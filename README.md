@@ -11,6 +11,27 @@
 - Вкладки, сохранение, метка «не сохранено», восстановление сессии
 - Палитра команд `Ctrl+Shift+P` и переход к файлу `Ctrl+P` (с учётом `.gitignore`)
 - `settings.json`, `keybindings.json`, `layout.json` в формате VS Code — применяются на лету
+- **Языковые серверы (LSP):** автодополнение с автоимпортом, ошибки, подсказки при наведении, подсказки параметров, переход к определению (`F12`), поиск использований (`Shift+F12`), переименование (`F2`), форматирование (`Shift+Alt+F`)
+
+## Языки
+
+Из коробки настроены Rust, Python, Go, C и C++. TypeScript и JavaScript обслуживает встроенный движок Monaco. Сервер запускается, только когда открыт файл его языка.
+
+| Язык | Сервер | Установка |
+|---|---|---|
+| Rust | rust-analyzer | `rustup component add rust-analyzer` |
+| Python | basedpyright | `pip install basedpyright` |
+| Go | gopls | `go install golang.org/x/tools/gopls@latest` |
+| C / C++ | clangd | из пакета LLVM |
+
+Любой другой язык — одна строка в `languages.json` (палитра → «Настройки: Открыть languages.json»):
+
+```jsonc
+{
+  "zig": { "command": "zls" },
+  "typescript": { "command": "typescript-language-server", "args": ["--stdio"] }
+}
+```
 
 ## Запуск
 

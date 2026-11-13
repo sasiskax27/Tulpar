@@ -13,7 +13,7 @@ export interface ChangeEvent {
   paths: string[];
 }
 
-export type ConfigName = "settings.json" | "keybindings.json" | "layout.json";
+export type ConfigName = "settings.json" | "keybindings.json" | "layout.json" | "languages.json";
 
 export const core = {
   workspaceOpen: (path: string) => invoke<string>("workspace_open", { path }),
@@ -24,12 +24,20 @@ export const core = {
   listFiles: () => invoke<string[]>("list_files"),
   configRead: (name: ConfigName) => invoke<string | null>("config_read", { name }),
   configDir: () => invoke<string>("config_dir"),
+  lspStart: (command: string, args: string[], cwd: string | null) =>
+    invoke<number>("lsp_start", { command, args, cwd }),
+  lspSend: (id: number, message: string) => invoke<void>("lsp_send", { id, message }),
+  lspStop: (id: number) => invoke<void>("lsp_stop", { id }),
   configEnsure: (name: ConfigName) => invoke<string>("config_ensure", { name }),
 };
 
 export const events = {
   onWorkspaceChanged: (cb: (e: ChangeEvent) => void): Promise<UnlistenFn> =>
     listen<ChangeEvent>("workspace:changed", (e) => cb(e.payload)),
+  onLspMessage: (cb: (id: number, message: string) => void): Promise<UnlistenFn> =>
+    listen<{ id: number; message: string }>("lsp:message", (e) => cb(e.payload.id, e.payload.message)),
+  onLspExit: (cb: (id: number) => void): Promise<UnlistenFn> =>
+    listen<{ id: number }>("lsp:exit", (e) => cb(e.payload.id)),
   onConfigChanged: (cb: (name: ConfigName) => void): Promise<UnlistenFn> =>
     listen<{ name: ConfigName }>("config:changed", (e) => cb(e.payload.name)),
 };

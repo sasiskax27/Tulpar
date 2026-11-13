@@ -6,6 +6,7 @@ import { installKeybindings } from "./keybindings/keybindings";
 import { registerBuiltinCommands } from "./app/commands";
 import { initWorkspaceEvents, openFolder } from "./app/workspace";
 import { loadSession, openFile, setActivePath } from "./editor/tabs";
+import { initLsp } from "./lsp/manager";
 
 async function start() {
   registerBuiltinCommands();
@@ -13,6 +14,7 @@ async function start() {
   render(() => <App />, document.getElementById("root")!);
 
   await Promise.all([initConfig(), initWorkspaceEvents()]);
+  await initLsp();
 
   // Восстанавливаем прошлую сессию: папку и открытые вкладки
   const session = loadSession();

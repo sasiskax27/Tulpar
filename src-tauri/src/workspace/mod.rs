@@ -39,6 +39,22 @@ fn to_string(p: &Path) -> String {
     p.to_string_lossy().into_owned()
 }
 
+/// canonicalize без префикса «\\?\» на Windows: такие пути не понимают
+/// языковые серверы и они некрасиво выглядят в интерфейсе.
+pub fn canonical(p: &Path) -> std::io::Result<PathBuf> {
+    let c = p.canonicalize()?;
+    #[cfg(windows)]
+    {
+        let s = c.to_string_lossy();
+        if let Some(rest) = s.strip_prefix(r"\\?\") {
+            if !rest.starts_with("UNC\\") {
+                return Ok(PathBuf::from(rest));
+            }
+        }
+    }
+    Ok(c)
+}
+
 fn current_root(state: &WorkspaceState) -> Result<PathBuf, String> {
     state
         .root
@@ -56,16 +72,16 @@ fn resolve(state: &WorkspaceState, path: &str) -> Result<PathBuf, String> {
     if let Ok(root) = current_root(state) {
         allowed.push(root);
     }
-    if let Some(cfg) = crate::config::dir().and_then(|d| d.canonicalize().ok()) {
+    if let Some(cfg) = crate::config::dir().and_then(|d| canonical(&d).ok()) {
         allowed.push(cfg);
     }
     let p = PathBuf::from(path);
     let canonical = if p.exists() {
-        p.canonicalize().map_err(|e| e.to_string())?
+        canonical(&p).map_err(|e| e.to_string())?
     } else {
         let parent = p.parent().ok_or("некорректный путь")?;
         let name = p.file_name().ok_or("некорректный путь")?;
-        parent.canonicalize().map_err(|e| e.to_string())?.join(name)
+        canonical(parent).map_err(|e| e.to_string())?.join(name)
     };
     if allowed.iter().any(|a| canonical.starts_with(a)) {
         Ok(canonical)
@@ -85,8 +101,7 @@ pub async fn workspace_open(
     state: State<'_, WorkspaceState>,
     path: String,
 ) -> Result<String, String> {
-    let root = PathBuf::from(&path)
-        .canonicalize()
+    let root = canonical(Path::new(&path))
         .map_err(|e| format!("не удалось открыть {path}: {e}"))?;
     if !root.is_dir() {
         return Err(format!("{path} — не папка"));

@@ -64,14 +64,34 @@ export const defaultLayout: LayoutConfig = {
   default: "Код",
 };
 
+// ---------- languages.json ----------
+
+export interface ServerConfig {
+  command: string;
+  args?: string[];
+  /** Подсказка, как установить сервер, если его нет */
+  install?: string;
+}
+
+/** Ключ — id языка в Monaco. TypeScript и JavaScript по умолчанию обслуживает
+ *  встроенный в Monaco движок, поэтому сервер для них не нужен. */
+export const defaultLanguages: Record<string, ServerConfig | null> = {
+  rust: { command: "rust-analyzer", install: "rustup component add rust-analyzer" },
+  python: { command: "basedpyright-langserver", args: ["--stdio"], install: "pip install basedpyright" },
+  go: { command: "gopls", install: "go install golang.org/x/tools/gopls@latest" },
+  c: { command: "clangd", install: "установите clangd (LLVM)" },
+  cpp: { command: "clangd", install: "установите clangd (LLVM)" },
+};
+
 // ---------- состояние ----------
 
 const [settings, setSettings] = createSignal<Settings>(defaultSettings);
 const [userKeybindings, setUserKeybindings] = createSignal<Keybinding[]>([]);
 const [layoutConfig, setLayoutConfig] = createSignal<LayoutConfig>(defaultLayout);
 const [activeLayout, setActiveLayout] = createSignal<string>(defaultLayout.default);
+const [languages, setLanguages] = createSignal<Record<string, ServerConfig | null>>(defaultLanguages);
 
-export { settings, userKeybindings, layoutConfig, activeLayout, setActiveLayout };
+export { settings, userKeybindings, layoutConfig, activeLayout, setActiveLayout, languages };
 
 export function setting<K extends keyof Settings>(key: K): Settings[K] {
   return settings()[key];
@@ -110,12 +130,17 @@ async function load(name: ConfigName) {
       if (!merged.layouts[activeLayout()]) setActiveLayout(merged.default);
       break;
     }
+    case "languages.json": {
+      const user = await readConfig<Record<string, ServerConfig | null>>(name);
+      setLanguages({ ...defaultLanguages, ...(user ?? {}) });
+      break;
+    }
   }
 }
 
 /** Загрузить всё при старте и подписаться на изменения файлов. */
 export async function initConfig() {
-  const names: ConfigName[] = ["settings.json", "keybindings.json", "layout.json"];
+  const names: ConfigName[] = ["settings.json", "keybindings.json", "layout.json", "languages.json"];
   await Promise.all(names.map((n) => load(n).catch(() => undefined)));
   setActiveLayout(layoutConfig().default);
   await events.onConfigChanged((name) => {

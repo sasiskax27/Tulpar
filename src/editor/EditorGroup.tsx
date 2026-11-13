@@ -4,7 +4,7 @@ import { createEffect, For, on, onCleanup, onMount, Show } from "solid-js";
 import { monaco, editorOptions } from "./monaco";
 import {
   tabs, activePath, setActivePath, closeTab, modelFor,
-  saveViewState, viewStateFor, setCursor,
+  saveViewState, viewStateFor, setCursor, takeReveal,
 } from "./tabs";
 import { settings } from "../config/store";
 import { executeCommand } from "../commands/registry";
@@ -41,6 +41,11 @@ export default function EditorGroup() {
       if (model && path) {
         const state = viewStateFor(path);
         if (state) editor.restoreViewState(state);
+        const reveal = takeReveal(path);
+        if (reveal) {
+          editor.setSelection(reveal);
+          editor.revealRangeInCenterIfOutsideViewport(reveal);
+        }
         editor.focus();
       }
     }),

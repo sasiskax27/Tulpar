@@ -1,7 +1,10 @@
 // Без консольного окна в релизной сборке Windows
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use tauri::Manager;
+
 mod config;
+mod lsp;
 mod workspace;
 
 fn main() {
@@ -9,6 +12,7 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .manage(workspace::WorkspaceState::default())
         .manage(config::ConfigState::default())
+        .manage(lsp::LspState::default())
         .setup(|app| {
             // Следим за папкой настроек, чтобы применять изменения без перезапуска
             config::start_watching(app.handle().clone());
@@ -24,7 +28,15 @@ fn main() {
             config::config_read,
             config::config_dir,
             config::config_ensure,
+            lsp::lsp_start,
+            lsp::lsp_send,
+            lsp::lsp_stop,
         ])
-        .run(tauri::generate_context!())
-        .expect("не удалось запустить Tulpar");
+        .build(tauri::generate_context!())
+        .expect("не удалось запустить Tulpar")
+        .run(|app, event| {
+            if let tauri::RunEvent::Exit = event {
+                app.state::<lsp::LspState>().kill_all();
+            }
+        });
 }

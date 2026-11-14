@@ -618,7 +618,11 @@ body.dragging-file, body.dragging-file * { cursor: grabbing !important; }
 .run-button:hover { color: #9be3b2; }
 .editor-host { flex: 1; position: relative; min-height: 0; }
 .monaco-container { position: absolute; inset: 0; }
-.monaco-container.hidden { visibility: hidden; }
+/* Скрытый редактор не должен ловить мышь. У части элементов Monaco (разделитель
+   редактора разницы, полосы прокрутки) своё visibility: visible — без !important
+   они просвечивали поверх обычного редактора и не давали кликать в код. */
+.monaco-container.hidden,
+.monaco-container.hidden * { visibility: hidden !important; pointer-events: none !important; }
 
 .welcome {
   position: absolute;

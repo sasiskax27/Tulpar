@@ -63,6 +63,7 @@ export async function openDiff(path: string, original: string, title: string) {
   } else {
     // Коммит мог измениться — обновляем левую сторону
     diffOriginals.get(key)?.setValue(original);
+    setTabs((t) => t.path === key, "title", title);
   }
   setActivePath(key);
 }

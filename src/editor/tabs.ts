@@ -123,6 +123,12 @@ export function takeReveal(path: string): monaco.IRange | undefined {
 }
 
 export async function openFile(requested: string, reveal?: monaco.IRange) {
+  // Картинки и видео — не текст: показываем их справа
+  if (/\.(png|jpe?g|gif|webp|bmp|ico|svg|mp4|webm)$/i.test(requested)) {
+    const { showMedia } = await import("./side");
+    showMedia(requested);
+    return;
+  }
   const model = await loadModel(requested);
   if (!model) return;
   const path = pathOfModel.get(model) ?? requested;

@@ -148,6 +148,10 @@ export function registerBuiltinCommands() {
   reg({ id: "workbench.action.tasks.build", category: "Задачи", title: "Собрать проект…", run: () => runTask("build") });
   reg({ id: "workbench.action.tasks.test", category: "Задачи", title: "Запустить тесты…", run: () => runTask("test") });
   reg({ id: "tulpar.run.file", category: "Задачи", title: "Запустить текущий файл", run: () => runCurrentFile() });
+  reg({ id: "workbench.action.splitEditor", category: "Вид", title: "Открыть файл рядом (справа)", run: () => import("../editor/side").then((m) => m.splitEditor()) });
+  reg({ id: "markdown.showPreviewToSide", category: "Вид", title: "Предпросмотр Markdown", run: () => import("../editor/side").then((m) => m.previewMarkdown()) });
+  reg({ id: "tulpar.html.preview", category: "Вид", title: "Показать HTML-страницу рядом", run: () => import("../editor/side").then((m) => m.previewHtml()) });
+  reg({ id: "tulpar.side.close", category: "Вид", title: "Закрыть правую половину", run: () => import("../editor/side").then((m) => m.closeSide()) });
   reg({
     id: "workbench.action.openRecent",
     category: "Файл",

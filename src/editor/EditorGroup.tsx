@@ -11,6 +11,8 @@ import { executeCommand } from "../commands/registry";
 import { keybindingFor } from "../keybindings/keybindings";
 import { setEditorInstance } from "./instance";
 import { registerAiActions } from "../ai/ai";
+import SidePane from "./SidePane";
+import { isHtml, isMarkdown, previewHtml, previewMarkdown, side, splitEditor } from "./side";
 import { forgetRecent, openFolder, recent, root } from "../app/workspace";
 import { baseName, parentDir } from "../ipc";
 import { registerFixActions } from "../problems/problems";
@@ -127,6 +129,19 @@ export default function EditorGroup() {
         <div class="tab-strip-spacer" />
         <Show when={activePath() && !activePath()!.startsWith("diff:")}>
           <div class="tab-strip-actions">
+            <Show when={isMarkdown(activePath())}>
+              <button class="icon-button" title="Предпросмотр Markdown (Ctrl+Shift+V)" aria-label="Предпросмотр" onClick={() => previewMarkdown()}>
+                <svg aria-hidden="true" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" /><circle cx="8" cy="8" r="2" /></svg>
+              </button>
+            </Show>
+            <Show when={isHtml(activePath())}>
+              <button class="icon-button" title="Показать страницу рядом — обновляется на лету" aria-label="Просмотр страницы" onClick={() => previewHtml()}>
+                <svg aria-hidden="true" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5" /><path d="M1.5 5.5h13" /></svg>
+              </button>
+            </Show>
+            <button class="icon-button" title={`Открыть рядом (${keybindingFor("workbench.action.splitEditor") ?? "Ctrl+\\"})`} aria-label="Открыть рядом" onClick={() => void splitEditor()}>
+              <svg aria-hidden="true" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5" /><path d="M8 2.5v11" /></svg>
+            </button>
             <button
               class="icon-button run-button"
               aria-label="Запустить файл"
@@ -172,12 +187,17 @@ export default function EditorGroup() {
           </div>
         )}
       </Show>
+      <div class="editor-row">
       <div class="editor-host">
         <div ref={container} class="monaco-container" classList={{ hidden: !activePath() || diffMode() }} />
         <div ref={diffContainer} class="monaco-container" classList={{ hidden: !diffMode() }} />
         <Show when={!activePath()}>
           <Welcome />
         </Show>
+      </div>
+      <Show when={side()}>
+        <SidePane />
+      </Show>
       </div>
     </div>
   );

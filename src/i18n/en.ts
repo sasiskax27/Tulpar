@@ -1,6 +1,24 @@
 // Generated: Russian UI text -> English. Keys are exact Russian strings;
 // pattern keys use {0}, {1}… for inserted values.
 export const EXACT: Record<string, string> = {
+ "Перезапустить (Ctrl+Shift+F5)": "Restart (Ctrl+Shift+F5)",
+ "Пауза": "Pause",
+ "убрать все": "remove all",
+ "Клик слева от номера строки или F9 — поставить точку останова": "Click left of a line number or press F9 to set a breakpoint",
+ "очистить": "clear",
+ "Выражение, например len(items) — Enter": "Expression, e.g. len(items) — Enter",
+ "Вычислять выражения можно, когда программа на паузе": "You can evaluate expressions while the program is paused",
+ "Вычислять можно, когда программа на паузе": "You can evaluate while the program is paused",
+ "Точка останова — клик, чтобы убрать": "Breakpoint — click to remove",
+ "Запустить отладку / продолжить": "Start debugging / continue",
+ "Перезапустить отладку": "Restart debugging",
+ "Отладка завершена.": "Debugging finished.",
+ "Отладка пока работает для Python (.py). Остальные языки — «Запустить файл» (Ctrl+F5).": "Debugging currently works for Python (.py). For other languages use “Run file” (Ctrl+F5).",
+ "точка останова": "breakpoint",
+ "шаг": "step",
+ "исключение": "exception",
+ "пауза": "pause",
+ "начало программы": "program start",
  "Применить профиль? Текущие настройки, сочетания клавиш, сниппеты, раскладки и языки будут заменены.": "Apply the profile? Current settings, shortcuts, snippets, layouts and languages will be replaced.",
  "Файл создан задачей": "File created by the task",
  "Файл изменён": "File changed",
@@ -1089,6 +1107,10 @@ export const EXACT: Record<string, string> = {
 };
 
 export const PATTERNS: Record<string, string> = {
+ "Программа завершилась, код {0}.": "The program exited with code {0}.",
+ "строка {0}": "line {0}",
+ "стр. {0}": "ln {0}",
+ "configurationDone: {0}": "configurationDone: {0}",
  "нет ответа на {0}": "no response to {0}",
  "точки останова не приняты ({0}): {1}": "breakpoints not accepted ({0}): {1}",
  "Не удалось запустить адаптер отладки ({0})": "Could not start the debug adapter ({0})",

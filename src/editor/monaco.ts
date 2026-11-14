@@ -64,6 +64,7 @@ export function editorOptions(s: Settings): monaco.editor.IEditorOptions & monac
     fontLigatures: s["editor.fontLigatures"] !== false,
     theme: monacoTheme(String(s["workbench.colorTheme"])),
     automaticLayout: true,
+    glyphMargin: true,
     smoothScrolling: s["editor.smoothScrolling"] !== false,
     cursorSmoothCaretAnimation: s["editor.smoothScrolling"] !== false ? "on" : "off",
     bracketPairColorization: { enabled: s["editor.bracketPairColorization.enabled"] !== false },

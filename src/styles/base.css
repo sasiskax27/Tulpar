@@ -1894,3 +1894,32 @@ body.resizing .side-island { transition: none; }
   height: 9px !important;
   background: var(--tp-error);
 }
+
+/* Отладчик: точки останова кликом в желобе, раскрытие переменных, вычисление выражений */
+.debug-breakpoint-glyph, .debug-breakpoint-hint, .debug-stopped-arrow { cursor: pointer; }
+.debug-breakpoint-glyph::before, .debug-breakpoint-hint::before {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 9px; height: 9px;
+  margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: var(--tp-error);
+}
+.debug-breakpoint-hint::before { opacity: 0.35; }
+.debug-stopped-arrow::before {
+  content: "➜"; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -52%);
+  font-size: 12px; color: var(--tp-gold);
+}
+.debug-frame { cursor: pointer; }
+.debug-frame.current { background: var(--tp-bg-hover); }
+.debug-frame.dim { opacity: 0.55; }
+.debug-break { cursor: pointer; }
+.debug-break-remove { margin-left: auto; opacity: 0; background: none; border: 0; color: var(--tp-fg-muted); cursor: pointer; }
+.debug-break:hover .debug-break-remove { opacity: 1; }
+.debug-link { margin-left: auto; background: none; border: 0; color: var(--tp-accent); cursor: pointer; font-size: 11px; font-weight: 400; text-transform: none; letter-spacing: 0; }
+.debug-var-expandable { cursor: pointer; }
+.debug-var-expandable:hover { background: var(--tp-bg-hover); }
+.debug-twisty { display: inline-block; width: 12px; color: var(--tp-fg-muted); }
+.debug-out.input { color: var(--tp-accent); }
+.debug-out.result { color: var(--tp-fg-strong); }
+.debug-eval {
+  margin-top: 6px; width: 100%; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--tp-border);
+  background: var(--tp-bg-input, transparent); color: var(--tp-fg); font-family: var(--tp-font-mono, monospace); font-size: 12px;
+}
+.debug-eval:disabled { opacity: 0.55; }

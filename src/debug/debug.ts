@@ -1,31 +1,19 @@
 // Отладчик. Протокол DAP (как у VS Code) поверх Content-Length «трубы»,
 // которую ядро уже умеет: lsp_start/lsp_send обслуживают и языковые серверы,
-// и адаптер debugpy. Весь Python-специфичный минимум — только launch-аргументы.
+// и адаптер debugpy (см. dap.ts).
 //
-// Порядок запуска: initialize → (ответ) → launch → событие initialized →
-// setBreakpoints по каждому файлу → configurationDone.
-import { createSignal } from "solid-js";
-import { baseName, core, events, parentDir } from "../ipc";
+// Порядок запуска: initialize → launch (ответ придёт позже) → событие
+// initialized → setBreakpoints по каждому файлу → configurationDone.
+// Программа запускается в терминале Tulpar (runInTerminal), поэтому input() работает.
+import { batch, createSignal } from "solid-js";
+import { baseName, core, parentDir } from "../ipc";
 import { root } from "../app/workspace";
-import { activePath, openFile } from "../editor/tabs";
+import { activePath, openFile, saveFile } from "../editor/tabs";
 import { notify, notifyError } from "../app/notify";
 import { runInTerminal } from "../terminal/sessions";
 import { setBottomTab, setBottomVisible } from "../app/ui";
+import { DapClient } from "./dap";
 import type { monaco } from "../editor/monaco";
-
-// ---------- интерфейсы DAP, которые используем ----------
-
-interface DapMessage {
-  seq: number;
-  type: "request" | "response" | "event";
-  command?: string;
-  args?: unknown;
-  request_seq?: number;
-  success?: boolean;
-  message?: string;
-  event?: string;
-  body?: unknown;
-}
 
 export interface StackFrame {
   id: number;
@@ -50,119 +38,62 @@ export type DebugStatus = "off" | "starting" | "running" | "stopped" | "ended";
 
 export interface DebugOutput {
   text: string;
-  kind: "stdout" | "stderr" | "info";
+  kind: "stdout" | "stderr" | "info" | "input" | "result";
 }
 
 // ---------- состояние ----------
+
+const isWindows = navigator.userAgent.includes("Windows");
+const BP_KEY = "tulpar.breakpoints";
 
 const [status, setStatus] = createSignal<DebugStatus>("off");
 const [frames, setFrames] = createSignal<StackFrame[]>([]);
 const [scopes, setScopes] = createSignal<ScopeVars[]>([]);
 const [output, setOutput] = createSignal<DebugOutput[]>([]);
 const [pausedLine, setPausedLine] = createSignal<{ file: string; line: number } | null>(null);
+const [currentFrame, setCurrentFrame] = createSignal<number | null>(null);
 
-/** Точки останова: путь файла → строки. */
-const breakpoints = new Map<string, number[]>();
+/** Точки останова: путь файла → строки. Сохраняются между запусками Tulpar. */
+const breakpoints = new Map<string, number[]>(loadBreakpoints());
 const [breakpointsVersion, setBreakpointsVersion] = createSignal(0);
 
-export { status, frames, scopes, output, pausedLine, breakpointsVersion };
+export { status, frames, scopes, output, pausedLine, breakpointsVersion, currentFrame };
 
-let adapterId: number | null = null;
-let seq = 1;
-const pending = new Map<number, { ok: (body: unknown) => void; fail: (e: string) => void }>();
+let client: DapClient | null = null;
+let threadId: number | null = null;
 let stopping = false;
+let lastFile: string | null = null;
 
-// ---------- служебное ----------
+function loadBreakpoints(): [string, number[]][] {
+  try {
+    const raw = JSON.parse(localStorage.getItem(BP_KEY) ?? "{}") as Record<string, number[]>;
+    return Object.entries(raw).filter(([, l]) => Array.isArray(l) && l.length);
+  } catch {
+    return [];
+  }
+}
 
-function pythonCommand(): string {
-  return navigator.userAgent.includes("Windows") ? "python" : "python3";
+function saveBreakpoints() {
+  try {
+    localStorage.setItem(BP_KEY, JSON.stringify(Object.fromEntries(breakpoints)));
+  } catch {
+    /* хранилище недоступно */
+  }
 }
 
 function emitOutput(text: string, kind: DebugOutput["kind"] = "info") {
   setOutput((list) => {
     // Сливаем подряд идущие куски одного вида, чтобы не мельтешило
     const last = list[list.length - 1];
-    if (last && last.kind === kind && kind !== "info") {
+    if (last && last.kind === kind && (kind === "stdout" || kind === "stderr")) {
       return [...list.slice(0, -1), { text: last.text + text, kind }];
     }
-    return [...list, { text, kind }];
+    return [...list.slice(-1000), { text, kind }];
   });
 }
 
-function request(command: string, args?: unknown, timeoutMs = 15000): Promise<unknown> {
-  if (adapterId === null) return Promise.reject("отладчик не запущен");
-  const requestSeq = seq++;
-  return new Promise((resolve, reject) => {
-    const timer = window.setTimeout(() => {
-      pending.delete(requestSeq);
-      reject(`нет ответа на ${command}`);
-    }, timeoutMs);
-    pending.set(requestSeq, {
-      ok: (body) => {
-        clearTimeout(timer);
-        resolve(body);
-      },
-      fail: (e) => {
-        clearTimeout(timer);
-        reject(e);
-      },
-    });
-    const message: DapMessage = { seq: seq++, type: "request", command, args: args ?? {} };
-    void core.lspSend(adapterId!, JSON.stringify(message)).catch((e) => {
-      clearTimeout(timer);
-      pending.delete(requestSeq);
-      reject(String(e));
-    });
-  });
-}
-
-function handle(raw: string) {
-  let msg: DapMessage;
-  try {
-    msg = JSON.parse(raw) as DapMessage;
-  } catch {
-    return;
-  }
-  if (msg.type === "response" && msg.request_seq !== undefined) {
-    const waiter = pending.get(msg.request_seq);
-    if (waiter) {
-      pending.delete(msg.request_seq);
-      if (msg.success) waiter.ok(msg.body);
-      else waiter.fail(msg.message ?? "ошибка отладчика");
-    }
-    return;
-  }
-  if (msg.type !== "event") return;
-  switch (msg.event) {
-    case "output": {
-      const body = msg.body as { output?: string; category?: string };
-      const text = body.output ?? "";
-      if (!text) break;
-      const kind: DebugOutput["kind"] = body.category === "stderr" ? "stderr" : body.category === "stdout" ? "stdout" : "info";
-      if (kind !== "info" || !/^\s*$/.test(text)) emitOutput(text, kind);
-      break;
-    }
-    case "stopped":
-      void onStopped(msg.body as { threadId?: number; reason?: string });
-      break;
-    case "continued":
-      setPausedLine(null);
-      setFrames([]);
-      setScopes([]);
-      setStatus("running");
-      clearStopMarker();
-      break;
-    case "terminated":
-    case "exited":
-      endSession();
-      break;
-    case "process":
-      // ничего: launch уже отправлен
-      break;
-    case "initialized":
-      void afterInitialized();
-      break;
-  }
+export function clearOutput() {
+  setOutput([]);
 }
 
 // ---------- точки останова ----------
@@ -181,29 +112,98 @@ export function isBreakpoint(path: string, line: number): boolean {
   return (breakpoints.get(path) ?? []).includes(line);
 }
 
-export function toggleBreakpoint(path: string, line: number) {
-  const lines = breakpoints.get(path) ?? [];
-  const next = lines.includes(line) ? lines.filter((l) => l !== line) : [...lines, line].sort((a, b) => a - b);
+/** Задать строки точек останова файла целиком (например, после правки кода точки сдвинулись). */
+export function setFileBreakpoints(path: string, lines: number[]) {
+  const next = [...new Set(lines)].sort((a, b) => a - b);
+  const prev = breakpoints.get(path) ?? [];
+  if (prev.length === next.length && prev.every((v, i) => v === next[i])) return;
   if (next.length) breakpoints.set(path, next);
   else breakpoints.delete(path);
+  saveBreakpoints();
   setBreakpointsVersion((v) => v + 1);
-  if (adapterId !== null) void sendBreakpoints(path);
+  if (client) void sendBreakpoints(path);
+}
+
+export function toggleBreakpoint(path: string, line: number) {
+  const lines = breakpointLines(path);
+  setFileBreakpoints(path, lines.includes(line) ? lines.filter((l) => l !== line) : [...lines, line]);
+}
+
+export function removeAllBreakpoints() {
+  const paths = [...breakpoints.keys()];
+  breakpoints.clear();
+  saveBreakpoints();
+  setBreakpointsVersion((v) => v + 1);
+  if (client) for (const p of paths) void sendBreakpoints(p);
 }
 
 async function sendBreakpoints(path: string) {
+  if (!client) return;
   const lines = breakpointLines(path);
   try {
-    await request("setBreakpoints", {
+    await client.request("setBreakpoints", {
       source: { path, name: baseName(path) },
       breakpoints: lines.map((line) => ({ line })),
       lines,
     });
   } catch (e) {
-    emitOutput(`точки останова не приняты (${baseName(path)}): ${e}`, "stderr");
+    emitOutput(`точки останова не приняты (${baseName(path)}): ${errText(e)}\n`, "stderr");
   }
 }
 
+const errText = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
 // ---------- запуск и останов ----------
+
+/** Python проекта: сначала виртуальное окружение (.venv, venv, env), потом системный. */
+async function pythonFor(dir: string | null): Promise<string> {
+  if (dir) {
+    const sep = dir.includes("\\") ? "\\" : "/";
+    const entries = await core.readDir(dir).catch(() => []);
+    for (const venv of [".venv", "venv", "env"]) {
+      if (!entries.some((e) => e.isDir && e.name === venv)) continue;
+      const bin = `${dir}${sep}${venv}${sep}${isWindows ? "Scripts" : "bin"}`;
+      const names = (await core.readDir(bin).catch(() => [])).map((e) => e.name);
+      if (isWindows && names.includes("python.exe")) return `${bin}${sep}python.exe`;
+      if (!isWindows && names.includes("python")) return `${bin}/python`;
+    }
+  }
+  return isWindows ? "python" : "python3";
+}
+
+const quotePs = (s: string) => `'${s.replace(/'/g, "''")}'`;
+const quoteSh = (s: string) => `'${s.replace(/'/g, `'\\''`)}'`;
+
+/** Команда для обратного запроса runInTerminal: программа идёт в терминале Tulpar. */
+function terminalCommand(args: string[], cwd?: string, env?: Record<string, string | null>): string {
+  const vars = Object.entries(env ?? {}).filter(([, v]) => v !== null) as [string, string][];
+  if (isWindows) {
+    return [
+      cwd ? `Set-Location -LiteralPath ${quotePs(cwd)}` : "",
+      ...vars.map(([k, v]) => `$env:${k}=${quotePs(v)}`),
+      `& ${args.map(quotePs).join(" ")}`,
+    ]
+      .filter(Boolean)
+      .join("; ");
+  }
+  const envPart = vars.map(([k, v]) => `${k}=${quoteSh(v)}`).join(" ");
+  return `${cwd ? `cd ${quoteSh(cwd)} && ` : ""}${envPart ? envPart + " " : ""}${args.map(quoteSh).join(" ")}`;
+}
+
+function offerDebugpy(py: string) {
+  notify("Для отладки нужен пакет debugpy. Установить?", "info", [
+    { label: "Установить", run: () => void runInTerminal(`${quoteArg(py)} -m pip install -U debugpy`, "Установка debugpy") },
+  ]);
+}
+
+const quoteArg = (s: string) => (/\s/.test(s) ? (isWindows ? `& ${quotePs(s)}` : quoteSh(s)) : s);
+
+/** F5: на паузе — продолжить, иначе запустить текущий файл под отладчиком. */
+export async function startOrContinue(): Promise<void> {
+  if (status() === "stopped") return continueDebugging();
+  if (status() === "running" || status() === "starting") return;
+  return startDebugging();
+}
 
 /** Запустить текущий файл под отладчиком (Python через debugpy). */
 export async function startDebugging(): Promise<void> {
@@ -212,96 +212,149 @@ export async function startDebugging(): Promise<void> {
     notify("Отладка: откройте файл, который нужно запустить");
     return;
   }
-  if (adapterId !== null) await stopDebugging();
+  if (!/\.pyw?$/i.test(file)) {
+    notify("Отладка пока работает для Python (.py). Остальные языки — «Запустить файл» (Ctrl+F5).");
+    return;
+  }
+  if (client) await stopDebugging();
+  await saveFile(file).catch(() => undefined);
   stopping = false;
-  setStatus("starting");
-  setOutput([]);
-  setFrames([]);
-  setScopes([]);
-  setPausedLine(null);
+  lastFile = file;
+  batch(() => {
+    setStatus("starting");
+    setOutput([]);
+    clearPauseState();
+  });
   setBottomVisible(true);
   setBottomTab("debug");
 
   const cwd = root() ?? parentDir(file);
-  let id: number;
+  const py = await pythonFor(root());
+  let c: DapClient;
   try {
-    id = await core.lspStart(pythonCommand(), ["-m", "debugpy.adapter"], cwd);
+    c = await DapClient.start(py, ["-m", "debugpy.adapter"], cwd);
   } catch (e) {
     setStatus("ended");
-    notifyError(`Не удалось запустить адаптер отладки (${pythonCommand()})`, e);
+    notifyError(`Не удалось запустить адаптер отладки (${py})`, e);
     return;
   }
-  adapterId = id;
-  unlistenMessage = await events.onLspMessage((id, message) => {
-    if (id === adapterId) handle(message);
-  });
-  unlistenExit = await events.onLspExit((id, stderr) => {
-    if (id !== adapterId) return;
-    if (!stopping && /No module named/.test(stderr)) {
-      notify("Для отладки нужен пакет debugpy. Установить?", "info", [
-        { label: "Установить", run: () => void runInTerminal("pip install -U debugpy", "Установка debugpy") },
-      ]);
+  client = c;
+
+  c.onExit = (stderr) => {
+    if (!stopping && /No module named/.test(stderr)) offerDebugpy(py);
+    else if (!stopping && stderr.trim()) emitOutput(stderr.trim().split(/\r?\n/).slice(-6).join("\n") + "\n", "stderr");
+    if (client === c) endSession(false);
+  };
+  c.onRequest = async (command, args) => {
+    if (command === "runInTerminal") {
+      await runInTerminal(terminalCommand(args.args ?? [], args.cwd, args.env), "Отладка");
+      // Вывод программы — в терминале, а панель отладки остаётся рядом
+      setBottomTab("terminal");
+      return {};
     }
-    adapterId = null;
-    setStatus("ended");
-  });
+    throw new Error(`не поддерживается: ${command}`);
+  };
+  c.onEvent = (event, body) => void onEvent(c, event, body);
 
   try {
-    await request("initialize", {
+    await c.request("initialize", {
+      clientID: "tulpar",
+      clientName: "Tulpar",
       adapterID: "debugpy",
+      locale: "ru",
       linesStartAt1: true,
       columnsStartAt1: true,
       pathFormat: "path",
+      supportsVariableType: true,
+      supportsRunInTerminalRequest: true,
     });
-    await request("launch", {
-      request: "launch",
-      name: "Tulpar: запуск",
-      type: "python",
-      program: file,
-      cwd,
-      console: "internalConsole",
-      stopOnEntry: false,
-      justMyCode: true,
-      redirectOutput: true,
-    });
-    setStatus("running");
     emitOutput(`Отладка: ${file}\n`, "info");
+    // debugpy отвечает на launch только после configurationDone — ответ не ждём
+    c.request(
+      "launch",
+      {
+        request: "launch",
+        name: "Tulpar: запуск",
+        type: "python",
+        program: file,
+        cwd,
+        python: [py],
+        console: "integratedTerminal",
+        stopOnEntry: false,
+        justMyCode: true,
+      },
+      120_000,
+    ).catch((e) => {
+      if (stopping || client !== c) return;
+      emitOutput(`Не удалось запустить отладку: ${errText(e)}\n`, "stderr");
+      notifyError("Отладка не запустилась", e);
+      void stopDebugging();
+    });
   } catch (e) {
-    emitOutput(`Не удалось запустить отладку: ${e}\n`, "stderr");
-    notifyError("Отладка не запустилась", e);
+    if (!stopping) {
+      emitOutput(`Не удалось запустить отладку: ${errText(e)}\n`, "stderr");
+      if (/debugpy|No module/i.test(errText(e))) offerDebugpy(py);
+      else notifyError("Отладка не запустилась", e);
+    }
     await stopDebugging();
   }
 }
 
-let unlistenMessage: (() => void) | undefined;
-let unlistenExit: (() => void) | undefined;
-
-/** Отписаться от событий адаптера (вызывается при завершении сеанса). */
-function detachAdapterEvents() {
-  unlistenMessage?.();
-  unlistenExit?.();
-  unlistenMessage = undefined;
-  unlistenExit = undefined;
-}
-
-async function afterInitialized() {
-  for (const path of [...breakpoints.keys()]) await sendBreakpoints(path);
-  try {
-    await request("configurationDone");
-  } catch (e) {
-    emitOutput(`configurationDone: ${e}`, "stderr");
+async function onEvent(c: DapClient, event: string, body: any) {
+  if (client !== c) return;
+  switch (event) {
+    case "initialized":
+      for (const path of [...breakpoints.keys()]) await sendBreakpoints(path);
+      await c.request("setExceptionBreakpoints", { filters: ["uncaught"] }).catch(() => undefined);
+      await c.request("configurationDone").catch((e) => emitOutput(`configurationDone: ${errText(e)}\n`, "stderr"));
+      setStatus("running");
+      break;
+    case "output": {
+      const text = String(body.output ?? "");
+      if (!text || body.category === "telemetry") break;
+      const kind: DebugOutput["kind"] = body.category === "stderr" ? "stderr" : body.category === "stdout" ? "stdout" : "info";
+      if (kind !== "info" || !/^\s*$/.test(text)) emitOutput(text, kind);
+      break;
+    }
+    case "stopped":
+      await onStopped(body);
+      break;
+    case "continued":
+      clearPauseState();
+      setStatus("running");
+      break;
+    case "exited":
+      emitOutput(`Программа завершилась, код ${body.exitCode ?? 0}.\n`, "info");
+      break;
+    case "terminated":
+      endSession(true);
+      break;
   }
 }
 
+const REASONS: Record<string, string> = {
+  breakpoint: "точка останова",
+  step: "шаг",
+  exception: "исключение",
+  pause: "пауза",
+  entry: "начало программы",
+};
+
 /** Останов в точке: стек, переменные, подсветка строки. */
-async function onStopped(body: { threadId?: number; reason?: string }) {
+async function onStopped(body: { threadId?: number; reason?: string; text?: string }) {
+  if (!client) return;
   setStatus("stopped");
-  emitOutput(`Остановка${body.reason ? ` (${body.reason})` : ""}\n`, "info");
+  setBottomTab("debug");
+  emitOutput(`Остановка${body.reason ? ` (${REASONS[body.reason] ?? body.reason})` : ""}\n`, "info");
+  if (body.reason === "exception" && body.text) emitOutput(`${body.text}\n`, "stderr");
   try {
-    const threads = (await request("threads")) as { threads?: { id: number; name?: string }[] };
-    const threadId = body.threadId ?? threads.threads?.[0]?.id;
-    if (!threadId) return;
-    const stack = (await request("stackTrace", { threadId, startFrame: 0, levels: 20 })) as {
+    if (body.threadId) threadId = body.threadId;
+    else {
+      const threads = (await client.request("threads")) as { threads?: { id: number }[] };
+      threadId = threads.threads?.[0]?.id ?? null;
+    }
+    if (threadId === null) return;
+    const stack = (await client.request("stackTrace", { threadId, startFrame: 0, levels: 30 })) as {
       stackFrames?: { id: number; name: string; line: number; source?: { path?: string } }[];
     };
     const list: StackFrame[] = (stack.stackFrames ?? []).map((f) => ({
@@ -311,128 +364,131 @@ async function onStopped(body: { threadId?: number; reason?: string }) {
       line: f.line,
     }));
     setFrames(list);
-    const top = list[0];
-    if (top?.file) {
-      setPausedLine({ file: top.file, line: top.line });
-      await openFile(top.file);
-      revealLine(top.line);
-      markStoppedLine(top.line);
-      await loadScopes(top.id);
-    }
+    const top = list.find((f) => f.file) ?? list[0];
+    if (top) await selectFrame(top);
   } catch (e) {
-    emitOutput(`Не удалось получить стек: ${e}\n`, "stderr");
+    emitOutput(`Не удалось получить стек: ${errText(e)}\n`, "stderr");
   }
 }
 
+/** Выбрать кадр стека: открыть файл на нужной строке и показать его переменные. */
+export async function selectFrame(f: StackFrame) {
+  setCurrentFrame(f.id);
+  if (f.file) {
+    setPausedLine({ file: f.file, line: f.line });
+    await openFile(f.file).catch(() => undefined);
+    revealLine(f.line);
+    markStoppedLine(f.line);
+  }
+  await loadScopes(f.id);
+}
+
 export async function loadScopes(frameId: number): Promise<void> {
+  if (!client) return;
   try {
-    const raw = (await request("scopes", { frameId })) as { scopes?: { name: string; variablesReference: number }[] };
+    const raw = (await client.request("scopes", { frameId })) as {
+      scopes?: { name: string; variablesReference: number; expensive?: boolean }[];
+    };
     const result: ScopeVars[] = [];
     for (const scope of (raw.scopes ?? []).filter((s) => s.variablesReference > 0).slice(0, 4)) {
-      const vars = (await request("variables", { variablesReference: scope.variablesReference, start: 0, count: 200 })) as {
-        variables?: { name: string; value: string; type?: string; variablesReference: number }[];
-      };
-      result.push({
-        name: scope.name,
-        vars: (vars.variables ?? []).map((v) => ({ name: v.name, value: v.value, type: v.type, variablesReference: v.variablesReference })),
-      });
+      result.push({ name: scope.name, vars: await loadVariables(scope.variablesReference) });
     }
     setScopes(result);
   } catch (e) {
-    emitOutput(`Не удалось получить переменные: ${e}\n`, "stderr");
+    emitOutput(`Не удалось получить переменные: ${errText(e)}\n`, "stderr");
+  }
+}
+
+/** Содержимое списка, словаря или объекта (раскрытие переменной в панели). */
+export async function loadVariables(ref: number): Promise<DebugVar[]> {
+  if (!client || ref <= 0) return [];
+  const vars = (await client
+    .request("variables", { variablesReference: ref, start: 0, count: 300 })
+    .catch(() => ({ variables: [] }))) as {
+    variables?: { name: string; value: string; type?: string; variablesReference: number }[];
+  };
+  return (vars.variables ?? [])
+    .filter((v) => !/^(special|function|class) variables$/.test(v.name))
+    .map((v) => ({ name: v.name, value: v.value, type: v.type, variablesReference: v.variablesReference }));
+}
+
+/** Вычислить выражение в выбранном кадре (поле под выводом). */
+export async function evaluate(expression: string): Promise<void> {
+  const expr = expression.trim();
+  if (!expr) return;
+  emitOutput(`› ${expr}\n`, "input");
+  if (!client || status() !== "stopped") {
+    emitOutput("Вычислять можно, когда программа на паузе\n", "info");
+    return;
+  }
+  try {
+    const r = (await client.request("evaluate", { expression: expr, frameId: currentFrame() ?? undefined, context: "repl" })) as {
+      result?: string;
+    };
+    emitOutput(`${r.result ?? ""}\n`, "result");
+  } catch (e) {
+    emitOutput(`${errText(e)}\n`, "stderr");
   }
 }
 
 // ---------- команды сеанса ----------
 
-async function threadIdFor(): Promise<number | null> {
+async function stepCommand(command: string, extra: Record<string, unknown> = {}) {
+  if (!client || status() !== "stopped" || threadId === null) return;
+  clearPauseState();
+  setStatus("running");
   try {
-    const threads = (await request("threads")) as { threads?: { id: number }[] };
-    return threads.threads?.[0]?.id ?? null;
-  } catch {
-    return null;
-  }
-}
-
-export async function continueDebugging(): Promise<void> {
-  const threadId = await threadIdFor();
-  if (threadId === null) return;
-  clearStopMarker();
-  try {
-    await request("continue", { threadId });
-  } catch {
-    /* событие continued придёт само */
-  }
-}
-
-export async function stepOver(): Promise<void> {
-  const threadId = await threadIdFor();
-  if (threadId === null) return;
-  clearStopMarker();
-  try {
-    await request("next", { threadId, granularity: "statement" });
+    await client.request(command, { threadId, ...extra });
   } catch (e) {
     notifyError("Шаг не выполнен", e);
   }
 }
 
-export async function stepInto(): Promise<void> {
-  const threadId = await threadIdFor();
-  if (threadId === null) return;
-  clearStopMarker();
-  try {
-    await request("stepIn", { threadId, granularity: "statement" });
-  } catch (e) {
-    notifyError("Шаг не выполнен", e);
-  }
-}
+export const continueDebugging = () => stepCommand("continue");
+export const stepOver = () => stepCommand("next", { granularity: "statement" });
+export const stepInto = () => stepCommand("stepIn", { granularity: "statement" });
+export const stepOut = () => stepCommand("stepOut", { granularity: "statement" });
 
-export async function stepOut(): Promise<void> {
-  const threadId = await threadIdFor();
-  if (threadId === null) return;
-  clearStopMarker();
-  try {
-    await request("stepOut", { threadId, granularity: "statement" });
-  } catch (e) {
-    notifyError("Шаг не выполнен", e);
-  }
+export async function pauseDebugging(): Promise<void> {
+  if (!client || status() !== "running") return;
+  await client.request("pause", { threadId: threadId ?? 1 }).catch(() => undefined);
 }
 
 /** Остановить отладку: вежливый disconnect, затем убить адаптер. */
 export async function stopDebugging(): Promise<void> {
   stopping = true;
-  const id = adapterId;
-  clearStopMarker();
-  setPausedLine(null);
-  setFrames([]);
-  setScopes([]);
-  if (id !== null) {
-    try {
-      await request("disconnect", { terminateDebuggee: true, restart: false }, 3000);
-    } catch {
-      /* процесс могли убить раньше */
-    }
-    try {
-      await core.lspStop(id);
-    } catch {
-      /* уже остановлен */
-    }
+  const c = client;
+  client = null;
+  clearPauseState();
+  if (c) {
+    await c.request("disconnect", { terminateDebuggee: true, restart: false }, 3000).catch(() => undefined);
+    await c.stop();
   }
-  adapterId = null;
-  detachAdapterEvents();
-  setStatus("ended");
+  if (status() !== "off") setStatus("ended");
 }
 
-function endSession() {
+/** Перезапуск того же файла. */
+export async function restartDebugging(): Promise<void> {
+  await stopDebugging();
+  if (lastFile) await openFile(lastFile).catch(() => undefined);
+  await startDebugging();
+}
+
+function clearPauseState() {
   clearStopMarker();
   setPausedLine(null);
+  setCurrentFrame(null);
   setFrames([]);
   setScopes([]);
-  if (adapterId !== null) void core.lspStop(adapterId).catch(() => undefined);
-  adapterId = null;
-  detachAdapterEvents();
+}
+
+function endSession(announce: boolean) {
+  const c = client;
+  client = null;
+  clearPauseState();
+  if (c) void c.stop();
+  if (status() !== "ended" && announce) emitOutput("Отладка завершена.\n", "info");
   setStatus("ended");
-  emitOutput("Программа завершилась.\n", "info");
 }
 
 // ---------- подсветка строк ----------
@@ -448,16 +504,15 @@ function withEditor(fn: (editor: monaco.editor.IStandaloneCodeEditor) => void) {
 }
 
 function revealLine(line: number) {
-  withEditor((editor) => {
-    editor.revealLineInCenter(line);
-  });
+  withEditor((editor) => editor.revealLineInCenter(line));
 }
 
 function markStoppedLine(line: number) {
   withEditor((editor) => {
+    stopDecorations?.clear();
     stopDecorations = editor.createDecorationsCollection([
       {
-        options: { isWholeLine: true, className: "debug-stopped-line", zIndex: -1 },
+        options: { isWholeLine: true, className: "debug-stopped-line", glyphMarginClassName: "debug-stopped-arrow", zIndex: -1 },
         range: { startLineNumber: line, startColumn: 1, endLineNumber: line, endColumn: 1 },
       },
     ]);
@@ -482,15 +537,4 @@ export function registerDebugActions(editor: monaco.editor.IStandaloneCodeEditor
       toggleBreakpoint(activePath()!, pos.lineNumber);
     },
   });
-}
-
-/** Подсветить точки останова: EditorGroup держит коллекцию и вызывает set() сам. */
-export function breakpointDecorationOptions(lines: number[]) {
-  return lines.map((line) => ({
-    options: {
-      isWholeLine: false,
-      linesDecorationsClassName: "debug-breakpoint-gutter",
-    },
-    range: { startLineNumber: line, startColumn: 1, endLineNumber: line, endColumn: 1 },
-  }));
 }

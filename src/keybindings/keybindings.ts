@@ -29,6 +29,9 @@ const defaults: Keybinding[] = [
   { key: "shift+f5", command: "workbench.action.debug.stop" },
   { key: "f10", command: "workbench.action.debug.stepOver" },
   { key: "f11", command: "workbench.action.debug.stepInto" },
+  { key: "shift+f11", command: "workbench.action.debug.stepOut" },
+  { key: "f9", command: "editor.debug.action.toggleBreakpoint" },
+  { key: "ctrl+shift+f5", command: "workbench.action.debug.restart" },
   { key: "mod+g", command: "workbench.action.gotoLine" },
   { key: "ctrl+tab", command: "workbench.action.nextEditor" },
   { key: "ctrl+shift+tab", command: "workbench.action.previousEditor" },
@@ -62,6 +65,10 @@ const WORKS_IN_TERMINAL = new Set([
   "workbench.action.debug.start",
   "workbench.action.debug.stop",
   "workbench.action.debug.continue",
+  "workbench.action.debug.stepOver",
+  "workbench.action.debug.stepInto",
+  "workbench.action.debug.stepOut",
+  "workbench.action.debug.restart",
   "workbench.action.terminal.toggleTerminal",
   "workbench.actions.view.problems",
   "workbench.action.terminal.new",
@@ -174,7 +181,8 @@ export function formatStrokes(strokes: string[]): string {
   return strokes.map((s) => s.split("+").filter(Boolean).map(partName).join("+")).join(" ");
 }
 
-let pending: string | null = null;let pendingTimer: number | undefined;
+let pending: string | null = null;
+let pendingTimer: number | undefined;
 
 export function installKeybindings() {
   window.addEventListener(

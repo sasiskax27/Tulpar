@@ -20,7 +20,7 @@ import { chooseBackground, clearBackground, usePhotoTheme } from "./background";
 import { fixWithAi, problems, showProblems } from "../problems/problems";
 import { cancelAi, runAiTask, tasks } from "../ai/ai";
 import { cursor } from "../editor/tabs";
-import { toggleBreakpoint, startDebugging, stopDebugging, continueDebugging, stepOver, stepInto, stepOut } from "../debug/debug";
+import { toggleBreakpoint, startOrContinue, stopDebugging, continueDebugging, stepOver, stepInto, stepOut, restartDebugging } from "../debug/debug";
 
 /** Точка останова на строке, где сейчас курсор. */
 function toggleBreakpointOnActiveLine() {
@@ -267,7 +267,8 @@ export function registerBuiltinCommands() {
   reg({ id: "tulpar.background.clear", category: "Вид", title: "Убрать фоновую картинку", run: () => clearBackground() });
 
   // Отладка: запуск, шаги и останов
-  reg({ id: "workbench.action.debug.start", category: "Отладка", title: "Запустить отладку", run: () => void startDebugging() });
+  reg({ id: "workbench.action.debug.start", category: "Отладка", title: "Запустить отладку / продолжить", run: () => void startOrContinue() });
+  reg({ id: "workbench.action.debug.restart", category: "Отладка", title: "Перезапустить отладку", run: () => void restartDebugging() });
   reg({ id: "workbench.action.debug.stop", category: "Отладка", title: "Остановить отладку", run: () => void stopDebugging() });
   reg({ id: "workbench.action.debug.continue", category: "Отладка", title: "Продолжить выполнение", run: () => void continueDebugging() });
   reg({ id: "workbench.action.debug.stepOver", category: "Отладка", title: "Шаг через строку", run: () => void stepOver() });

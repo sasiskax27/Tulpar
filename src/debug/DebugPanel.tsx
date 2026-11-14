@@ -1,11 +1,45 @@
 // Панель отладчика: тулбар управления, стек вызовов, переменные и вывод программы.
 // Живёт в нижней панели отдельной вкладкой рядом с терминалом и проблемами.
-import { For, Show, createMemo } from "solid-js";
+import { For, Show, createMemo, createResource, createSignal } from "solid-js";
 import {
   continueDebugging, frames, output, pausedLine, scopes, startDebugging, status,
   stepInto, stepOut, stepOver, stopDebugging, breakpointsVersion, breakpointFileMap,
+  pauseDebugging, restartDebugging, selectFrame, currentFrame, loadVariables, evaluate,
+  toggleBreakpoint, removeAllBreakpoints, clearOutput, type DebugVar,
 } from "./debug";
-import { activePath } from "../editor/tabs";
+import { activePath, openFile } from "../editor/tabs";
+
+/** Строка переменной; списки, словари и объекты раскрываются по клику. */
+function VarRow(props: { v: DebugVar; depth: number }) {
+  const [open, setOpen] = createSignal(false);
+  const [children] = createResource(
+    () => (open() && props.v.variablesReference > 0 ? props.v.variablesReference : false),
+    (ref) => loadVariables(ref as number),
+  );
+  const expandable = () => props.v.variablesReference > 0;
+  return (
+    <>
+      <tr
+        classList={{ "debug-var-expandable": expandable() }}
+        title={props.v.type ? `${props.v.name}: ${props.v.type}` : props.v.name}
+        onClick={() => expandable() && setOpen(!open())}
+      >
+        <td class="debug-var-name" style={{ "padding-left": `${6 + props.depth * 14}px` }}>
+          <span class="debug-twisty">{expandable() ? (open() ? "▾" : "▸") : ""}</span>
+          <span data-no-translate>{props.v.name}</span>
+        </td>
+        <td class="debug-var-value" data-no-translate>
+          {props.v.value}
+        </td>
+      </tr>
+      <Show when={open()}>
+        <Show when={!children.loading} fallback={<tr><td class="debug-empty" colspan={2} style={{ "padding-left": `${20 + props.depth * 14}px` }}>…</td></tr>}>
+          <For each={children() ?? []}>{(c) => <VarRow v={c} depth={props.depth + 1} />}</For>
+        </Show>
+      </Show>
+    </>
+  );
+}
 
 /** Короткое имя файла стека: без длинного пути, но с папкой для различения. */
 function frameLabel(file: string): string {
@@ -24,6 +58,7 @@ const STATUS_LABEL: Record<string, string> = {
 export default function DebugPanel() {
   const active = () => status() !== "off" && status() !== "ended";
   const canStep = () => status() === "stopped";
+  const [expr, setExpr] = createSignal("");
 
   // Все точки останова — для списка внизу слева (пересобирается при любом изменении).
   const allBreakpoints = createMemo(() => {
@@ -46,19 +81,25 @@ export default function DebugPanel() {
             ▶ Запустить
           </button>
           <span class="debug-sep" />
-          <button class="debug-btn" title="Продолжить (F10)" disabled={!canStep()} onClick={() => void continueDebugging()}>
+          <button class="debug-btn" title="Продолжить (F5)" disabled={!canStep()} onClick={() => void continueDebugging()}>
             ⏵ Продолжить
           </button>
-          <button class="debug-btn" title="Шаг через (F11)" disabled={!canStep()} onClick={() => void stepOver()}>
+          <button class="debug-btn" title="Пауза" disabled={status() !== "running"} onClick={() => void pauseDebugging()}>
+            ⏸
+          </button>
+          <button class="debug-btn" title="Шаг через (F10)" disabled={!canStep()} onClick={() => void stepOver()}>
             ⇢ Через
           </button>
-          <button class="debug-btn" title="Шаг в (Alt+F11)" disabled={!canStep()} onClick={() => void stepInto()}>
+          <button class="debug-btn" title="Шаг в (F11)" disabled={!canStep()} onClick={() => void stepInto()}>
             ↓ В функцию
           </button>
           <button class="debug-btn" title="Шаг из (Shift+F11)" disabled={!canStep()} onClick={() => void stepOut()}>
             ↑ Из функции
           </button>
           <span class="debug-sep" />
+          <button class="debug-btn" title="Перезапустить (Ctrl+Shift+F5)" disabled={!active()} onClick={() => void restartDebugging()}>
+            ⟳
+          </button>
           <button class="debug-btn danger" title="Остановить отладку (Shift+F5)" disabled={!active()} onClick={() => void stopDebugging()}>
             ■ Стоп
           </button>
@@ -76,9 +117,13 @@ export default function DebugPanel() {
               <ul class="debug-frames">
                 <For each={frames()}>
                   {(f, i) => (
-                    <li class="debug-frame" classList={{ top: i() === 0 }}>
+                    <li
+                      class="debug-frame"
+                      classList={{ top: i() === 0, current: currentFrame() === f.id, dim: !f.file }}
+                      onClick={() => void selectFrame(f)}
+                    >
                       <span class="debug-frame-line">стр. {f.line}</span>
-                      <span class="debug-frame-name" title={f.file}>{f.name}</span>
+                      <span class="debug-frame-name" title={f.file} data-no-translate>{f.name}</span>
                       <span class="debug-frame-file" title={f.file}>{frameLabel(f.file)}</span>
                     </li>
                   )}
@@ -92,16 +137,29 @@ export default function DebugPanel() {
               Точки останова
               <Show when={allBreakpoints().length}>
                 <span class="debug-count">{allBreakpoints().length}</span>
+                <button class="debug-link" onClick={removeAllBreakpoints}>убрать все</button>
               </Show>
             </h4>
-            <Show when={allBreakpoints().length} fallback={<p class="debug-empty">Правый клик по строке в редакторе → «Точка останова»</p>}>
+            <Show when={allBreakpoints().length} fallback={<p class="debug-empty">Клик слева от номера строки или F9 — поставить точку останова</p>}>
               <ul class="debug-breaks">
                 <For each={allBreakpoints()}>
                   {(b) => (
-                    <li class="debug-break" title={b.file}>
+                    <li
+                      class="debug-break"
+                      title={b.file}
+                      onClick={() => void openFile(b.file, { startLineNumber: b.line, startColumn: 1, endLineNumber: b.line, endColumn: 1 })}
+                    >
                       <span class="debug-break-dot" />
-                      <span class="debug-break-name">{frameLabel(b.file)}</span>
+                      <span class="debug-break-name" data-no-translate>{frameLabel(b.file)}</span>
                       <span class="debug-break-line">стр. {b.line}</span>
+                      <button
+                        class="debug-break-remove"
+                        title="Убрать"
+                        aria-label="Убрать"
+                        onClick={(e) => (e.stopPropagation(), toggleBreakpoint(b.file, b.line))}
+                      >
+                        ✕
+                      </button>
                     </li>
                   )}
                 </For>
@@ -123,17 +181,10 @@ export default function DebugPanel() {
                 <For each={scopes()}>
                   {(scope) => (
                     <details class="debug-scope" open={scope.name === "Locals" || scope.name === "Локальные"}>
-                      <summary>{scope.name}</summary>
+                      <summary>{scope.name === "Locals" ? "Локальные" : scope.name === "Globals" ? "Глобальные" : scope.name}</summary>
                       <table class="debug-var-table">
                         <tbody>
-                          <For each={scope.vars}>
-                            {(v) => (
-                              <tr title={v.type ? `${v.name}: ${v.type}` : v.name}>
-                                <td class="debug-var-name">{v.name}</td>
-                                <td class="debug-var-value">{v.value}</td>
-                              </tr>
-                            )}
-                          </For>
+                          <For each={scope.vars}>{(v) => <VarRow v={v} depth={0} />}</For>
                           <Show when={!scope.vars.length}>
                             <tr>
                               <td class="debug-empty" colspan={2}>пусто</td>
@@ -149,7 +200,12 @@ export default function DebugPanel() {
           </div>
 
           <div class="debug-section grow">
-            <h4>Вывод</h4>
+            <h4>
+              Вывод
+              <Show when={output().length}>
+                <button class="debug-link" onClick={clearOutput}>очистить</button>
+              </Show>
+            </h4>
             <pre class="debug-console" ref={(el) => {
               // Автопрокрутка при появлении новых строк
               const mo = new MutationObserver(() => {
@@ -159,10 +215,28 @@ export default function DebugPanel() {
             }}>
               <Show when={output().length} fallback={<p class="debug-empty">Запустите отладку (F5) — здесь будет вывод программы</p>}>
                 <For each={output()}>
-                  {(line) => <span class={`debug-out ${line.kind}`}>{line.text}</span>}
+                  {(line) => (
+                    <span class={`debug-out ${line.kind}`} data-no-translate={line.kind === "info" ? undefined : ""}>
+                      {line.text}
+                    </span>
+                  )}
                 </For>
               </Show>
             </pre>
+            <input
+              class="debug-eval"
+              placeholder={status() === "stopped" ? "Выражение, например len(items) — Enter" : "Вычислять выражения можно, когда программа на паузе"}
+              disabled={status() !== "stopped"}
+              value={expr()}
+              spellcheck={false}
+              onInput={(e) => setExpr(e.currentTarget.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  void evaluate(expr());
+                  setExpr("");
+                }
+              }}
+            />
           </div>
         </div>
       </div>

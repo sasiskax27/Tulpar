@@ -601,6 +601,8 @@ export async function runAgent(question: string, attachedNote: string): Promise<
         contextSize: Number(settings()["tulpar.ai.contextSize"]) || 16384,
       });
       if (stopRequested || streaming() !== runId) break;
+      // Думающие модели (qwen3, qwen3.5) иногда кладут рассуждения в текст
+      reply.text = reply.text.replace(/<think>[\s\S]*?<\/think>/g, "").replace(/^[\s\S]*?<\/think>/, "").trim();
       if (!reply.toolCalls.length) {
         const parsed = textToolCalls(reply.text);
         if (parsed.calls.length) {

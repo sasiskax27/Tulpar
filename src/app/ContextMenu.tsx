@@ -25,6 +25,11 @@ export function showContextMenu(e: MouseEvent, items: Entry[]) {
   setMenu({ x: e.clientX, y: e.clientY, items });
 }
 
+/** Показать меню в точке окна — когда нет события мыши (например, после перетаскивания). */
+export function showContextMenuAt(x: number, y: number, items: Entry[]) {
+  setMenu({ x, y, items });
+}
+
 export function hideContextMenu() {
   setMenu(null);
 }

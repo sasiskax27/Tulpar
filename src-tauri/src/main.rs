@@ -10,6 +10,7 @@ mod media;
 mod ollama;
 mod search;
 mod terminal;
+mod transfer;
 mod workspace;
 
 fn main() {
@@ -19,6 +20,7 @@ fn main() {
         .manage(config::ConfigState::default())
         .manage(lsp::LspState::default())
         .manage(terminal::TerminalState::default())
+        .manage(transfer::DroppedPaths::default())
         .setup(|app| {
             // Следим за папкой настроек, чтобы применять изменения без перезапуска
             config::start_watching(app.handle().clone());
@@ -37,6 +39,7 @@ fn main() {
             workspace::delete_path,
             search::search_project,
             search::replace_in_file,
+            transfer::transfer_paths,
             config::config_read,
             config::config_dir,
             config::config_ensure,
@@ -56,6 +59,15 @@ fn main() {
             ollama::ollama_pull,
             ollama::ollama_delete,
         ])
+        .on_window_event(|window, event| {
+            // Запоминаем, что пользователь сам бросил в окно: только эти пути
+            // извне проекта разрешено копировать и перемещать
+            if let tauri::WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }) = event {
+                if let Ok(mut dropped) = window.state::<transfer::DroppedPaths>().0.lock() {
+                    *dropped = paths.clone();
+                }
+            }
+        })
         .build(tauri::generate_context!())
         .expect("не удалось запустить Tulpar")
         .run(|app, event| {

@@ -82,6 +82,8 @@ export const core = {
   searchProject: (options: SearchOptions) => invoke<SearchResult>("search_project", { options }),
   replaceInFile: (path: string, options: SearchOptions, replacement: string) =>
     invoke<number>("replace_in_file", { path, options, replacement }),
+  transferPaths: (sources: string[], targetDir: string, mode: "copy" | "move") =>
+    invoke<string[]>("transfer_paths", { sources, targetDir, mode }),
   configEnsure: (name: ConfigName) => invoke<string>("config_ensure", { name }),
 };
 

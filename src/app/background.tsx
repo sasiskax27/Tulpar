@@ -2,12 +2,9 @@
 // так она видна и в редакторе, и в панелях, и не требует менять темы.
 import { createEffect, createSignal, on, onCleanup, Show } from "solid-js";
 import { open } from "@tauri-apps/plugin-dialog";
-import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { core } from "../ipc";
 import { settings, updateSetting } from "../config/store";
 import { notify, notifyError } from "./notify";
-
-const IMAGE_RE = /\.(png|jpe?g|webp|gif|bmp)$/i;
 
 export async function setBackgroundFrom(path: string) {
   try {
@@ -30,19 +27,6 @@ export async function chooseBackground() {
 
 export function clearBackground() {
   updateSetting("tulpar.background.image", null);
-}
-
-/** Картинка, брошенная в окно Tulpar, становится фоном. */
-export async function initDragDrop() {
-  try {
-    await getCurrentWebview().onDragDropEvent((event) => {
-      if (event.payload.type !== "drop") return;
-      const image = event.payload.paths.find((p) => IMAGE_RE.test(p));
-      if (image) void setBackgroundFrom(image);
-    });
-  } catch (e) {
-    console.warn("Перетаскивание файлов недоступно", e);
-  }
 }
 
 function toBlobUrl(mime: string, base64: string): string {

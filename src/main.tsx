@@ -8,7 +8,7 @@ import { initWorkspaceEvents, openFolder } from "./app/workspace";
 import { loadSession, openFile, setActivePath } from "./editor/tabs";
 import { initLsp } from "./lsp/manager";
 import { initTerminals } from "./terminal/sessions";
-import { initDragDrop } from "./app/background";
+import { initFileDrop } from "./explorer/dnd";
 
 async function start() {
   registerBuiltinCommands();
@@ -18,7 +18,7 @@ async function start() {
   await Promise.all([initConfig(), initWorkspaceEvents()]);
   await initLsp();
   await initTerminals();
-  await initDragDrop();
+  await initFileDrop();
 
   // Восстанавливаем прошлую сессию: папку и открытые вкладки
   const session = loadSession();

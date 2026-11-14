@@ -94,24 +94,27 @@ async function rename(from: string, name: string) {
     return;
   }
   const to = parentDir(from) + sepOf(from) + name;
-  const wasActive = activePath();
   const renamed = await core.renamePath(from, to);
-  // Вкладки и раскрытые папки — на новый путь
+  await retarget(from, renamed, affected);
+  setSelected(renamed);
+  reloadDir(parentDir(from));
+}
+
+/** Файл или папка переехали: переоткрываем вкладки и раскрытые папки по новому пути. */
+export async function retarget(from: string, to: string, affected = tabsUnder(from)) {
+  const wasActive = activePath();
   for (const tab of affected) {
-    const next = renamed + tab.path.slice(from.length);
     await closeTab(tab.path, true);
-    await openFile(next);
+    await openFile(to + tab.path.slice(from.length));
   }
   if (wasActive && affected.some((t) => t.path === wasActive)) {
-    setActivePath(renamed + wasActive.slice(from.length));
+    setActivePath(to + wasActive.slice(from.length));
   }
   setExpanded((prev) => {
     const next = new Set<string>();
-    for (const p of prev) next.add(p === from || p.startsWith(from + sepOf(from)) ? renamed + p.slice(from.length) : p);
+    for (const p of prev) next.add(p === from || p.startsWith(from + sepOf(from)) ? to + p.slice(from.length) : p);
     return next;
   });
-  setSelected(renamed);
-  reloadDir(parentDir(from));
 }
 
 export async function remove(path: string, isDir: boolean) {

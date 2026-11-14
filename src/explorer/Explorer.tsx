@@ -6,6 +6,7 @@ import { root, onDirChanged, reloadDir } from "../app/workspace";
 import { activePath, openFile } from "../editor/tabs";
 import { executeCommand } from "../commands/registry";
 import { showContextMenu } from "../app/ContextMenu";
+import { dropTarget, ghost, startTreeDrag } from "./dnd";
 import {
   collapseAll, commitEditing, copyPath, editing, isExpanded, remove, selected,
   setEditing, setFolderOpen, setSelected, startNew, startRename,
@@ -129,6 +130,7 @@ export default function Explorer() {
           <div
             ref={tree}
             class="tree"
+            classList={{ "drop-target": dropTarget() === r }}
             role="tree"
             tabIndex={0}
             onKeyDown={onKey}
@@ -144,6 +146,13 @@ export default function Explorer() {
           >
             <div class="tree-root-name">{baseName(r)}</div>
             <DirChildren path={r} depth={0} />
+          </div>
+        )}
+      </Show>
+      <Show when={ghost()}>
+        {(g) => (
+          <div class="drag-ghost" style={{ left: `${g().x + 14}px`, top: `${g().y + 10}px` }}>
+            {g().label}
           </div>
         )}
       </Show>
@@ -257,7 +266,11 @@ function Node(props: { entry: DirEntry; depth: number }) {
       >
         <div
           class="tree-item"
-          classList={{ active: activePath() === path(), selected: selected() === path() }}
+          classList={{
+            active: activePath() === path(),
+            selected: selected() === path(),
+            "drop-target": props.entry.isDir && dropTarget() === path(),
+          }}
           role="treeitem"
           aria-expanded={props.entry.isDir ? open() : undefined}
           aria-selected={selected() === path()}
@@ -265,6 +278,7 @@ function Node(props: { entry: DirEntry; depth: number }) {
           data-dir={props.entry.isDir ? "1" : "0"}
           style={{ "padding-left": `${8 + props.depth * 12}px` }}
           onClick={click}
+          onPointerDown={(e) => startTreeDrag(e, path())}
           onContextMenu={menu}
           title={path()}
         >

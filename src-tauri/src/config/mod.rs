@@ -32,7 +32,7 @@ fn template(name: &str) -> &'static str {
         "settings.json" => "{\n  // Настройки Tulpar. Ключи — как в VS Code, например:\n  // \"editor.fontSize\": 15,\n  // \"workbench.colorTheme\": \"light\",\n  // \"files.autoSave\": \"afterDelay\"\n}\n",
         "keybindings.json" => "[\n  // Сочетания клавиш в формате VS Code, например:\n  // { \"key\": \"ctrl+shift+e\", \"command\": \"workbench.action.toggleSidebarVisibility\" },\n  // Отменить стандартное сочетание — минус перед командой:\n  // { \"key\": \"ctrl+b\", \"command\": \"-workbench.action.toggleSidebarVisibility\" }\n]\n",
         "languages.json" => "{\n  // Языковые серверы (LSP). Ключ — id языка, как в строке статуса.\n  // Пример — подключить TypeScript через сервер вместо встроенного:\n  // \"typescript\": { \"command\": \"typescript-language-server\", \"args\": [\"--stdio\"] },\n  // Отключить сервер для языка:\n  // \"python\": null\n}\n",
-        _ => "{\n  // Раскладки панелей. Слоты: left, center, bottom, right.\n  // Панели: explorer, editor.\n  \"layouts\": {\n    \"Код\": { \"left\": [\"explorer\"], \"center\": [\"editor\"] },\n    \"Фокус\": { \"center\": [\"editor\"] }\n  },\n  \"default\": \"Код\"\n}\n",
+        _ => "{\n  // Раскладки панелей. Слоты: left, center, bottom, right.\n  // Панели: explorer, editor, terminal.\n  \"layouts\": {\n    \"Код\": { \"left\": [\"explorer\"], \"center\": [\"editor\"], \"bottom\": [\"terminal\"] },\n    \"Фокус\": { \"center\": [\"editor\"] }\n  },\n  \"default\": \"Код\"\n}\n",
     }
 }
 

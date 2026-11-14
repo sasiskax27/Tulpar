@@ -28,6 +28,12 @@ export const core = {
     invoke<number>("lsp_start", { command, args, cwd }),
   lspSend: (id: number, message: string) => invoke<void>("lsp_send", { id, message }),
   lspStop: (id: number) => invoke<void>("lsp_stop", { id }),
+  terminalStart: (id: string, shell: string | null, cwd: string | null, cols: number, rows: number) =>
+    invoke<string>("terminal_start", { id, shell, cwd, cols, rows }),
+  terminalWrite: (id: string, data: string) => invoke<void>("terminal_write", { id, data }),
+  terminalResize: (id: string, cols: number, rows: number) => invoke<void>("terminal_resize", { id, cols, rows }),
+  terminalKill: (id: string) => invoke<void>("terminal_kill", { id }),
+  terminalReset: () => invoke<void>("terminal_reset"),
   configEnsure: (name: ConfigName) => invoke<string>("config_ensure", { name }),
 };
 
@@ -38,6 +44,10 @@ export const events = {
     listen<{ id: number; message: string }>("lsp:message", (e) => cb(e.payload.id, e.payload.message)),
   onLspExit: (cb: (id: number) => void): Promise<UnlistenFn> =>
     listen<{ id: number }>("lsp:exit", (e) => cb(e.payload.id)),
+  onTerminalData: (cb: (id: string, data: string) => void): Promise<UnlistenFn> =>
+    listen<{ id: string; data: string }>("terminal:data", (e) => cb(e.payload.id, e.payload.data)),
+  onTerminalExit: (cb: (id: string) => void): Promise<UnlistenFn> =>
+    listen<{ id: string }>("terminal:exit", (e) => cb(e.payload.id)),
   onConfigChanged: (cb: (name: ConfigName) => void): Promise<UnlistenFn> =>
     listen<{ name: ConfigName }>("config:changed", (e) => cb(e.payload.name)),
 };

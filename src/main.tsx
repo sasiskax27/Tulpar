@@ -7,6 +7,7 @@ import { registerBuiltinCommands } from "./app/commands";
 import { initWorkspaceEvents, openFolder } from "./app/workspace";
 import { loadSession, openFile, setActivePath } from "./editor/tabs";
 import { initLsp } from "./lsp/manager";
+import { initTerminals } from "./terminal/sessions";
 
 async function start() {
   registerBuiltinCommands();
@@ -15,6 +16,7 @@ async function start() {
 
   await Promise.all([initConfig(), initWorkspaceEvents()]);
   await initLsp();
+  await initTerminals();
 
   // Восстанавливаем прошлую сессию: папку и открытые вкладки
   const session = loadSession();

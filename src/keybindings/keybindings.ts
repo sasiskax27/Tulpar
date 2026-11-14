@@ -24,7 +24,24 @@ const defaults: Keybinding[] = [
   { key: "ctrl+pageup", command: "workbench.action.previousEditor" },
   { key: "mod+k z", command: "workbench.action.toggleZenMode" },
   { key: "mod+,", command: "workbench.action.openSettings" },
+  { key: "ctrl+`", command: "workbench.action.terminal.toggleTerminal" },
+  { key: "ctrl+shift+`", command: "workbench.action.terminal.new" },
+  { key: "mod+1", command: "workbench.action.focusActiveEditorGroup" },
 ];
+
+/** В терминале почти все клавиши принадлежат оболочке (Ctrl+W, Ctrl+S, Ctrl+K…).
+ *  Редактор забирает себе только эти команды. */
+const WORKS_IN_TERMINAL = new Set([
+  "workbench.action.showCommands",
+  "workbench.action.quickOpen",
+  "workbench.action.terminal.toggleTerminal",
+  "workbench.action.terminal.new",
+  "workbench.action.focusActiveEditorGroup",
+  "workbench.action.toggleSidebarVisibility",
+  "workbench.action.nextEditor",
+  "workbench.action.previousEditor",
+  "workbench.action.openSettings",
+]);
 
 const MOD_ORDER = ["ctrl", "shift", "alt", "meta"] as const;
 
@@ -116,7 +133,10 @@ export function installKeybindings() {
     (e) => {
       const stroke = strokeFromEvent(e);
       if (!stroke) return;
-      const bindings = resolved();
+      const inTerminal = e.target instanceof Element && !!e.target.closest(".terminal-host");
+      const bindings = inTerminal
+        ? resolved().filter((b) => b.strokes.length === 1 && WORKS_IN_TERMINAL.has(b.command))
+        : resolved();
 
       if (pending) {
         const first = pending;

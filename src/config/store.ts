@@ -20,6 +20,9 @@ export interface Settings {
   "workbench.colorTheme": "dark" | "light";
   "files.autoSave": "off" | "afterDelay" | "onFocusChange";
   "files.autoSaveDelay": number;
+  /** Оболочка терминала; null — PowerShell на Windows, $SHELL на macOS и Linux */
+  "terminal.integrated.shell": string | null;
+  "terminal.integrated.fontSize": number;
   [key: string]: unknown;
 }
 
@@ -36,6 +39,8 @@ export const defaultSettings: Settings = {
   "workbench.colorTheme": "dark",
   "files.autoSave": "off",
   "files.autoSaveDelay": 1000,
+  "terminal.integrated.shell": null,
+  "terminal.integrated.fontSize": 13,
 };
 
 // ---------- keybindings.json (формат VS Code) ----------
@@ -58,7 +63,7 @@ export interface LayoutConfig {
 
 export const defaultLayout: LayoutConfig = {
   layouts: {
-    "Код": { left: ["explorer"], center: ["editor"] },
+    "Код": { left: ["explorer"], center: ["editor"], bottom: ["terminal"] },
     "Фокус": { center: ["editor"] },
   },
   default: "Код",

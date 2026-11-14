@@ -9,6 +9,7 @@ import {
 import { settings } from "../config/store";
 import { executeCommand } from "../commands/registry";
 import { keybindingFor } from "../keybindings/keybindings";
+import { setEditorInstance } from "./instance";
 
 export default function EditorGroup() {
   let container!: HTMLDivElement;
@@ -20,7 +21,11 @@ export default function EditorGroup() {
     editor.onDidChangeCursorPosition((e) =>
       setCursor({ line: e.position.lineNumber, column: e.position.column }),
     );
-    onCleanup(() => editor?.dispose());
+    setEditorInstance(editor);
+    onCleanup(() => {
+      setEditorInstance(undefined);
+      editor?.dispose();
+    });
   });
 
   // Настройки из settings.json применяются на лету

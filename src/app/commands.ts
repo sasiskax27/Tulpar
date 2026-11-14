@@ -8,6 +8,8 @@ import { activeLayout, layoutConfig, setActiveLayout } from "../config/store";
 import { core, type ConfigName } from "../ipc";
 import { notify } from "./notify";
 import { restartLanguageServers } from "../lsp/manager";
+import { toggleTerminal, newTerminal, killSession } from "../terminal/sessions";
+import { focusEditor } from "../editor/instance";
 
 async function openConfig(name: ConfigName) {
   const path = await core.configEnsure(name);
@@ -63,6 +65,11 @@ export function registerBuiltinCommands() {
       notify(`Раскладка: ${next}`);
     },
   });
+
+  reg({ id: "workbench.action.terminal.toggleTerminal", category: "Терминал", title: "Показать/скрыть терминал", run: () => toggleTerminal() });
+  reg({ id: "workbench.action.terminal.new", category: "Терминал", title: "Новый терминал", run: () => newTerminal() });
+  reg({ id: "workbench.action.terminal.kill", category: "Терминал", title: "Закрыть активный терминал", run: () => killSession() });
+  reg({ id: "workbench.action.focusActiveEditorGroup", category: "Вид", title: "Перейти в редактор", run: () => focusEditor() });
 
   reg({ id: "workbench.action.openSettings", category: "Настройки", title: "Открыть settings.json", run: () => openConfig("settings.json") });
   reg({ id: "workbench.action.openGlobalKeybindings", category: "Настройки", title: "Открыть keybindings.json", run: () => openConfig("keybindings.json") });

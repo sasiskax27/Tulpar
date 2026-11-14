@@ -5,6 +5,7 @@ use tauri::Manager;
 
 mod config;
 mod lsp;
+mod terminal;
 mod workspace;
 
 fn main() {
@@ -13,6 +14,7 @@ fn main() {
         .manage(workspace::WorkspaceState::default())
         .manage(config::ConfigState::default())
         .manage(lsp::LspState::default())
+        .manage(terminal::TerminalState::default())
         .setup(|app| {
             // Следим за папкой настроек, чтобы применять изменения без перезапуска
             config::start_watching(app.handle().clone());
@@ -31,12 +33,18 @@ fn main() {
             lsp::lsp_start,
             lsp::lsp_send,
             lsp::lsp_stop,
+            terminal::terminal_start,
+            terminal::terminal_write,
+            terminal::terminal_resize,
+            terminal::terminal_kill,
+            terminal::terminal_reset,
         ])
         .build(tauri::generate_context!())
         .expect("не удалось запустить Tulpar")
         .run(|app, event| {
             if let tauri::RunEvent::Exit = event {
                 app.state::<lsp::LspState>().kill_all();
+                app.state::<terminal::TerminalState>().kill_all();
             }
         });
 }

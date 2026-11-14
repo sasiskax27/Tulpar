@@ -230,6 +230,44 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .welcome-row:hover { background: var(--tp-bg-hover); color: var(--tp-fg); }
 kbd { font-family: inherit; font-size: 12px; opacity: 0.8; }
 
+/* ---------- терминал ---------- */
+
+.terminal-panel { display: flex; flex-direction: column; height: 100%; background: var(--tp-bg); }
+.terminal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 30px;
+  padding: 0 8px 0 12px;
+  flex-shrink: 0;
+}
+.terminal-tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.terminal-tab {
+  padding: 3px 10px;
+  border-radius: 3px;
+  color: var(--tp-fg-muted);
+  white-space: nowrap;
+  font-size: 12px;
+}
+.terminal-tab:hover { background: var(--tp-bg-hover); }
+.terminal-tab.active { color: var(--tp-fg-strong); background: var(--tp-bg-hover); }
+.terminal-actions { display: flex; gap: 2px; }
+.terminal-actions button {
+  width: 24px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  color: var(--tp-fg-muted);
+  font-size: 16px;
+  line-height: 1;
+}
+.terminal-actions button:hover { background: var(--tp-bg-hover); color: var(--tp-fg-strong); }
+.terminal-host { flex: 1; min-height: 0; padding: 2px 0 4px 12px; overflow: hidden; }
+.terminal-instance { width: 100%; height: 100%; }
+.terminal-instance .xterm-viewport { background-color: transparent !important; }
+
 /* ---------- палитра ---------- */
 
 .palette-backdrop { position: fixed; inset: 0; z-index: 100; }

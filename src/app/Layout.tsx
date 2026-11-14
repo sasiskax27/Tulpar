@@ -7,7 +7,7 @@
 //  │                status bar                 │
 //  └───────────────────────────────────────────┘
 import { createSignal, For, Show } from "solid-js";
-import { sidebarVisible } from "./ui";
+import { bottomVisible, sidebarVisible } from "./ui";
 import { Dynamic } from "solid-js/web";
 import { activeLayout, layoutConfig, type Slot } from "../config/store";
 import { panels, UnknownPanel } from "./panels";
@@ -19,7 +19,14 @@ const [rightWidth, setRightWidth] = createSignal(360);
 const [bottomHeight, setBottomHeight] = createSignal(240);
 
 function slotPanels(slot: Slot): string[] {
-  return layoutConfig().layouts[activeLayout()]?.[slot] ?? [];
+  const layout = layoutConfig().layouts[activeLayout()] ?? {};
+  const list = layout[slot] ?? [];
+  // Терминал должен открываться по Ctrl+` в любой раскладке, даже если
+  // в layout.json его нет: тогда он появляется внизу.
+  if (slot === "bottom" && !Object.values(layout).some((ids) => ids?.includes("terminal"))) {
+    return [...list, "terminal"];
+  }
+  return list;
 }
 
 function SlotView(props: { slot: Slot }) {
@@ -61,7 +68,7 @@ function Sash(props: { axis: "x" | "y"; get: () => number; set: (v: number) => v
 export default function Layout() {
   const hasLeft = () => sidebarVisible() && slotPanels("left").length > 0;
   const hasRight = () => slotPanels("right").length > 0;
-  const hasBottom = () => slotPanels("bottom").length > 0;
+  const hasBottom = () => bottomVisible() && slotPanels("bottom").length > 0;
 
   return (
     <div class="workbench">

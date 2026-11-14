@@ -250,6 +250,13 @@ export async function runCurrentFile() {
     notify("Откройте файл, который хотите запустить");
     return;
   }
+  // HTML «запускается» в предпросмотре справа, Markdown — тоже
+  if (/\.html?$/i.test(path) || /\.(md|markdown)$/i.test(path)) {
+    const side = await import("../editor/side");
+    if (/\.html?$/i.test(path)) side.previewHtml(path);
+    else side.previewMarkdown(path);
+    return;
+  }
   const command = runFileCommand(path, tab.languageId);
   if (!command) {
     notify(`Запуск файлов этого типа пока не поддерживается. Попробуйте «Задачи проекта» (Ctrl+Shift+B).`);

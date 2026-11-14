@@ -159,7 +159,12 @@ export async function createProject(t: Template | null, suggested = "my-app"): P
     for (const [rel, content] of Object.entries(files)) {
       await core.agentWrite(dir + sep + rel.replace(/\//g, sep), content);
     }
-    if (t?.main && files[t.main] !== undefined) await openFile(dir + sep + t.main.replace(/\//g, sep));
+    if (t?.main && files[t.main] !== undefined) {
+      const mainPath = dir + sep + t.main.replace(/\//g, sep);
+      await openFile(mainPath);
+      // Сайт сразу показываем справа
+      if (/\.html?$/i.test(t.main)) (await import("../editor/side")).previewHtml(mainPath);
+    }
     if (t?.command) await runInTerminal(t.command(name.trim()), "Новый проект");
     return true;
   } catch (e) {

@@ -2101,3 +2101,5 @@ body.resizing .side-island { transition: none; }
 .db-delete { margin-left: auto; color: var(--tp-error); }
 .db-ok { color: var(--tp-ok); font-size: 12px; margin: 0; }
 .db-view { position: absolute; inset: 0; }
+.tab-preview-btn { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; border-radius: 999px; border: 1px solid var(--tp-border); background: transparent; color: var(--tp-fg); font-size: 12px; cursor: pointer; margin-right: 4px; }
+.tab-preview-btn:hover { border-color: var(--tp-accent); color: var(--tp-accent); }

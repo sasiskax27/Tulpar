@@ -149,8 +149,9 @@ export default function EditorGroup() {
               </button>
             </Show>
             <Show when={isHtml(activePath())}>
-              <button class="icon-button" title="Показать страницу рядом — обновляется на лету" aria-label="Просмотр страницы" onClick={() => previewHtml()}>
-                <svg aria-hidden="true" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5" /><path d="M1.5 5.5h13" /></svg>
+              <button class="tab-preview-btn" title="Показать страницу рядом — обновляется на лету" aria-label="Просмотр страницы" onClick={() => previewHtml()}>
+                <svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5" /><path d="M1.5 5.5h13" /></svg>
+                Предпросмотр
               </button>
             </Show>
             <button class="icon-button" title={`Открыть рядом (${keybindingFor("workbench.action.splitEditor") ?? "Ctrl+\\"})`} aria-label="Открыть рядом" onClick={() => void splitEditor()}>

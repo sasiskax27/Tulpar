@@ -114,14 +114,23 @@ function HtmlPreview(props: { path: string }) {
       const abs = near(props.path, m[1]);
       if (!abs) continue;
       const css = await core.readFile(abs).catch(() => null);
-      if (css !== null) out = out.replace(m[0], `<style>/* ${m[1]} */\n${css}</style>`);
+      // Замена функцией: в CSS/JS бывают «$», которые String.replace иначе портит
+      if (css !== null) out = out.replace(m[0], () => `<style>/* ${m[1]} */\n${css}</style>`);
     }
     const scripts = [...html.matchAll(/<script([^>]*)\ssrc=["']([^"']+\.js)["']([^>]*)>\s*<\/script>/gi)];
     for (const m of scripts) {
       const abs = near(props.path, m[2]);
       if (!abs) continue;
       const js = await core.readFile(abs).catch(() => null);
-      if (js !== null) out = out.replace(m[0], `<script${m[1]}${m[3]}>/* ${m[2]} */\n${js.replace(/<\/script/gi, "<\\/script")}</script>`);
+      if (js !== null) out = out.replace(m[0], () => `<script${m[1]}${m[3]}>/* ${m[2]} */\n${js.replace(/<\/script/gi, "<\\/script")}</script>`);
+    }
+    // Картинки рядом с файлом: в предпросмотре нет адреса страницы, поэтому встраиваем их
+    const images = [...out.matchAll(/(<img\b[^>]*?\ssrc=)(["'])([^"']+)\2/gi)];
+    for (const m of images) {
+      const abs = near(props.path, m[3]);
+      if (!abs) continue;
+      const img = await core.imageRead(abs).catch(() => null);
+      if (img) out = out.replace(m[0], () => `${m[1]}${m[2]}data:${img.mime};base64,${img.base64}${m[2]}`);
     }
     return out;
   };

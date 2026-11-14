@@ -49,11 +49,47 @@ export async function openFolder(path?: string) {
     if (root() && root() !== canonical) await closeAll();
     setRoot(canonical);
     setSessionRoot(canonical);
+    rememberRecent(canonical);
     // Резервные копии этой папки — если остались с прошлого раза
     void import("../editor/backup").then((m) => m.offerRestore());
     return true;
   } catch (e) {
     notifyError("Не удалось открыть папку", e);
     return false;
+  }
+}
+
+// ---------- последние проекты ----------
+
+const RECENT_KEY = "tulpar.recent";
+const [recent, setRecent] = createSignal<string[]>(loadRecent());
+export { recent };
+
+function loadRecent(): string[] {
+  try {
+    const list = JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]");
+    return Array.isArray(list) ? list.filter((p) => typeof p === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberRecent(path: string) {
+  const list = [path, ...recent().filter((p) => p.toLowerCase() !== path.toLowerCase())].slice(0, 12);
+  setRecent(list);
+  try {
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list));
+  } catch {
+    // не запомнится — не страшно
+  }
+}
+
+export function forgetRecent(path: string) {
+  const list = recent().filter((p) => p !== path);
+  setRecent(list);
+  try {
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list));
+  } catch {
+    // ничего
   }
 }

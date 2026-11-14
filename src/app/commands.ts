@@ -148,6 +148,22 @@ export function registerBuiltinCommands() {
   reg({ id: "workbench.action.tasks.build", category: "Задачи", title: "Собрать проект…", run: () => runTask("build") });
   reg({ id: "workbench.action.tasks.test", category: "Задачи", title: "Запустить тесты…", run: () => runTask("test") });
   reg({ id: "tulpar.run.file", category: "Задачи", title: "Запустить текущий файл", run: () => runCurrentFile() });
+  reg({
+    id: "workbench.action.openRecent",
+    category: "Файл",
+    title: "Открыть недавний проект…",
+    run: async () => {
+      const { recent } = await import("./workspace");
+      const { pick } = await import("./QuickPick");
+      const list = recent();
+      if (!list.length) {
+        notify("Недавних проектов пока нет");
+        return;
+      }
+      const chosen = await pick<string>(list.map((p) => ({ label: p.split(/[\\/]/).pop() ?? p, detail: p, value: p })), "Недавние проекты");
+      if (chosen) await openFolder(chosen);
+    },
+  });
   reg({ id: "git.clone", category: "Git", title: "Клонировать репозиторий…", run: () => import("../git/account").then((m) => m.cloneRepo()) });
   reg({ id: "tulpar.github.signIn", category: "Git", title: "Войти в GitHub", run: () => import("../git/account").then((m) => m.signInGithub()) });
   reg({ id: "tulpar.github.publish", category: "Git", title: "Опубликовать проект на GitHub", run: () => import("../git/account").then((m) => m.publishToGithub()) });

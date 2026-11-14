@@ -1457,3 +1457,27 @@ body.resizing .side-island { transition: none; }
 .git-identity { color: var(--tp-fg-muted); }
 .git-warn { display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 8px; border: 1px solid color-mix(in srgb, var(--tp-gold) 50%, transparent); background: color-mix(in srgb, var(--tp-gold) 8%, transparent); font-size: 12px; }
 .model-badge.ok { background: color-mix(in srgb, var(--tp-ok) 18%, transparent); color: var(--tp-ok); }
+
+/* ---------- иконки файлов ---------- */
+
+.file-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 16px; height: 14px; padding: 0 2px;
+  border-radius: 3px;
+  font-size: 8.5px; font-weight: 800; letter-spacing: -0.02em; line-height: 1;
+  color: var(--fi);
+  background: color-mix(in srgb, var(--fi) 18%, transparent);
+  font-family: var(--tp-font-ui);
+  text-transform: none;
+}
+.folder-icon { display: inline-flex; }
+.folder-icon svg { fill: color-mix(in srgb, currentColor 25%, transparent); }
+.tree-icon { width: 20px; }
+.welcome-columns { display: flex; gap: 40px; flex-wrap: wrap; justify-content: center; }
+.welcome-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tp-fg-muted); margin: 0 0 6px 10px; }
+.welcome-recent { display: flex; align-items: center; }
+.welcome-recent .welcome-row { flex: 1; flex-direction: column; align-items: flex-start; gap: 1px; }
+.welcome-recent .welcome-row small { color: var(--tp-fg-muted); font-size: 11px; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.welcome-forget { opacity: 0; width: 22px; height: 22px; border-radius: 4px; color: var(--tp-fg-muted); }
+.welcome-recent:hover .welcome-forget { opacity: 1; }
+.welcome-forget:hover { background: var(--tp-bg-hover); }

@@ -11,6 +11,8 @@ import { executeCommand } from "../commands/registry";
 import { keybindingFor } from "../keybindings/keybindings";
 import { setEditorInstance } from "./instance";
 import { registerAiActions } from "../ai/ai";
+import { forgetRecent, openFolder, recent, root } from "../app/workspace";
+import { baseName, parentDir } from "../ipc";
 import { registerFixActions } from "../problems/problems";
 import { compareReview, keepAll, keepReview, reviewFor, reviews, undoReview } from "../ai/review";
 
@@ -188,14 +190,36 @@ function Welcome() {
       <kbd>{keybindingFor(command) ?? ""}</kbd>
     </button>
   );
+  const recentOthers = () => recent().filter((p) => p !== root()).slice(0, 8);
   return (
     <div class="welcome">
       <div class="welcome-logo">Tulpar</div>
-      <div class="welcome-actions">
-        {row("Открыть папку", "workbench.action.files.openFolder")}
-        {row("Перейти к файлу", "workbench.action.quickOpen")}
-        {row("Все команды", "workbench.action.showCommands")}
-        {row("Настройки", "workbench.action.openSettings")}
+      <div class="welcome-columns">
+        <div class="welcome-actions">
+          <div class="welcome-title">Начать</div>
+          {row("Открыть папку", "workbench.action.files.openFolder")}
+          {row("Клонировать с GitHub", "git.clone")}
+          {row("Перейти к файлу", "workbench.action.quickOpen")}
+          {row("Все команды", "workbench.action.showCommands")}
+          {row("Чат с ИИ", "workbench.action.chat.open")}
+          {row("Настройки", "workbench.action.openSettings")}
+        </div>
+        <Show when={recentOthers().length}>
+          <div class="welcome-actions">
+            <div class="welcome-title">Недавние проекты</div>
+            <For each={recentOthers()}>
+              {(path) => (
+                <div class="welcome-recent">
+                  <button class="welcome-row" title={path} onClick={() => void openFolder(path)}>
+                    <span>{baseName(path)}</span>
+                    <small>{parentDir(path)}</small>
+                  </button>
+                  <button class="welcome-forget" title="Убрать из списка" onClick={() => forgetRecent(path)}>×</button>
+                </div>
+              )}
+            </For>
+          </div>
+        </Show>
       </div>
     </div>
   );

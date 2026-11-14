@@ -7,23 +7,13 @@ import { activePath, openFile } from "../editor/tabs";
 import { executeCommand } from "../commands/registry";
 import { showContextMenu } from "../app/ContextMenu";
 import { dropTarget, ghost, startTreeDrag } from "./dnd";
+import { FileIcon, folderColor } from "./icons";
 import {
   collapseAll, commitEditing, copyPath, editing, isExpanded, remove, selected,
   setEditing, setFolderOpen, setSelected, startNew, startRename,
 } from "./fileOps";
 
-const FILE_COLORS: Record<string, string> = {
-  rs: "#F2A27A", ts: "#4FA3E0", tsx: "#4FA3E0", js: "#E9C46A", jsx: "#E9C46A", mjs: "#E9C46A",
-  py: "#6FA8DC", go: "#5CC8B8", c: "#8FA7C9", h: "#8FA7C9", cpp: "#8FA7C9", hpp: "#8FA7C9", cs: "#9E7FD6",
-  java: "#E08A5B", kt: "#B48CF0", json: "#C9A0F2", toml: "#C9A0F2", yaml: "#C9A0F2", yml: "#C9A0F2",
-  md: "#9ED4A2", txt: "#9AA0A6", css: "#B4A7F5", scss: "#E58FB8", html: "#F2A27A", svg: "#F0B840",
-  png: "#F0B840", jpg: "#F0B840", jpeg: "#F0B840", gif: "#F0B840", lock: "#6B7280", sh: "#9ED4A2", ps1: "#4FA3E0",
-};
 
-function fileColor(name: string): string {
-  const ext = name.includes(".") ? name.split(".").pop()!.toLowerCase() : "";
-  return FILE_COLORS[ext] ?? "#8B8B8B";
-}
 
 function HeaderButton(props: { label: string; onClick: () => void; children?: JSX.Element }) {
   return (
@@ -178,7 +168,7 @@ function NameInput(props: { initial: string; depth: number; icon: "file" | "fold
     <div class="tree-item editing" style={{ "padding-left": `${8 + props.depth * 12}px` }}>
       <span class="twistie" />
       <span class="tree-icon">
-        {props.icon === "folder" ? <FolderIcon open={false} /> : <span class="file-dot" style={{ background: "#8B8B8B" }} />}
+        {props.icon === "folder" ? <FolderIcon open={false} /> : <FileIcon name="new" />}
       </span>
       <input
         ref={(el) =>
@@ -302,7 +292,13 @@ function Node(props: { entry: DirEntry; depth: number }) {
         >
           <span class="twistie">{props.entry.isDir ? (open() ? "▾" : "▸") : ""}</span>
           <span class="tree-icon">
-            {props.entry.isDir ? <FolderIcon open={open()} /> : <span class="file-dot" style={{ background: fileColor(props.entry.name) }} />}
+            {props.entry.isDir ? (
+              <span class="folder-icon" style={{ color: folderColor(props.entry.name) }}>
+                <FolderIcon open={open()} />
+              </span>
+            ) : (
+              <FileIcon name={props.entry.name} />
+            )}
           </span>
           <span class="tree-label">{props.entry.name}</span>
         </div>

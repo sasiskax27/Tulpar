@@ -75,22 +75,33 @@ async function start(): Promise<LspClient | null> {
     } catch (e) {
       const missing = String(e).startsWith("not-found:");
       setState(missing ? "missing" : "error");
-      if (missing) {
-        notify("Для Copilot нужен официальный Copilot Language Server от GitHub. Установить его (npm)?", "info", [
-          {
-            label: "Установить",
-            run: () => {
-              void runInTerminal("npm install -g @github/copilot-language-server", "Установка Copilot");
-              notify("Когда установка закончится, перезапустите Tulpar.");
-            },
-          },
-        ]);
-      } else notifyError("Copilot не запустился", e);
+      if (missing) offerInstall();
+      else notifyError("Copilot не запустился", e);
       return null;
     }
     const c = new LspClient(id, "Copilot");
     const unlisten = await events.onLspMessage((sid, message) => {
       if (sid === id) void c.handle(message);
+    });
+    // Сервер может упасть сразу (старый Node.js, сломанная установка) —
+    // тогда ответа на initialize не будет никогда. Ловим выход процесса.
+    let exited: (reason: string) => void = () => undefined;
+    const exitedPromise = new Promise<never>((_, reject) => (exited = (r) => reject(new Error(r))));
+    exitedPromise.catch(() => undefined);
+    const unlistenExit = await events.onLspExit((sid, stderr) => {
+      if (sid !== id) return;
+      const reason = lastLines(stderr) || "сервер Copilot завершился";
+      exited(reason);
+      if (client === c) {
+        client = null;
+        versions.clear();
+        for (const d of subs.values()) d.dispose();
+        subs.clear();
+        setState("error");
+        notify(`Copilot остановился. Причина: ${reason}`, "error");
+      }
+      unlisten();
+      unlistenExit();
     });
     c.onNotification("didChangeStatus", (p) => {
       if (p?.kind === "Error") setState("signedOut");
@@ -107,7 +118,7 @@ async function start(): Promise<LspClient | null> {
     c.onRequest("window/workDoneProgress/create", () => null);
     try {
       const r = root();
-      await c.request("initialize", {
+      const init = c.request("initialize", {
         processId: null,
         rootUri: r ? monaco.Uri.file(r).toString() : null,
         workspaceFolders: r ? [{ uri: monaco.Uri.file(r).toString(), name: r.split(/[\\/]/).pop() }] : null,
@@ -117,13 +128,38 @@ async function start(): Promise<LspClient | null> {
           editorPluginInfo: { name: "tulpar-copilot", version: "0.1.0" },
         },
       });
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("сервер Copilot не ответил за 40 секунд")), 40_000),
+      );
+      await Promise.race([init, exitedPromise, timeout]);
       c.notify("initialized", {});
       c.notify("workspace/didChangeConfiguration", { settings: { telemetry: { telemetryLevel: "off" } } });
     } catch (e) {
       unlisten();
+      unlistenExit();
       setState("error");
-      notifyError("Copilot не запустился", e);
-      void core.lspStop(id);
+      const reason = e instanceof Error ? e.message : String(e);
+      // Через cmd /C «не найдено» превращается в мгновенный выход с такой фразой
+      if (/not recognized|не является внутренней|не найден|cannot find|ENOENT/i.test(reason)) {
+        void core.lspStop(id).catch(() => undefined);
+        setState("missing");
+        offerInstall();
+        return null;
+      }
+      const oldNode = /Unexpected token|SyntaxError|node:|requires? Node|version/i.test(reason);
+      notify(
+        `Copilot не запустился: ${reason}` +
+          (oldNode ? "\nПохоже, Node.js слишком старый — Copilot нужен Node.js 20.8 или новее (nodejs.org)." : ""),
+        "error",
+        [
+          {
+            label: "Переустановить",
+            run: () => void runInTerminal("npm install -g @github/copilot-language-server@latest", "Установка Copilot"),
+          },
+          { label: "Повторить", run: () => void copilotSignIn() },
+        ],
+      );
+      void core.lspStop(id).catch(() => undefined);
       return null;
     }
     client = c;
@@ -134,6 +170,22 @@ async function start(): Promise<LspClient | null> {
   const result = await starting;
   starting = null;
   return result;
+}
+
+function offerInstall() {
+  notify("Для Copilot нужен официальный Copilot Language Server от GitHub. Установить его (npm)?", "info", [
+    {
+      label: "Установить",
+      run: () => {
+        void runInTerminal("npm install -g @github/copilot-language-server", "Установка Copilot");
+        notify("Когда установка закончится, снова нажмите «Войти в Copilot».");
+      },
+    },
+  ]);
+}
+
+function lastLines(text: string): string {
+  return text.trim().split(/\r?\n/).filter(Boolean).slice(-3).join(" · ").slice(0, 400);
 }
 
 async function checkStatus() {
@@ -164,13 +216,30 @@ export async function copilotSignIn() {
       return;
     }
     if (r?.userCode) {
+      const page = typeof r.verificationUri === "string" ? r.verificationUri : "https://github.com/login/device";
       await navigator.clipboard.writeText(r.userCode).catch(() => undefined);
       notify(`Код для входа: ${r.userCode} (уже скопирован). Откроется GitHub — вставьте код и подтвердите.`, "info", [
-        { label: "Открыть GitHub", run: () => void c.request("workspace/executeCommand", r.command).then(checkStatus).catch(() => undefined) },
+        { label: "Открыть GitHub", run: () => void core.openUrl(page).catch(() => undefined) },
       ]);
-      // Сразу запускаем завершение входа — сервер сам откроет страницу
-      void c.request("workspace/executeCommand", r.command).then(checkStatus).catch(() => undefined);
+      void core.openUrl(page).catch(() => undefined);
+      // Завершение входа: сервер ждёт, пока вы подтвердите код на GitHub
+      if (r.command) {
+        c.request("workspace/executeCommand", r.command)
+          .then(async () => {
+            await checkStatus();
+            if (state() === "ready") notify(`Copilot подключён${user() ? ": " + user() : ""}`);
+          })
+          .catch((e) => notifyError("Вход в Copilot не завершён", e));
+      } else {
+        // Старые версии сервера: подтверждаем вход отдельным запросом
+        c.request("signInConfirm", { userCode: r.userCode })
+          .then(checkStatus)
+          .catch(() => void checkStatus());
+      }
+      return;
     }
+    await checkStatus();
+    if (state() !== "ready") notify(`Copilot не начал вход: сервер ответил ${JSON.stringify(r).slice(0, 200)}`, "error");
   } catch (e) {
     notifyError("Не удалось начать вход в Copilot", e);
   }

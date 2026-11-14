@@ -1,6 +1,19 @@
 // Generated: Russian UI text -> English. Keys are exact Russian strings;
 // pattern keys use {0}, {1}… for inserted values.
 export const EXACT: Record<string, string> = {
+ "Синхронизация через GitHub": "Sync via GitHub",
+ "Тот же профиль хранится в вашем секретном gist на GitHub. Поставили Tulpar на другой компьютер — вошли в GitHub и нажали «Скачать».": "The same profile is kept in your secret gist on GitHub. Installed Tulpar on another computer? Sign in to GitHub and press “Download”.",
+ "☁ Сохранить в GitHub": "☁ Save to GitHub",
+ "Скачать из GitHub": "Download from GitHub",
+ "Сохранить настройки в GitHub": "Save settings to GitHub",
+ "Скачать настройки из GitHub": "Download settings from GitHub",
+ "Для синхронизации войдите в GitHub (нужен GitHub CLI).": "Sign in to GitHub to sync (GitHub CLI is needed).",
+ "У входа в GitHub нет доступа к gist. Выполните в терминале: gh auth refresh -s gist": "Your GitHub sign-in has no gist access. Run in the terminal: gh auth refresh -s gist",
+ "Синхронизация настроек": "Settings sync",
+ "Настройки сохранены в GitHub (секретный gist). На другом компьютере: «Скачать из GitHub».": "Settings saved to GitHub (secret gist). On another computer: “Download from GitHub”.",
+ "В вашем GitHub пока нет сохранённых настроек Tulpar. Сначала нажмите «Сохранить в GitHub» там, где они есть.": "There are no saved Tulpar settings in your GitHub yet. First press “Save to GitHub” where they are.",
+ "Сохранённые в GitHub настройки повреждены": "The settings saved in GitHub are damaged",
+ "Профиль применён": "Profile applied",
  "Блокнот ·": "Notebook ·",
  "Новый блокнот Jupyter": "New Jupyter notebook",
  "Имя блокнота": "Notebook name",

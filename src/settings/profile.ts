@@ -47,6 +47,16 @@ export async function exportProfile(): Promise<void> {
       filters: FILE_FILTERS,
     });
     if (!path) return;
+    await core.userFileWrite(path, JSON.stringify(buildProfile(), null, 2) + "\n");
+    notify(`Профиль сохранён: ${path}`);
+  } catch (e) {
+    notifyError("Не удалось экспортировать профиль", e);
+  }
+}
+
+/** Всё личное в одном объекте — для файла и для синхронизации через GitHub. */
+export function buildProfile(): TulparProfile {
+  {
     const full: Record<string, unknown> = { ...settings() };
     for (const key of PRIVATE) delete full[key];
     // По умолчанию совпадающее не пишем — профиль компактный и переносимый.
@@ -54,7 +64,7 @@ export async function exportProfile(): Promise<void> {
     for (const [key, value] of Object.entries(full)) {
       if (value !== defaultSettings[key as keyof Settings]) slim[key] = value;
     }
-    const profile: TulparProfile = {
+    return {
       app: "tulpar-profile",
       version: "0.2.0",
       exportedAt: new Date().toISOString(),
@@ -64,10 +74,6 @@ export async function exportProfile(): Promise<void> {
       layout: { ...layoutConfig(), default: activeLayout() },
       languages: languages(),
     };
-    await core.writeFile(path, JSON.stringify(profile, null, 2) + "\n");
-    notify(`Профиль сохранён: ${path}`);
-  } catch (e) {
-    notifyError("Не удалось экспортировать профиль", e);
   }
 }
 
@@ -78,7 +84,7 @@ export async function importProfile(): Promise<void> {
     if (typeof picked !== "string") return;
     let profile: TulparProfile | null = null;
     try {
-      profile = parseJsonc<TulparProfile>(await core.readFile(picked));
+      profile = parseJsonc<TulparProfile>(await core.userFileRead(picked));
     } catch {
       /* ниже сообщим понятнее */
     }
@@ -86,12 +92,21 @@ export async function importProfile(): Promise<void> {
       notifyError("Это не файл профиля Tulpar", picked);
       return;
     }
+    await applyProfile(profile);
+  } catch (e) {
+    notifyError("Не удалось импортировать профиль", e);
+  }
+}
+
+/** Применить профиль (с подтверждением). */
+export async function applyProfile(profile: TulparProfile): Promise<boolean> {
+  {
     const date = typeof profile.exportedAt === "string" ? profile.exportedAt.slice(0, 10) : "";
     const ok = await ask(
       `Применить профиль${date ? ` от ${date}` : ""}? Текущие настройки, сочетания клавиш, сниппеты, раскладки и языки будут заменены.`,
       { title: "Импорт профиля", kind: "warning", okLabel: "Применить" },
     );
-    if (!ok) return;
+    if (!ok) return false;
 
     if (profile.settings && typeof profile.settings === "object") {
       // Свои секреты и локальные пути остаются на этой машине.
@@ -110,7 +125,6 @@ export async function importProfile(): Promise<void> {
       await replaceConfig(name, JSON.stringify(value, null, 2) + "\n");
     }
     notify("Профиль применён");
-  } catch (e) {
-    notifyError("Не удалось импортировать профиль", e);
+    return true;
   }
 }

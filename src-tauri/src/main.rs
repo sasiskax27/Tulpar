@@ -37,6 +37,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             workspace::workspace_open,
             workspace::project_create,
+            workspace::user_file_write,
+            workspace::user_file_read,
             pkg::pkg_search,
             testing::tests_run,
             sqlite::sqlite_tables,

@@ -324,3 +324,38 @@ pub async fn project_create(parent: String, name: String) -> Result<String, Stri
     }
     Ok(to_string(&dir))
 }
+
+/// Файл, который пользователь сам выбрал в системном окне «Сохранить/Открыть»
+/// (профиль настроек, тема). Может лежать вне папки проекта, поэтому только
+/// небольшие .json/.tulpar-theme файлы.
+fn user_file_ok(path: &str) -> Result<PathBuf, String> {
+    let p = PathBuf::from(path);
+    let ext = p.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
+    if !matches!(ext.as_str(), "json" | "tulpar-theme") {
+        return Err("можно только файлы .json".into());
+    }
+    if !p.is_absolute() {
+        return Err("некорректный путь".into());
+    }
+    Ok(p)
+}
+
+#[tauri::command]
+pub async fn user_file_write(path: String, content: String) -> Result<(), String> {
+    let p = user_file_ok(&path)?;
+    if content.len() > 5 * 1024 * 1024 {
+        return Err("файл слишком большой".into());
+    }
+    std::fs::write(&p, content).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn user_file_read(path: String) -> Result<String, String> {
+    let p = user_file_ok(&path)?;
+    let size = std::fs::metadata(&p).map_err(|e| e.to_string())?.len();
+    if size > 5 * 1024 * 1024 {
+        return Err("файл слишком большой".into());
+    }
+    let bytes = std::fs::read(&p).map_err(|e| e.to_string())?;
+    String::from_utf8(bytes).map_err(|_| "файл не в кодировке UTF-8".into())
+}

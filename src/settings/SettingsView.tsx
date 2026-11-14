@@ -26,6 +26,7 @@ import { installed, isInstalled } from "../ai/ollama";
 import { allThemes } from "../app/themes";
 import CustomActions from "./CustomActions";
 import { exportProfile, importProfile } from "./profile";
+import { uploadSettings, downloadSettings } from "./sync";
 import { formatStrokes, keybindingList, normalizeStroke, strokeFromEvent } from "../keybindings/keybindings";
 
 type Text = string | (() => string);
@@ -806,6 +807,22 @@ const sectionList: Section[] = [
             </button>
             <button class="button-quiet" onClick={() => void importProfile()}>
               Импорт…
+            </button>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">
+            <span>Синхронизация через GitHub</span>
+            <small>
+              Тот же профиль хранится в вашем секретном gist на GitHub. Поставили Tulpar на другой компьютер — вошли в GitHub и нажали «Скачать».
+            </small>
+          </div>
+          <div class="settings-control settings-buttons">
+            <button class="button" onClick={() => void uploadSettings()}>
+              ☁ Сохранить в GitHub
+            </button>
+            <button class="button-quiet" onClick={() => void downloadSettings()}>
+              Скачать из GitHub
             </button>
           </div>
         </div>

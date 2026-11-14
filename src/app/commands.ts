@@ -3,13 +3,15 @@ import { registerCommand } from "../commands/registry";
 import { showPalette } from "../palette/Palette";
 import { saveFile, saveAll, closeTab, cycleTab, openFile } from "../editor/tabs";
 import { openFolder } from "./workspace";
-import { setSidebarVisible } from "./ui";
-import { activeLayout, layoutConfig, setActiveLayout } from "../config/store";
+import { setSidebarVisible, setSettingsVisible } from "./ui";
+import { activeLayout, defaultSettings, layoutConfig, setActiveLayout, settings, updateSetting } from "../config/store";
 import { core, type ConfigName } from "../ipc";
 import { notify } from "./notify";
 import { restartLanguageServers } from "../lsp/manager";
 import { toggleTerminal, newTerminal, killSession } from "../terminal/sessions";
 import { focusEditor } from "../editor/instance";
+import { chooseBackground, clearBackground } from "./background";
+import { cancelAi, runAiTask, tasks } from "../ai/ai";
 
 async function openConfig(name: ConfigName) {
   const path = await core.configEnsure(name);
@@ -71,7 +73,24 @@ export function registerBuiltinCommands() {
   reg({ id: "workbench.action.terminal.kill", category: "Терминал", title: "Закрыть активный терминал", run: () => killSession() });
   reg({ id: "workbench.action.focusActiveEditorGroup", category: "Вид", title: "Перейти в редактор", run: () => focusEditor() });
 
-  reg({ id: "workbench.action.openSettings", category: "Настройки", title: "Открыть settings.json", run: () => openConfig("settings.json") });
+  reg({ id: "workbench.action.openSettings", category: "Настройки", title: "Открыть настройки", run: () => setSettingsVisible((v) => !v) });
+  reg({ id: "workbench.action.openSettingsJson", category: "Настройки", title: "Открыть settings.json", run: () => openConfig("settings.json") });
+
+  // Размер шрифта с клавиатуры
+  const zoom = (delta: number) =>
+    updateSetting("editor.fontSize", Math.min(40, Math.max(8, settings()["editor.fontSize"] + delta)));
+  reg({ id: "editor.action.fontZoomIn", category: "Вид", title: "Увеличить шрифт", run: () => zoom(1) });
+  reg({ id: "editor.action.fontZoomOut", category: "Вид", title: "Уменьшить шрифт", run: () => zoom(-1) });
+  reg({ id: "editor.action.fontZoomReset", category: "Вид", title: "Сбросить размер шрифта", run: () => updateSetting("editor.fontSize", defaultSettings["editor.fontSize"]) });
+
+  reg({ id: "tulpar.background.choose", category: "Вид", title: "Выбрать фоновую картинку…", run: () => chooseBackground() });
+  reg({ id: "tulpar.background.clear", category: "Вид", title: "Убрать фоновую картинку", run: () => clearBackground() });
+
+  // Действия ИИ: те же, что в меню по правому клику
+  for (const task of tasks) {
+    reg({ id: task.id, title: task.label, run: () => runAiTask(task.id) });
+  }
+  reg({ id: "tulpar.ai.cancel", title: "ИИ: Отменить запрос", run: () => cancelAi() });
   reg({ id: "workbench.action.openGlobalKeybindings", category: "Настройки", title: "Открыть keybindings.json", run: () => openConfig("keybindings.json") });
   reg({ id: "tulpar.openLanguageSettings", category: "Настройки", title: "Открыть languages.json", run: () => openConfig("languages.json") });
   reg({ id: "tulpar.lsp.restart", category: "Языки", title: "Перезапустить языковые серверы", run: () => restartLanguageServers() });

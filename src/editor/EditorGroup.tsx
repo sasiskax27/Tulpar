@@ -10,6 +10,7 @@ import { settings } from "../config/store";
 import { executeCommand } from "../commands/registry";
 import { keybindingFor } from "../keybindings/keybindings";
 import { setEditorInstance } from "./instance";
+import { registerAiActions } from "../ai/ai";
 
 export default function EditorGroup() {
   let container!: HTMLDivElement;
@@ -22,6 +23,7 @@ export default function EditorGroup() {
       setCursor({ line: e.position.lineNumber, column: e.position.column }),
     );
     setEditorInstance(editor);
+    registerAiActions(editor);
     onCleanup(() => {
       setEditorInstance(undefined);
       editor?.dispose();

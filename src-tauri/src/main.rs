@@ -3,8 +3,10 @@
 
 use tauri::Manager;
 
+mod ai;
 mod config;
 mod lsp;
+mod media;
 mod terminal;
 mod workspace;
 
@@ -38,6 +40,9 @@ fn main() {
             terminal::terminal_resize,
             terminal::terminal_kill,
             terminal::terminal_reset,
+            media::background_import,
+            media::image_read,
+            ai::ai_complete,
         ])
         .build(tauri::generate_context!())
         .expect("не удалось запустить Tulpar")

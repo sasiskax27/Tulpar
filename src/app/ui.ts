@@ -7,3 +7,7 @@ export { sidebarVisible, setSidebarVisible };
 /** Нижняя панель (терминал) скрыта, пока её не позовут: Ctrl+` */
 const [bottomVisible, setBottomVisible] = createSignal(false);
 export { bottomVisible, setBottomVisible };
+
+/** Окно настроек (Ctrl+,) */
+const [settingsVisible, setSettingsVisible] = createSignal(false);
+export { settingsVisible, setSettingsVisible };

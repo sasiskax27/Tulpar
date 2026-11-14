@@ -17,6 +17,7 @@ notify = "8"
 ignore = "0.4"
 dirs = "6"
 portable-pty = "0.9"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 
 [profile.release]
 codegen-units = 1

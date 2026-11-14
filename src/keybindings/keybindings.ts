@@ -27,6 +27,9 @@ const defaults: Keybinding[] = [
   { key: "ctrl+`", command: "workbench.action.terminal.toggleTerminal" },
   { key: "ctrl+shift+`", command: "workbench.action.terminal.new" },
   { key: "mod+1", command: "workbench.action.focusActiveEditorGroup" },
+  { key: "mod+=", command: "editor.action.fontZoomIn" },
+  { key: "mod+-", command: "editor.action.fontZoomOut" },
+  { key: "mod+0", command: "editor.action.fontZoomReset" },
 ];
 
 /** В терминале почти все клавиши принадлежат оболочке (Ctrl+W, Ctrl+S, Ctrl+K…).

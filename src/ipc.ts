@@ -15,6 +15,15 @@ export interface ChangeEvent {
 
 export type ConfigName = "settings.json" | "keybindings.json" | "layout.json" | "languages.json";
 
+export interface AiRequest {
+  provider: string;
+  baseUrl: string;
+  model: string;
+  apiKey: string;
+  system: string;
+  prompt: string;
+}
+
 export const core = {
   workspaceOpen: (path: string) => invoke<string>("workspace_open", { path }),
   workspaceRoot: () => invoke<string | null>("workspace_root"),
@@ -34,6 +43,9 @@ export const core = {
   terminalResize: (id: string, cols: number, rows: number) => invoke<void>("terminal_resize", { id, cols, rows }),
   terminalKill: (id: string) => invoke<void>("terminal_kill", { id }),
   terminalReset: () => invoke<void>("terminal_reset"),
+  backgroundImport: (path: string) => invoke<string>("background_import", { path }),
+  imageRead: (path: string) => invoke<{ mime: string; base64: string }>("image_read", { path }),
+  aiComplete: (request: AiRequest) => invoke<string>("ai_complete", { request }),
   configEnsure: (name: ConfigName) => invoke<string>("config_ensure", { name }),
 };
 

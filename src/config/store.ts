@@ -3,7 +3,7 @@
 import { createSignal } from "solid-js";
 import { core, events, type ConfigName } from "../ipc";
 import { parseJsonc } from "./jsonc";
-import { notify } from "../app/notify";
+import { notify, notifyError } from "../app/notify";
 
 // ---------- settings.json (ключи совместимы с VS Code) ----------
 
@@ -23,6 +23,17 @@ export interface Settings {
   /** Оболочка терминала; null — PowerShell на Windows, $SHELL на macOS и Linux */
   "terminal.integrated.shell": string | null;
   "terminal.integrated.fontSize": number;
+  /** Фоновая картинка: путь к файлу или null */
+  "tulpar.background.image": string | null;
+  "tulpar.background.opacity": number;
+  "tulpar.background.blur": number;
+  "tulpar.background.fit": "cover" | "contain" | "center" | "tile";
+  "tulpar.ai.provider": "none" | "ollama" | "openai" | "anthropic";
+  "tulpar.ai.baseUrl": string;
+  "tulpar.ai.model": string;
+  "tulpar.ai.apiKey": string;
+  /** На каком языке ИИ пишет комментарии и объяснения */
+  "tulpar.ai.language": string;
   [key: string]: unknown;
 }
 
@@ -41,6 +52,15 @@ export const defaultSettings: Settings = {
   "files.autoSaveDelay": 1000,
   "terminal.integrated.shell": null,
   "terminal.integrated.fontSize": 13,
+  "tulpar.background.image": null,
+  "tulpar.background.opacity": 0.15,
+  "tulpar.background.blur": 0,
+  "tulpar.background.fit": "cover",
+  "tulpar.ai.provider": "none",
+  "tulpar.ai.baseUrl": "",
+  "tulpar.ai.model": "",
+  "tulpar.ai.apiKey": "",
+  "tulpar.ai.language": "русский",
 };
 
 // ---------- keybindings.json (формат VS Code) ----------
@@ -102,6 +122,47 @@ export function setting<K extends keyof Settings>(key: K): Settings[K] {
   return settings()[key];
 }
 
+// ---------- изменение настроек из интерфейса ----------
+
+let pendingChanges: Record<string, unknown> = {};
+let persistTimer: number | undefined;
+let lastOwnWrite = 0;
+
+/** Изменить настройку: применяется сразу, а в settings.json записывается чуть позже,
+ *  чтобы не писать файл на каждое движение ползунка. */
+export function updateSetting<K extends keyof Settings>(key: K, value: Settings[K]) {
+  setSettings((s) => ({ ...s, [key]: value }));
+  pendingChanges[key as string] = value;
+  clearTimeout(persistTimer);
+  persistTimer = window.setTimeout(() => void persistSettings(), 300);
+}
+
+async function persistSettings() {
+  const changes = pendingChanges;
+  pendingChanges = {};
+  try {
+    const path = await core.configEnsure("settings.json");
+    const text = await core.configRead("settings.json");
+    let current: Record<string, unknown>;
+    try {
+      current = text && text.trim() ? parseJsonc<Record<string, unknown>>(text) : {};
+    } catch {
+      // Файл с ошибкой не перезаписываем — иначе потеряем то, что в нём написано
+      notify("В settings.json ошибка, изменения не сохранены. Исправьте файл.", "error");
+      return;
+    }
+    for (const [key, value] of Object.entries(changes)) {
+      // Значения по умолчанию в файле не держим
+      if (value === defaultSettings[key]) delete current[key];
+      else current[key] = value;
+    }
+    lastOwnWrite = Date.now();
+    await core.writeFile(path, JSON.stringify(current, null, 2) + "\n");
+  } catch (e) {
+    notifyError("Не удалось сохранить настройки", e);
+  }
+}
+
 async function readConfig<T>(name: ConfigName): Promise<T | null> {
   const text = await core.configRead(name);
   if (text === null || text.trim() === "") return null;
@@ -117,7 +178,7 @@ async function load(name: ConfigName) {
   switch (name) {
     case "settings.json": {
       const user = await readConfig<Partial<Settings>>(name);
-      setSettings({ ...defaultSettings, ...(user ?? {}) });
+      setSettings({ ...defaultSettings, ...(user ?? {}), ...pendingChanges });
       break;
     }
     case "keybindings.json": {
@@ -149,6 +210,10 @@ export async function initConfig() {
   await Promise.all(names.map((n) => load(n).catch(() => undefined)));
   setActiveLayout(layoutConfig().default);
   await events.onConfigChanged((name) => {
-    load(name).then(() => notify(`${name} применён`));
+    // О собственной записи из окна настроек не сообщаем
+    const own = name === "settings.json" && Date.now() - lastOwnWrite < 2000;
+    void load(name).then(() => {
+      if (!own) notify(`${name} применён`);
+    });
   });
 }

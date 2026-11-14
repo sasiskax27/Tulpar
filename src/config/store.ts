@@ -70,6 +70,12 @@ export interface Settings {
   "tulpar.background.opacity": number;
   "tulpar.background.blur": number;
   "tulpar.background.fit": "cover" | "contain" | "center" | "tile";
+  /** overlay — слой поверх окна; behind — фон под окном, панели полупрозрачные */
+  "tulpar.background.mode": "overlay" | "behind";
+  /** Непрозрачность панелей в режиме «за панелями», 0.3…1 */
+  "workbench.panelOpacity": number;
+  /** Размытие под панелями («стекло»), px */
+  "workbench.panelBlur": number;
   "tulpar.ai.provider": "none" | "ollama" | "openai" | "opencode" | "openrouter" | "anthropic";
   "tulpar.ai.baseUrl": string;
   "tulpar.ai.model": string;
@@ -150,6 +156,9 @@ export const defaultSettings: Settings = {
   "tulpar.background.opacity": 0.15,
   "tulpar.background.blur": 0,
   "tulpar.background.fit": "cover",
+  "tulpar.background.mode": "behind",
+  "workbench.panelOpacity": 0.78,
+  "workbench.panelBlur": 14,
   "tulpar.ai.provider": "none",
   "tulpar.ai.baseUrl": "",
   "tulpar.ai.model": "",

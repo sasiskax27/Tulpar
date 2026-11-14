@@ -17,7 +17,7 @@ import { setBackgroundFrom } from "../app/background";
 import { tabsUnder } from "../editor/tabs";
 import { retarget, setFolderOpen, setSelected } from "./fileOps";
 
-const IMAGE_RE = /\.(png|jpe?g|webp|gif|bmp)$/i;
+const IMAGE_RE = /\.(png|jpe?g|webp|gif|bmp|mp4|webm|m4v)$/i;
 const THRESHOLD = 5;
 
 const [dropTarget, setDropTarget] = createSignal<string | null>(null);

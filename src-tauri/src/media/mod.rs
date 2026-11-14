@@ -1,4 +1,4 @@
-//! Картинки для оформления: фон редактора.
+//! Картинки и видео для оформления: фон редактора.
 //!
 //! Выбранная картинка копируется в папку настроек Tulpar, поэтому фон не пропадёт,
 //! если исходный файл переместить или удалить.
@@ -9,7 +9,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use serde::Serialize;
 
 const IMAGE_EXT: &[&str] = &["png", "jpg", "jpeg", "webp", "gif", "bmp"];
+const VIDEO_EXT: &[&str] = &["mp4", "webm", "m4v"];
 const MAX_IMAGE: u64 = 20 * 1024 * 1024;
+const MAX_VIDEO: u64 = 80 * 1024 * 1024;
 
 #[derive(Serialize)]
 pub struct ImageData {
@@ -21,14 +23,20 @@ fn image_ext(path: &Path) -> Result<String, String> {
     path.extension()
         .and_then(|e| e.to_str())
         .map(|e| e.to_lowercase())
-        .filter(|e| IMAGE_EXT.contains(&e.as_str()))
-        .ok_or_else(|| "поддерживаются картинки PNG, JPG, WebP, GIF и BMP".to_string())
+        .filter(|e| IMAGE_EXT.contains(&e.as_str()) || VIDEO_EXT.contains(&e.as_str()))
+        .ok_or_else(|| "поддерживаются картинки PNG, JPG, WebP, GIF, BMP и видео MP4, WebM".to_string())
+}
+
+fn is_video(ext: &str) -> bool {
+    VIDEO_EXT.contains(&ext)
 }
 
 fn check_size(path: &Path) -> Result<(), String> {
     let size = std::fs::metadata(path).map_err(|e| e.to_string())?.len();
-    if size > MAX_IMAGE {
-        return Err(format!("картинка слишком большая ({} МБ, можно до 20)", size / 1024 / 1024));
+    let video = path.extension().and_then(|e| e.to_str()).is_some_and(|e| is_video(&e.to_lowercase()));
+    let (limit, what) = if video { (MAX_VIDEO, "видео") } else { (MAX_IMAGE, "картинка") };
+    if size > limit {
+        return Err(format!("{what} слишком большая ({} МБ, можно до {})", size / 1024 / 1024, limit / 1024 / 1024));
     }
     Ok(())
 }
@@ -89,6 +97,8 @@ pub async fn image_read(path: String) -> Result<ImageData, String> {
     let bytes = std::fs::read(&file).map_err(|e| format!("не удалось прочитать {path}: {e}"))?;
     let mime = match ext.as_str() {
         "jpg" | "jpeg" => "image/jpeg".to_string(),
+        "mp4" | "m4v" => "video/mp4".to_string(),
+        "webm" => "video/webm".to_string(),
         other => format!("image/{other}"),
     };
     Ok(ImageData { mime, base64: base64_encode(&bytes) })

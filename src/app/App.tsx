@@ -33,6 +33,8 @@ export default function App() {
       "--tp-radius": `${clamp(Number(s["workbench.radius"]), 0, 20, 10)}px`,
       "--tp-font-size-ui": `${clamp(Number(s["workbench.uiFontSize"]), 10, 18, 13)}px`,
       "--tp-gap": `${clamp(Number(s["workbench.gap"]), 0, 16, 6)}px`,
+      "--tp-panel-alpha": `${Math.round(clamp(Number(s["workbench.panelOpacity"]), 0.3, 1, 0.78) * 100)}%`,
+      "--tp-panel-blur": `${clamp(Number(s["workbench.panelBlur"]), 0, 40, 14)}px`,
     };
     for (const [name, value] of Object.entries(vars)) el.style.setProperty(name, value);
     applied = Object.keys(vars);

@@ -248,6 +248,32 @@ const sections: Section[] = [
       { key: "workbench.statusBar.visible", label: "Строка статуса внизу", type: "toggle" },
       { key: "workbench.sidebar.autoHide", label: "Прятать боковую панель", hint: "Дизайн 2: панель выезжает при наведении на левый край и прячется, когда уводишь мышь.", type: "toggle" },
       {
+        key: "tulpar.background.mode",
+        label: "Как показывать фон",
+        hint: "«За панелями» — фон под окном, а панели как матовое стекло. «Поверх» — лёгкая дымка поверх всего окна.",
+        type: "select",
+        options: [["behind", "За панелями (стекло)"], ["overlay", "Поверх окна"]],
+      },
+      {
+        key: "workbench.panelOpacity",
+        label: "Непрозрачность панелей",
+        hint: "Для режима «за панелями»: меньше — сильнее просвечивает фон.",
+        type: "range",
+        min: 0.3,
+        max: 1,
+        step: 0.01,
+        show: (v) => `${Math.round(v * 100)}%`,
+      },
+      {
+        key: "workbench.panelBlur",
+        label: "Размытие под панелями",
+        type: "range",
+        min: 0,
+        max: 40,
+        step: 1,
+        show: (v) => (v ? `${v} px` : "нет"),
+      },
+      {
         key: "tulpar.background.opacity",
         label: "Яркость фона",
         type: "range",
@@ -277,8 +303,8 @@ const sections: Section[] = [
       return (
         <div class="settings-row">
           <div class="settings-label">
-            <span>Фоновая картинка</span>
-            <small>{image() ? baseName(image()!) : "Можно просто перетащить картинку в окно Tulpar."}</small>
+            <span>Фон: картинка или видео</span>
+            <small>{image() ? baseName(image()!) : "Картинка или видео (MP4, WebM до 80 МБ). Можно просто перетащить файл в окно Tulpar."}</small>
           </div>
           <div class="settings-control settings-buttons">
             <button class="button" onClick={() => void chooseBackground()}>

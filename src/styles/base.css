@@ -1417,3 +1417,35 @@ body.resizing .side-island { transition: none; }
 .settings-nav-item:hover { color: var(--tp-fg-strong); }
 .settings-buttons.wrap { flex-wrap: wrap; justify-content: flex-end; }
 .button-quiet.danger { color: var(--tp-error); }
+
+/* ---------- фон за панелями: «стекло» ---------- */
+
+.background-video { object-position: center; width: auto; height: auto; }
+.background-layer.background-video { position: fixed; width: calc(100% + 4px); height: calc(100% + 4px); }
+.background-layer.behind { z-index: 0; }
+:root[data-glass="on"] body, :root[data-glass="on"] #root { background: #000; }
+:root[data-glass="on"] .workbench { position: relative; z-index: 1; background: transparent; }
+:root[data-glass="on"] .slot-left,
+:root[data-glass="on"] .slot-right,
+:root[data-glass="on"] .activity-bar,
+:root[data-glass="on"] .top-bar {
+  background: color-mix(in srgb, var(--tp-bg-sidebar) var(--tp-panel-alpha), transparent) !important;
+  backdrop-filter: blur(var(--tp-panel-blur));
+}
+:root[data-glass="on"] .slot-center,
+:root[data-glass="on"] .slot-bottom,
+:root[data-glass="on"] .terminal-panel {
+  background: color-mix(in srgb, var(--tp-code-bg) var(--tp-panel-alpha), transparent) !important;
+  backdrop-filter: blur(var(--tp-panel-blur));
+}
+:root[data-glass="on"] .tab-strip,
+:root[data-glass="on"] .status-bar,
+:root[data-glass="on"] .welcome { background: transparent !important; }
+/* Monaco и терминал рисуют свой фон — делаем его прозрачным, чтобы было видно «стекло» */
+:root[data-glass="on"] .monaco-editor,
+:root[data-glass="on"] .monaco-editor .margin,
+:root[data-glass="on"] .monaco-editor-background,
+:root[data-glass="on"] .monaco-editor .minimap,
+:root[data-glass="on"] .xterm .xterm-viewport,
+:root[data-glass="on"] .xterm-screen canvas { background-color: transparent !important; }
+:root[data-glass="on"] .monaco-editor .sticky-widget { background: color-mix(in srgb, var(--tp-code-bg) 92%, transparent) !important; }

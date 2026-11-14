@@ -37,3 +37,60 @@ export const catalog: CatalogModel[] = [
   { tag: "qwen3-coder-next", title: "Qwen3 Coder Next", sizeGb: 52, kind: "код", note: "Для машин с 64 ГБ и больше." },
   { tag: "gpt-oss:120b", title: "gpt-oss 120B", sizeGb: 65, kind: "рассуждения", note: "Для серверов с 80 ГБ видеопамяти." },
 ];
+
+// ---------- облачные модели Ollama ----------
+// Модель с тегом :cloud считается на серверах Ollama: компьютер только отправляет
+// запрос и получает ответ. Нужен вход: `ollama signin`. У бесплатного тарифа есть
+// лимит на 5 часов и на неделю. Список меняется — актуальный: ollama.com/search?c=cloud
+
+export interface CloudModel {
+  tag: string;
+  title: string;
+  note: string;
+}
+
+export const cloudCatalog: CloudModel[] = [
+  { tag: "deepseek-v4.1-flash:cloud", title: "DeepSeek V4.1 Flash", note: "Быстрая и экономная — хороший выбор для бесплатного лимита." },
+  { tag: "glm-5.3-flash:cloud", title: "GLM 5.3 Flash", note: "Быстрая модель для кода и агента." },
+  { tag: "minimax-m3.1-flash:cloud", title: "MiniMax M3.1 Flash", note: "Лёгкая быстрая модель, умеет работать агентом." },
+  { tag: "qwen3.5:cloud", title: "Qwen 3.5 (облако)", note: "Старшая Qwen 3.5 — та же семья, что ваша 4B, но намного умнее." },
+  { tag: "gemma4:cloud", title: "Gemma 4 (облако)", note: "Модель Google." },
+  { tag: "kimi-k2.7-code:cloud", title: "Kimi K2.7 Code", note: "Сильная модель именно для кода. Тратит лимит быстрее." },
+  { tag: "glm-5.3:cloud", title: "GLM 5.3", note: "Большая модель для сложных задач. Тратит лимит быстрее." },
+  { tag: "deepseek-v4-pro:cloud", title: "DeepSeek V4 Pro", note: "Одна из самых сильных. Расходует лимит быстрее всех." },
+];
+
+// ---------- модели OpenCode Zen ----------
+// Только те, что работают через /chat/completions — так Tulpar обращается к OpenCode.
+// Бесплатные модели OpenCode из других программ не работают (только в самом OpenCode).
+
+export const opencodeModels: { id: string; note: string }[] = [
+  { id: "deepseek-v4.1-flash", note: "быстрая и недорогая" },
+  { id: "glm-5.3-flash", note: "быстрая, для кода" },
+  { id: "minimax-m3", note: "хороша для агента" },
+  { id: "kimi-k2.7-code", note: "сильная для кода" },
+  { id: "qwen3.8-max", note: "старшая Qwen" },
+  { id: "glm-5.3", note: "большая модель" },
+  { id: "kimi-k3", note: "большая модель" },
+  { id: "deepseek-v4-pro", note: "одна из самых сильных" },
+  { id: "mistral-large-4", note: "Mistral" },
+  { id: "minimax-m2.7", note: "предыдущая MiniMax" },
+  { id: "glm-5.2", note: "предыдущая GLM" },
+  { id: "kimi-k2.6", note: "предыдущая Kimi" },
+];
+
+// ---------- Claude и OpenAI ----------
+
+export const claudeModels: { id: string; note: string }[] = [
+  { id: "claude-sonnet-5-5", note: "лучший баланс ума и цены — рекомендуется" },
+  { id: "claude-opus-5-5", note: "самая умная для сложных задач, дороже" },
+  { id: "claude-haiku-5-5", note: "самая быстрая и дешёвая" },
+  { id: "claude-fable-5-2", note: "старший уровень, самая дорогая" },
+];
+
+/** Запасной список, если сервер OpenAI не отдал свой (нет ключа или сети). */
+export const openaiModels: { id: string; note: string }[] = [
+  { id: "gpt-5.5", note: "старшая модель" },
+  { id: "gpt-5.4-mini", note: "быстрая и недорогая" },
+  { id: "gpt-5.4-nano", note: "самая дешёвая" },
+];

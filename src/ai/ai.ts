@@ -24,6 +24,8 @@ export const providers: Record<string, Provider> = {
   openai: { baseUrl: "https://api.openai.com/v1", model: "" },
   /** OpenCode Zen: облачные модели, часть — бесплатные; компьютер не нагружается */
   opencode: { baseUrl: "https://opencode.ai/zen/v1", model: "" },
+  /** OpenRouter: сотни моделей, у части есть бесплатные версии (:free) */
+  openrouter: { baseUrl: "https://openrouter.ai/api/v1", model: "" },
   anthropic: { baseUrl: "https://api.anthropic.com", model: "claude-sonnet-5-5" },
 };
 

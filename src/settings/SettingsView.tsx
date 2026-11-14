@@ -11,6 +11,8 @@ import { baseName, core } from "../ipc";
 import { pick } from "../app/QuickPick";
 import { notify, notifyError } from "../app/notify";
 import LocalAi from "./LocalAi";
+import { claudeModels, cloudCatalog, openaiModels, opencodeModels } from "../ai/models";
+import { installed, isInstalled } from "../ai/ollama";
 import { THEME_NAMES } from "../app/themes";
 import CustomActions from "./CustomActions";
 
@@ -34,26 +36,72 @@ interface Section {
   after?: boolean;
 }
 
-/** Загрузить список моделей сервиса и выбрать одну (бесплатные — сверху). */
-async function chooseModel() {
+type ModelChoice = { label: string; detail?: string; value: string };
+
+/** Модели с сервера (OpenAI-совместимый /models); null — не получилось. */
+async function serverModels(name: string): Promise<{ id: string; free: boolean }[] | null> {
   const cfg = settings();
-  const name = String(cfg["tulpar.ai.provider"]);
   const base = String(cfg["tulpar.ai.baseUrl"] ?? "").trim() || providers[name]?.baseUrl || "";
-  let list: { id: string; free: boolean }[];
   try {
-    list = await core.aiModels(name, base, String(cfg["tulpar.ai.apiKey"] ?? ""));
-  } catch (e) {
-    notifyError("Не удалось загрузить список моделей", e);
+    return await core.aiModels(name, base, String(cfg["tulpar.ai.apiKey"] ?? ""));
+  } catch {
+    return null;
+  }
+}
+
+/** Список моделей для выбранного варианта ИИ. */
+async function modelChoices(name: string): Promise<{ items: ModelChoice[]; title: string } | null> {
+  switch (name) {
+    case "ollama": {
+      const local = installed()
+        .filter((m) => !m.name.includes("cloud"))
+        .map((m) => ({ label: m.name, detail: "на компьютере · бесплатно", value: m.name }));
+      const cloud = cloudCatalog.map((m) => ({
+        label: m.tag,
+        detail: `облако · бесплатно с лимитом · ${isInstalled(m.tag) ? "готова" : "нажмите «Установить» в «Локальный ИИ» и войдите"}`,
+        value: m.tag,
+      }));
+      return { items: [...local, ...cloud], title: "Модель Ollama: на компьютере или в облаке (бесплатно)" };
+    }
+    case "opencode":
+      return {
+        items: opencodeModels.map((m) => ({ label: m.id, detail: `платно · ${m.note}`, value: m.id })),
+        title: "Модель OpenCode Zen (платно; бесплатные работают только в программе OpenCode)",
+      };
+    case "anthropic":
+      return { items: claudeModels.map((m) => ({ label: m.id, detail: `платно · ${m.note}`, value: m.id })), title: "Модель Claude (платно)" };
+    case "openai": {
+      const list = await serverModels(name);
+      const items = list?.length
+        ? list.map((m) => ({ label: m.id, detail: m.free ? "бесплатно" : "платно", value: m.id }))
+        : openaiModels.map((m) => ({ label: m.id, detail: `платно · ${m.note}`, value: m.id }));
+      return { items, title: list?.length ? "Модели сервера" : "Модель OpenAI (платно; полный список появится, когда укажете ключ)" };
+    }
+    case "openrouter": {
+      const list = await serverModels(name);
+      if (!list?.length) {
+        notifyError("Не удалось загрузить модели OpenRouter", "проверьте интернет");
+        return null;
+      }
+      return {
+        items: list.map((m) => ({ label: m.id, detail: m.free ? "бесплатно (лимит 50 запросов в день)" : "платно", value: m.id })),
+        title: "Модель OpenRouter — бесплатные сверху",
+      };
+    }
+    default:
+      return null;
+  }
+}
+
+async function chooseModel() {
+  const name = String(settings()["tulpar.ai.provider"]);
+  const choices = await modelChoices(name);
+  if (!choices) return;
+  if (!choices.items.length) {
+    notify("Список пуст. Для Ollama установите модель в разделе «Локальный ИИ».");
     return;
   }
-  if (!list.length) {
-    notify("Сервис не вернул ни одной модели");
-    return;
-  }
-  const chosen = await pick(
-    list.map((m) => ({ label: m.id, detail: m.free ? "бесплатно" : "платно", value: m.id })),
-    "Модель ИИ — начните печатать для поиска",
-  );
+  const chosen = await pick(choices.items, choices.title);
   if (chosen) updateSetting("tulpar.ai.model", chosen);
 }
 
@@ -215,12 +263,12 @@ const sections: Section[] = [
     intro:
       "Выделите код, нажмите правую кнопку мыши и выберите действие «ИИ: …». Код отправляется только на сервер, указанный здесь, и только по вашей команде.",
     extra: () => (
-      <Show when={["opencode", "openai"].includes(String(settings()["tulpar.ai.provider"]))}>
+      <Show when={String(settings()["tulpar.ai.provider"]) !== "none"}>
         <div class="settings-row">
           <div class="settings-label">
             <span>Модель из списка</span>
             <small>
-              {settings()["tulpar.ai.model"] ? `Сейчас: ${settings()["tulpar.ai.model"]}` : "Загрузить модели сервиса и выбрать — бесплатные сверху."}
+              {settings()["tulpar.ai.model"] ? `Сейчас: ${settings()["tulpar.ai.model"]}` : "Выбрать модель из списка."}
             </small>
           </div>
           <div class="settings-control settings-buttons">
@@ -260,17 +308,21 @@ const sections: Section[] = [
         hint: () =>
           ({
             none: "ИИ выключен.",
-            ollama: "Бесплатно и без интернета: модель работает на вашем компьютере. Нужна установленная Ollama.",
-            openai: "Любой сервис с OpenAI-совместимым API: OpenAI, OpenRouter, LM Studio и другие.",
+            ollama:
+              "Бесплатно. Модель работает на вашем компьютере, а для слабых компьютеров есть облачные модели (:cloud) — см. «Локальный ИИ» ниже. Нужна установленная Ollama.",
+            openai: "Любой сервис с OpenAI-совместимым API: OpenAI, LM Studio и другие. Платно, нужен ключ.",
+            openrouter:
+              "Сотни моделей через один ключ (openrouter.ai/keys, бесплатно, без карты). Модели с пометкой «бесплатно» — без оплаты, но всего 50 запросов в день; агенту этого хватит на пару задач.",
             opencode:
-              "Облачные модели OpenCode Zen — работают на их серверах, поэтому подходят для слабых компьютеров. Есть бесплатные модели (с пометкой «бесплатно» в списке). Ключ API — на opencode.ai, раздел Zen.",
+              "Облачные модели OpenCode Zen — работают на их серверах, компьютер не нагружается. Платно, оплата за запросы: ключ и баланс — на opencode.ai/console. Бесплатные модели OpenCode из других программ не работают. Бесплатный облачный вариант — Ollama с моделью :cloud (раздел «Локальный ИИ»).",
             anthropic: "Claude через API. Нужен ключ API из консоли Anthropic.",
           })[String(settings()["tulpar.ai.provider"])] ?? "",
         type: "select",
         options: [
           ["none", "Выключен"],
-          ["opencode", "OpenCode Zen (облако, есть бесплатные)"],
-          ["ollama", "Ollama (локально)"],
+          ["opencode", "OpenCode Zen (облако, платно)"],
+          ["ollama", "Ollama (компьютер или облако, бесплатно)"],
+          ["openrouter", "OpenRouter (есть бесплатные)"],
           ["openai", "OpenAI-совместимый"],
           ["anthropic", "Claude (Anthropic)"],
         ],

@@ -52,6 +52,7 @@ pub(crate) fn env_for(provider: &str) -> &'static str {
     match provider {
         "anthropic" => "ANTHROPIC_API_KEY",
         "opencode" => "OPENCODE_API_KEY",
+        "openrouter" => "OPENROUTER_API_KEY",
         _ => "OPENAI_API_KEY",
     }
 }

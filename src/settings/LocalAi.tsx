@@ -1,6 +1,7 @@
 // Раздел настроек «Локальный ИИ»: установка моделей Ollama одной кнопкой.
 import { createMemo, createSignal, For, Match, onMount, Show, Switch } from "solid-js";
-import { catalog, type CatalogModel } from "../ai/models";
+import { catalog, cloudCatalog, type CatalogModel } from "../ai/models";
+import { runInTerminal } from "../terminal/sessions";
 import {
   fitOf, initLocalAi, install, installed, isCurrent, isInstalled, memory,
   normalize, progress, refresh, remove, running, useModel, type Fit,
@@ -70,7 +71,9 @@ export default function LocalAi() {
 
   // Установленные модели, которых нет в каталоге
   const extra = () =>
-    installed().filter((m) => !catalog.some((c) => normalize(c.tag) === normalize(m.name)));
+    installed().filter(
+      (m) => !catalog.some((c) => normalize(c.tag) === normalize(m.name)) && !cloudCatalog.some((c) => normalize(c.tag) === normalize(m.name)),
+    );
 
   const addCustom = () => {
     const tag = custom().trim();
@@ -114,6 +117,40 @@ export default function LocalAi() {
         </Match>
       </Switch>
 
+      <h3 class="local-ai-heading">Облачные модели Ollama — для слабых компьютеров</h3>
+      <p class="settings-intro">
+        Модели с пометкой «облако» считаются на серверах Ollama: компьютер не нагружается, но нужен интернет и вход в
+        аккаунт ollama.com. Бесплатно с лимитом (сбрасывается каждые 5 часов и раз в неделю). Код при этом уходит на
+        серверы Ollama.
+      </p>
+      <div class="model-row">
+        <div class="model-info">
+          <span class="model-title">Вход в Ollama</span>
+          <small>Один раз: команда откроет страницу входа в браузере. После входа нажмите «Установить» у облачной модели.</small>
+        </div>
+        <div class="model-actions">
+          <button class="button" disabled={!running()} onClick={() => void runInTerminal("ollama signin", "Ollama")}>
+            Войти (ollama signin)
+          </button>
+        </div>
+      </div>
+      <For each={cloudCatalog}>
+        {(m) => (
+          <div class="model-row">
+            <div class="model-info">
+              <span class="model-title">
+                {m.title}
+                <span class="model-badge cloud">облако</span>
+              </span>
+              <small>{m.tag} · почти не занимает места</small>
+              <small>{m.note}</small>
+            </div>
+            <Actions tag={m.tag} />
+          </div>
+        )}
+      </For>
+
+      <h3 class="local-ai-heading">Модели на вашем компьютере</h3>
       <For each={extra()}>
         {(m) => (
           <div class="model-row">

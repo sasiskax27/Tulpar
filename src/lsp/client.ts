@@ -1,6 +1,7 @@
 // JSON-RPC клиент одного языкового сервера. Ядро на Rust только пересылает байты,
 // а запросы, ответы и уведомления разбираются здесь.
 import { core } from "../ipc";
+import type { ServerConfig } from "../config/store";
 
 type Handler = (params: any) => unknown;
 
@@ -16,6 +17,13 @@ export class LspClient {
   private requestHandlers = new Map<string, Handler>();
   capabilities: any = {};
   alive = true;
+  /** Ответил на initialize — работает */
+  initialized = false;
+  /** Настройки, с которыми запущен (для сообщения о падении) */
+  config?: ServerConfig;
+  /** Последние строки stderr, если сервер завершился */
+  stderr = "";
+  crashReported = false;
 
   constructor(readonly serverId: number, readonly name: string) {}
 

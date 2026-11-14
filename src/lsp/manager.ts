@@ -22,6 +22,34 @@ const CHANGE_DELAY = 150;
 const clients = new Map<string, Promise<LspClient | null>>();
 const byServerId = new Map<number, LspClient>();
 const warnedMissing = new Set<string>();
+/** Серверы, которые упали: не перезапускаем их на каждом открытии файла */
+const crashed = new Set<string>();
+/** Растёт при каждой остановке всех серверов — так отличаем «остановили сами» от падения */
+let generation = 0;
+
+function crashNotice(cfg: ServerConfig, reason: string) {
+  const key = serverKey(cfg);
+  crashed.add(key);
+  const detail = reason.trim().split("\n").filter(Boolean).slice(-3).join(" · ").slice(0, 400);
+  const actions = [
+    { label: "Перезапустить", run: () => { crashed.delete(key); void restart(); } },
+  ];
+  if (cfg.install) {
+    const install = cfg.install;
+    actions.unshift({
+      label: "Переустановить",
+      run: () => {
+        void runInTerminal(install.replace(/^pip install /, "pip install -U "));
+        crashed.delete(key);
+      },
+    });
+  }
+  notify(
+    `Языковой сервер ${cfg.command} падает, подсказки для этого языка отключены до перезапуска.` + (detail ? ` Причина: ${detail}` : ""),
+    "error",
+    actions,
+  );
+}
 
 interface Doc {
   client: LspClient;
@@ -69,6 +97,7 @@ function serverKey(cfg: ServerConfig): string {
 async function startServer(cfg: ServerConfig): Promise<LspClient | null> {
   const key = serverKey(cfg);
   const r = root();
+  const gen = generation;
   let id: number;
   try {
     id = await core.lspStart(cfg.command, cfg.args ?? [], r);
@@ -101,6 +130,7 @@ async function startServer(cfg: ServerConfig): Promise<LspClient | null> {
   }
 
   const client = new LspClient(id, cfg.command);
+  client.config = cfg;
   byServerId.set(id, client);
 
   client.onNotification("textDocument/publishDiagnostics", (p) => {
@@ -139,9 +169,16 @@ async function startServer(cfg: ServerConfig): Promise<LspClient | null> {
       capabilities: clientCapabilities,
     });
     client.capabilities = result?.capabilities ?? {};
+    client.initialized = true;
     client.notify("initialized", {});
   } catch (e) {
-    notify(`${cfg.command} не запустился: ${e instanceof Error ? e.message : e}`, "error");
+    // Остановили сами (сменилась папка, перезапуск) — это не ошибка
+    if (gen === generation && !client.crashReported) {
+      client.crashReported = true;
+      // Причина приходит в stderr вместе с событием завершения — даём ему дойти
+      await new Promise((r) => setTimeout(r, 700));
+      if (gen === generation) crashNotice(cfg, client.stderr || (e instanceof Error ? e.message : String(e)));
+    }
     client.dispose();
     byServerId.delete(id);
     void core.lspStop(id);
@@ -155,6 +192,7 @@ function clientForLanguage(languageId: string): Promise<LspClient | null> | null
   const cfg = languages()[languageId];
   if (!cfg?.command) return null;
   const key = serverKey(cfg);
+  if (crashed.has(key)) return null;
   let p = clients.get(key);
   if (!p) {
     p = startServer(cfg);
@@ -223,6 +261,8 @@ export function clientFor(model: monaco.editor.ITextModel): LspClient | undefine
 }
 
 async function stopAll() {
+  generation++;
+  crashed.clear();
   const all = [...byServerId.entries()];
   byServerId.clear();
   clients.clear();
@@ -253,9 +293,11 @@ async function restart() {
 
 export async function initLsp() {
   await events.onLspMessage((id, message) => void byServerId.get(id)?.handle(message));
-  await events.onLspExit((id) => {
+  await events.onLspExit((id, stderr) => {
     const client = byServerId.get(id);
     if (!client) return;
+    client.stderr = stderr;
+    const wasAlive = client.alive;
     client.dispose();
     byServerId.delete(id);
     for (const [key, p] of clients) {
@@ -264,7 +306,11 @@ export async function initLsp() {
       });
     }
     for (const [uri, doc] of docs) if (doc.client === client) docs.delete(uri);
-    notify(`Языковой сервер ${client.name} завершился. Откройте файл заново, чтобы перезапустить.`, "error");
+    // Если сервер упал при запуске, об этом сообщит startServer — одним сообщением
+    if (wasAlive && client.config && !client.crashReported && client.initialized) {
+      client.crashReported = true;
+      crashNotice(client.config, stderr);
+    }
     void core.lspStop(id);
   });
 

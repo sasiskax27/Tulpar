@@ -159,8 +159,8 @@ export const events = {
     listen<ChangeEvent>("workspace:changed", (e) => cb(e.payload)),
   onLspMessage: (cb: (id: number, message: string) => void): Promise<UnlistenFn> =>
     listen<{ id: number; message: string }>("lsp:message", (e) => cb(e.payload.id, e.payload.message)),
-  onLspExit: (cb: (id: number) => void): Promise<UnlistenFn> =>
-    listen<{ id: number }>("lsp:exit", (e) => cb(e.payload.id)),
+  onLspExit: (cb: (id: number, stderr: string) => void): Promise<UnlistenFn> =>
+    listen<{ id: number; stderr: string }>("lsp:exit", (e) => cb(e.payload.id, e.payload.stderr ?? "")),
   onTerminalData: (cb: (id: string, data: string) => void): Promise<UnlistenFn> =>
     listen<{ id: string; data: string }>("terminal:data", (e) => cb(e.payload.id, e.payload.data)),
   onTerminalExit: (cb: (id: string) => void): Promise<UnlistenFn> =>

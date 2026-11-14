@@ -11,6 +11,7 @@ import { executeCommand } from "../commands/registry";
 import { keybindingFor } from "../keybindings/keybindings";
 import { setEditorInstance } from "./instance";
 import { registerAiActions } from "../ai/ai";
+import { compareReview, keepAll, keepReview, reviewFor, reviews, undoReview } from "../ai/review";
 
 export default function EditorGroup() {
   let container!: HTMLDivElement;
@@ -141,6 +142,32 @@ export default function EditorGroup() {
           </div>
         </Show>
       </div>
+      <Show when={reviewFor(activePath())}>
+        {(r) => (
+          <div class="ai-review-bar" classList={{ pending: r().pending }} role="status">
+            <span class="ai-review-spark" aria-hidden="true">✦</span>
+            <span class="ai-review-text">
+              {r().pending ? "ИИ предлагает правку" : r().before === null ? "ИИ создал файл" : "ИИ изменил файл"}
+              <span class="ai-review-count">
+                <span class="plus">+{r().added}</span> <span class="minus">−{r().removed}</span>
+              </span>
+            </span>
+            <Show when={reviews().length > 1}>
+              <span class="ai-review-more">ещё файлов: {reviews().length - 1}</span>
+            </Show>
+            <div class="ai-review-actions">
+              <button class="ai-review-btn keep" onClick={() => keepReview(r())}>✓ {r().pending ? "Принять" : "Оставить"}</button>
+              <button class="ai-review-btn" onClick={() => undoReview(r())}>↶ {r().pending ? "Отклонить" : "Отменить"}</button>
+              <Show when={r().before !== null}>
+                <button class="ai-review-btn" onClick={() => compareReview(r())}>Сравнить</button>
+              </Show>
+              <Show when={reviews().length > 1 && !reviews().some((x) => x.pending)}>
+                <button class="ai-review-btn" onClick={keepAll}>Оставить все</button>
+              </Show>
+            </div>
+          </div>
+        )}
+      </Show>
       <div class="editor-host">
         <div ref={container} class="monaco-container" classList={{ hidden: !activePath() || diffMode() }} />
         <div ref={diffContainer} class="monaco-container" classList={{ hidden: !diffMode() }} />

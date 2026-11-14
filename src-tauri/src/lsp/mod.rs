@@ -6,11 +6,11 @@
 //! Команду запуска берём из languages.json — того же доверия, что и терминал:
 //! пользователь сам решает, что запускать.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::atomic::{AtomicU32, Ordering};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
@@ -47,6 +47,8 @@ struct LspMessage {
 #[derive(Serialize, Clone)]
 struct LspExit {
     id: u32,
+    /** Последние строки stderr — обычно там причина падения */
+    stderr: String,
 }
 
 fn build_command(command: &str, args: &[String], cwd: Option<&str>, via_shell: bool) -> Command {
@@ -127,20 +129,35 @@ pub async fn lsp_start(
     let stdout = child.stdout.take().ok_or("нет stdout")?;
     let stderr = child.stderr.take();
 
+    // Хвост stderr: если сервер упадёт, покажем пользователю причину
+    let tail: Arc<Mutex<VecDeque<String>>> = Arc::new(Mutex::new(VecDeque::new()));
+
     let emitter = app.clone();
+    let tail_for_exit = tail.clone();
     std::thread::spawn(move || {
         let mut reader = BufReader::new(stdout);
         while let Some(message) = read_message(&mut reader) {
             let _ = emitter.emit("lsp:message", LspMessage { id, message });
         }
-        let _ = emitter.emit("lsp:exit", LspExit { id });
+        // stderr обычно дописывается чуть позже stdout
+        std::thread::sleep(std::time::Duration::from_millis(300));
+        let stderr = tail_for_exit
+            .lock()
+            .map(|t| t.iter().cloned().collect::<Vec<_>>().join("\n"))
+            .unwrap_or_default();
+        let _ = emitter.emit("lsp:exit", LspExit { id, stderr });
     });
 
     if let Some(stderr) = stderr {
-        // Логи сервера — в консоль разработчика; позже выведем в панель «Вывод»
         std::thread::spawn(move || {
             for line in BufReader::new(stderr).lines().map_while(Result::ok) {
                 eprintln!("[lsp {id}] {line}");
+                if let Ok(mut t) = tail.lock() {
+                    if t.len() >= 15 {
+                        t.pop_front();
+                    }
+                    t.push_back(line.chars().take(300).collect());
+                }
             }
         });
     }

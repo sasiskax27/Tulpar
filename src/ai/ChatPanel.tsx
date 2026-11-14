@@ -11,7 +11,7 @@ import { openFile, activePath } from "../editor/tabs";
 import { monaco } from "../editor/monaco";
 import { pick } from "../app/QuickPick";
 import { notify } from "../app/notify";
-import { settings } from "../config/store";
+import { settings, updateSetting } from "../config/store";
 import { executeCommand } from "../commands/registry";
 import { chatDrop } from "../explorer/dnd";
 import { answerStep, showStepDiff, undoStep } from "./agent";
@@ -410,6 +410,18 @@ export default function ChatPanel(props: { embedded?: boolean }) {
             >
               {agentMode() ? "🤖 Агент" : "💬 Вопрос"}
             </button>
+            <Show when={agentMode()}>
+              <button
+                class="chat-chip auto"
+                classList={{ on: settings()["tulpar.agent.approve"] === "all" }}
+                title={settings()["tulpar.agent.approve"] === "all"
+                  ? "Авто: агент сам правит файлы и запускает команды без вопросов (опасные команды всё равно спросит). Нажмите, чтобы спрашивать"
+                  : "Включить авто: агент будет всё делать сам, без вопросов. Правки останутся подсвечены в редакторе — их можно отменить"}
+                onClick={() => updateSetting("tulpar.agent.approve", settings()["tulpar.agent.approve"] === "all" ? "ask" : "all")}
+              >
+                ⚡ Авто
+              </button>
+            </Show>
           </Show>
         </div>
         <div class="chat-box">

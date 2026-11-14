@@ -24,6 +24,9 @@ export function dismiss(id: number) {
 }
 
 export function notify(text: string, level: Notice["level"] = "info", actions?: NoticeAction[]) {
+  // Одно и то же сообщение, которое уже на экране, не дублируем
+  const same = notices().find((n) => n.text === text);
+  if (same) return same.id;
   const id = nextId++;
   setNotices((list) => [...list, { id, text, level, actions }]);
   const ttl = actions?.length ? 20000 : level === "error" ? 8000 : 4000;

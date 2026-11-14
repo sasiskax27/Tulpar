@@ -9,6 +9,7 @@ import { editorInstance } from "../editor/instance";
 import { modelFor, openDiff, saveFile, tabs } from "../editor/tabs";
 import { notifyError } from "../app/notify";
 import { aiBase } from "./ai";
+import { closeReview, setReviewHandlers, setReviewPending, showReview, type Review } from "./review";
 import { chatInternals, relPath, streaming, type AgentStep } from "./chat";
 
 const isWindows = navigator.userAgent.includes("Windows");
@@ -161,6 +162,58 @@ function needsApproval(tool: string): boolean {
   return false;
 }
 
+/** Команды, которые даже в режиме «Авто» выполняются только после «Запустить». */
+export function isDangerous(command: string): boolean {
+  const c = command.toLowerCase();
+  return [
+    /\brm\s+(-\w*\s+)*-\w*r/, // rm -rf, rm -r
+    /remove-item\b.*-recurse/,
+    /\b(rd|rmdir)\s+\/s/,
+    /\bdel\s+.*\/s/,
+    /(^|[;&|]\s*)format(\.com)?\s+[a-z]:|\bformat-volume\b/,
+    /\bgit\s+(reset\s+--hard|clean\s+-\w*f|push\s+.*--force|push\s+-f)/,
+    /\b(shutdown|restart-computer|stop-computer)\b/,
+    /\bmkfs\b|\bdd\s+if=/,
+    /set-executionpolicy|reg\s+(add|delete)|bcdedit/,
+    /\b(curl|wget|iwr|invoke-webrequest)\b.*\|\s*(sh|bash|iex|invoke-expression)/,
+  ].some((re) => re.test(c));
+}
+
+/**
+ * Применить правку так, чтобы её было видно в редакторе. Существующий файл:
+ * текст сразу появляется в открытой вкладке с подсветкой, а сохраняется после
+ * «Оставить»/«Разрешить» (в режиме без вопросов — сразу). Новый файл создаётся
+ * после разрешения. Возвращает путь файла или null, если правку отклонили.
+ */
+async function applyChange(stepId: string, kind: "edit_file" | "write_file", path: string, before: string | null, after: string): Promise<string | null> {
+  const needAsk = needsApproval(kind);
+  if (before !== null) {
+    const shown = await showReview({ path, stepId, before, after, preview: true });
+    if (needAsk && !(await ask(stepId))) {
+      const model = modelFor(shown);
+      if (model && !model.isDisposed()) {
+        model.pushEditOperations([], [{ range: model.getFullModelRange(), text: before }], () => null);
+        await saveFile(shown);
+      }
+      closeReview(shown);
+      return null;
+    }
+    if (modelFor(shown)) await saveFile(shown);
+    else await core.agentWrite(shown, after);
+    reloadDir(parentDir(shown));
+    // С вопросами решение уже принято; без вопросов — подсветка остаётся до «Оставить»
+    if (needAsk) closeReview(shown);
+    else setReviewPending(shown, false);
+    return shown;
+  }
+  if (needAsk && !(await ask(stepId))) return null;
+  const written = await core.agentWrite(path, after);
+  reloadDir(parentDir(written));
+  const shown = await showReview({ path: written, stepId, before: null, after, preview: false });
+  if (needAsk) closeReview(shown);
+  return shown;
+}
+
 // ---------- шаги в чате ----------
 
 function updateStep(stepId: string, patch: Partial<AgentStep>) {
@@ -288,11 +341,11 @@ async function executeOnce(call: ToolCall): Promise<string> {
             ? `Ошибка: old_text встречается ${count} раз. Добавьте соседние строки, чтобы он был уникальным.`
             : "Ошибка: old_text не найден в файле. Прочитайте файл заново (read_file) и скопируйте фрагмент точно.";
         }
-        if (needsApproval("edit_file") && !(await ask(stepId))) return "Пользователь отклонил эту правку.";
         let after = oldText ? text.replace(norm(oldText), () => norm(newText)) : norm(newText);
         if (crlf) after = after.replace(/\n/g, "\r\n");
-        await writeText(path, after);
-        updateStep(stepId, { status: "done", undo: { path, before } });
+        const saved = await applyChange(stepId, "edit_file", path, before, after);
+        if (!saved) return "Пользователь отклонил эту правку.";
+        updateStep(stepId, { status: "done", undo: { path: saved, before } });
         return "Готово, файл изменён.";
       }
       case "write_file": {
@@ -300,16 +353,18 @@ async function executeOnce(call: ToolCall): Promise<string> {
         const content = String(a.content ?? "");
         const before = await readText(path);
         step(`${before === null ? "Создаю" : "Перезаписываю"} ${relPath(path)}`, preview(content));
-        if (needsApproval("write_file") && !(await ask(stepId))) return "Пользователь отклонил запись файла.";
-        await writeText(path, content);
-        updateStep(stepId, { status: "done", undo: { path, before } });
+        const saved = await applyChange(stepId, "write_file", path, before, content);
+        if (!saved) return "Пользователь отклонил запись файла.";
+        updateStep(stepId, { status: "done", undo: { path: saved, before } });
         return before === null ? "Файл создан." : "Файл перезаписан.";
       }
       case "run_command": {
         const command = String(a.command ?? "").trim();
         if (!command) return "Ошибка: пустая команда";
         step(`Запускаю команду`, command);
-        if (needsApproval("run_command") && !(await ask(stepId))) return "Пользователь не разрешил запускать эту команду.";
+        const risky = isDangerous(command);
+        if (risky) updateStep(stepId, { result: "опасная команда — нужна проверка" });
+        if ((risky || needsApproval("run_command")) && !(await ask(stepId))) return "Пользователь не разрешил запускать эту команду.";
         const r = await core.agentRun(command, Number(a.timeout_seconds) || undefined);
         const status = r.timedOut ? "остановлена по времени" : `код выхода ${r.code ?? "?"}`;
         updateStep(stepId, {
@@ -399,6 +454,7 @@ export function textToolCalls(text: string): { calls: ToolCall[]; rest: string }
 
 export async function undoStep(step: AgentStep) {
   if (!step.undo) return;
+  closeReview(step.undo.path);
   try {
     if (step.undo.before === null) {
       await core.deletePath(step.undo.path);
@@ -411,6 +467,21 @@ export async function undoStep(step: AgentStep) {
     notifyError("Не удалось отменить правку", e);
   }
 }
+
+// Кнопки панели над редактором
+setReviewHandlers({
+  keep: (r: Review) => {
+    if (waiting.has(r.stepId)) answerStep(r.stepId, true);
+    else closeReview(r.path);
+  },
+  undo: (r: Review) => {
+    if (waiting.has(r.stepId)) {
+      answerStep(r.stepId, false);
+      return;
+    }
+    void undoStep({ id: r.stepId, tool: "edit_file", title: "", status: "done", undo: { path: r.path, before: r.before } });
+  },
+});
 
 export function showStepDiff(step: AgentStep) {
   if (!step.undo) return;

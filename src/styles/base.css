@@ -1233,6 +1233,8 @@ body.resizing .side-island { transition: none; }
 /* ---------- агент в чате ---------- */
 
 .chat-chip.agent { margin-left: auto; border: 1px solid var(--tp-border); }
+.chat-chip.auto { border: 1px solid var(--tp-border); color: var(--tp-fg-muted); }
+.chat-chip.auto.on { color: #1a1406; background: var(--tp-gold); border-color: var(--tp-gold); font-weight: 600; }
 .chat-chip.agent.on { color: var(--tp-gold); border-color: color-mix(in srgb, var(--tp-gold) 55%, transparent); background: color-mix(in srgb, var(--tp-gold) 10%, transparent); }
 .agent-steps { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
 .agent-step {
@@ -1273,3 +1275,34 @@ body.resizing .side-island { transition: none; }
 .agent-step-actions .button, .agent-step-actions .button-quiet { font-size: 12px; padding: 3px 10px; }
 @media (prefers-reduced-motion: reduce) { .agent-step.running .agent-step-icon { animation: none; } }
 .chat-warn { font-size: 12px; color: var(--tp-gold); border-left: 2px solid var(--tp-gold); padding-left: 8px; }
+
+/* ---------- правки ИИ в редакторе ---------- */
+
+.ai-line-added { background: rgba(76, 195, 138, 0.13); }
+.ai-gutter-added { border-left: 3px solid #4cc38a; margin-left: 3px; }
+.ai-line-deleted { box-shadow: inset 0 2px 0 rgba(255, 107, 107, 0.75); }
+.ai-gutter-deleted { border-left: 3px solid #ff6b6b; margin-left: 3px; }
+.ai-review-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  margin: 4px 8px 2px;
+  padding: 5px 6px 5px 12px;
+  border-radius: calc(var(--tp-radius) * 0.8);
+  border: 1px solid color-mix(in srgb, var(--tp-gold) 40%, var(--tp-border));
+  background: color-mix(in srgb, var(--tp-gold) 7%, var(--tp-bg-sidebar));
+  font-size: 12.5px;
+}
+.ai-review-bar.pending { border-color: var(--tp-gold); box-shadow: 0 0 0 1px color-mix(in srgb, var(--tp-gold) 35%, transparent); }
+.ai-review-spark { color: var(--tp-gold); }
+.ai-review-text { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.ai-review-count { font-variant-numeric: tabular-nums; font-size: 12px; }
+.ai-review-count .plus { color: #4cc38a; }
+.ai-review-count .minus { color: #ff6b6b; }
+.ai-review-more { color: var(--tp-fg-muted); font-size: 11.5px; white-space: nowrap; }
+.ai-review-actions { margin-left: auto; display: flex; gap: 4px; }
+.ai-review-btn { padding: 3px 10px; border-radius: 6px; color: var(--tp-fg); white-space: nowrap; }
+.ai-review-btn:hover { background: var(--tp-bg-hover); color: var(--tp-fg-strong); }
+.ai-review-btn.keep { background: var(--tp-gold); color: #1a1406; font-weight: 600; }
+.ai-review-btn.keep:hover { filter: brightness(1.08); background: var(--tp-gold); color: #1a1406; }

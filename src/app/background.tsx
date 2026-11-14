@@ -5,15 +5,49 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { core } from "../ipc";
 import { settings, updateSetting } from "../config/store";
 import { notify, notifyError } from "./notify";
+import { photoThemeFromPixels, type PhotoTheme } from "./themes";
 
 export async function setBackgroundFrom(path: string) {
   try {
     const stored = await core.backgroundImport(path);
     updateSetting("tulpar.background.image", stored);
-    notify("Фон установлен. Прозрачность и размытие — в настройках (Ctrl+,)");
+    if (settings()["workbench.colorTheme"] === "photo") {
+      notify("Фон установлен, тема подстроится под его цвета");
+    } else {
+      notify("Фон установлен. Прозрачность и размытие — в настройках (Ctrl+,)", "info", [
+        { label: "Перекрасить Tulpar под картинку", run: () => usePhotoTheme() },
+      ]);
+    }
   } catch (e) {
     notifyError("Не удалось поставить фон", e);
   }
+}
+
+/** Включить тему «Из фоновой картинки» (оттенок посчитается из картинки). */
+export function usePhotoTheme() {
+  updateSetting("workbench.colorTheme", "photo");
+  const s = settings();
+  // Чтобы картинку было видно за кодом, но она не мешала читать
+  if (Number(s["tulpar.background.opacity"]) < 0.12) updateSetting("tulpar.background.opacity", 0.2);
+  if (!Number(s["tulpar.background.blur"])) updateSetting("tulpar.background.blur", 3);
+}
+
+/** Главный оттенок картинки: уменьшаем до 48×48 и считаем по точкам. */
+async function photoThemeOf(url: string): Promise<PhotoTheme | null> {
+  const img = new Image();
+  img.src = url;
+  try {
+    await img.decode();
+  } catch {
+    return null;
+  }
+  const canvas = document.createElement("canvas");
+  canvas.width = 48;
+  canvas.height = 48;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return null;
+  ctx.drawImage(img, 0, 0, 48, 48);
+  return photoThemeFromPixels(ctx.getImageData(0, 0, 48, 48).data);
 }
 
 export async function chooseBackground() {
@@ -69,6 +103,18 @@ export default function BackgroundLayer() {
     ),
   );
   onCleanup(() => replaceUrl(null));
+
+  // Тема «Из фоновой картинки» следует за картинкой
+  createEffect(
+    on([url, () => settings()["workbench.colorTheme"]], ([u, theme]) => {
+      if (!u || theme !== "photo") return;
+      void photoThemeOf(u).then((t) => {
+        if (!t || url() !== u) return;
+        const cur = settings()["tulpar.photoTheme"];
+        if (!cur || cur.hue !== t.hue || cur.sat !== t.sat || cur.light !== t.light) updateSetting("tulpar.photoTheme", t);
+      });
+    }),
+  );
 
   const style = () => {
     const s = settings();

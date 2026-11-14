@@ -16,7 +16,7 @@ import { notify } from "./notify";
 import { restartLanguageServers } from "../lsp/manager";
 import { toggleTerminal, newTerminal, killSession } from "../terminal/sessions";
 import { focusEditor } from "../editor/instance";
-import { chooseBackground, clearBackground } from "./background";
+import { chooseBackground, clearBackground, usePhotoTheme } from "./background";
 import { cancelAi, runAiTask, tasks } from "../ai/ai";
 
 async function openConfig(name: ConfigName) {
@@ -182,6 +182,7 @@ export function registerBuiltinCommands() {
   reg({ id: "editor.action.fontZoomReset", category: "Вид", title: "Сбросить размер шрифта", run: () => updateSetting("editor.fontSize", defaultSettings["editor.fontSize"]) });
 
   reg({ id: "tulpar.background.choose", category: "Вид", title: "Выбрать фоновую картинку…", run: () => chooseBackground() });
+  reg({ id: "tulpar.theme.fromPhoto", category: "Вид", title: "Тема из фоновой картинки", run: () => usePhotoTheme() });
   reg({ id: "tulpar.background.clear", category: "Вид", title: "Убрать фоновую картинку", run: () => clearBackground() });
 
   // Действия ИИ: те же, что в меню по правому клику

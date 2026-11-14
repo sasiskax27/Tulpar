@@ -4,7 +4,7 @@ import { For, onCleanup, onMount, Show, type JSX } from "solid-js";
 import { settings, updateSetting, type Settings } from "../config/store";
 import { settingsVisible, setSettingsVisible } from "../app/ui";
 import { executeCommand } from "../commands/registry";
-import { chooseBackground, clearBackground } from "../app/background";
+import { chooseBackground, clearBackground, usePhotoTheme } from "../app/background";
 import { providers } from "../ai/ai";
 import { focusEditor } from "../editor/instance";
 import { baseName } from "../ipc";
@@ -151,6 +151,11 @@ const sections: Section[] = [
             <button class="button" onClick={() => void chooseBackground()}>
               Выбрать…
             </button>
+            <Show when={image() && settings()["workbench.colorTheme"] !== "photo"}>
+              <button class="button-quiet" title="Подобрать цвета интерфейса и кода под картинку" onClick={usePhotoTheme}>
+                Тема по картинке
+              </button>
+            </Show>
             <Show when={image()}>
               <button class="button-quiet" onClick={clearBackground}>
                 Убрать

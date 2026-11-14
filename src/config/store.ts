@@ -17,7 +17,7 @@ export interface Settings {
   "editor.minimap.enabled": boolean;
   "editor.lineNumbers": "on" | "off" | "relative";
   "editor.cursorBlinking": "blink" | "smooth" | "phase" | "expand" | "solid";
-  "workbench.colorTheme": "steppe" | "berkut" | "dawn" | "dark" | "light";
+  "workbench.colorTheme": "steppe" | "berkut" | "dawn" | "photo" | "dark" | "light";
   /** Дизайн 1 (classic) или Дизайн 2 (tulpar: верхняя панель и выезжающий остров) */
   "workbench.style": "classic" | "tulpar";
   /** Панели — отдельные скруглённые острова с промежутками */
@@ -40,6 +40,8 @@ export interface Settings {
   /** Оболочка терминала; null — PowerShell на Windows, $SHELL на macOS и Linux */
   "terminal.integrated.shell": string | null;
   "terminal.integrated.fontSize": number;
+  /** Оттенок темы «Из фоновой картинки», вычисляется из картинки */
+  "tulpar.photoTheme": { hue: number; sat: number; light: boolean } | null;
   /** Фоновая картинка: путь к файлу или null */
   "tulpar.background.image": string | null;
   "tulpar.background.opacity": number;
@@ -99,6 +101,7 @@ export const defaultSettings: Settings = {
   "files.autoSaveDelay": 1000,
   "terminal.integrated.shell": null,
   "terminal.integrated.fontSize": 13,
+  "tulpar.photoTheme": null,
   "tulpar.background.image": null,
   "tulpar.background.opacity": 0.15,
   "tulpar.background.blur": 0,

@@ -4,8 +4,9 @@
 // и цвета терминала.
 import type { ITheme } from "@xterm/xterm";
 import * as monaco from "monaco-editor";
+import { settings } from "../config/store";
 
-export type ThemeId = "dark" | "light" | "steppe" | "berkut" | "dawn";
+export type ThemeId = "dark" | "light" | "steppe" | "berkut" | "dawn" | "photo";
 
 interface Palette {
   light: boolean;
@@ -15,7 +16,7 @@ interface Palette {
   err: string; ok: string;
 }
 
-const PALETTES: Record<Exclude<ThemeId, "dark" | "light">, Palette> = {
+const PALETTES: Record<"steppe" | "berkut" | "dawn", Palette> = {
   steppe: {
     light: false,
     bg: "#0B0F1C", island: "#141A2C", panel: "#212944", line: "#232B45", code: "#0E1324",
@@ -43,17 +44,117 @@ export const THEME_NAMES: [ThemeId, string][] = [
   ["steppe", "Ночная степь"],
   ["berkut", "Беркут"],
   ["dawn", "Рассвет"],
+  ["photo", "Из фоновой картинки"],
   ["dark", "Тёмная (классическая)"],
   ["light", "Светлая (классическая)"],
 ];
 
+// ---------- тема из фото ----------
+
+export interface PhotoTheme {
+  hue: number;
+  sat: number;
+  light: boolean;
+}
+
+/** Цвет из HSL (h в градусах, s и l — 0…100) в #rrggbb. */
+export function hsl(h: number, s: number, l: number): string {
+  h = ((h % 360) + 360) % 360;
+  s /= 100;
+  l /= 100;
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  const hex = (x: number) => Math.round(x * 255).toString(16).padStart(2, "0");
+  return `#${hex(f(0))}${hex(f(8))}${hex(f(4))}`;
+}
+
+/**
+ * Тема вокруг одного оттенка. Яркости фиксированные — поэтому читаемость
+ * не зависит от фото; подсветка — оттенок, повёрнутый на постоянные углы.
+ */
+export function photoPalette(t: PhotoTheme): Palette {
+  const h = t.hue;
+  const sat = Math.max(35, Math.min(85, t.sat));
+  const tint = sat * 0.35;
+  if (t.light) {
+    return {
+      light: true,
+      bg: hsl(h, tint, 94), island: hsl(h, tint, 99), panel: hsl(h, tint, 90), line: hsl(h, tint, 86), code: hsl(h, tint, 97.5),
+      text: hsl(h, 20, 15), muted: hsl(h, 10, 40), strong: "#000000", accent: hsl(h, sat, 34), onAccent: "#ffffff", selection: hsl(h, 55, 85),
+      kw: hsl(h + 60, 60, 38), fn: hsl(h + 25, 75, 32), str: hsl(h + 150, 55, 28), num: hsl(h - 40, 70, 38), com: hsl(h, 8, 45),
+      param: hsl(h + 100, 50, 32), type: hsl(h + 180, 55, 28), punct: hsl(h, 10, 42), err: "#b4441f", ok: "#2d6e3a",
+    };
+  }
+  return {
+    light: false,
+    bg: hsl(h, tint, 7), island: hsl(h, tint, 11), panel: hsl(h, tint, 17), line: hsl(h, tint, 19), code: hsl(h, tint, 8.5),
+    text: hsl(h, 15, 89), muted: hsl(h, 12, 62), strong: "#ffffff", accent: hsl(h, sat, 66), onAccent: hsl(h, 40, 10), selection: hsl(h, 35, 25),
+    kw: hsl(h + 60, 70, 77), fn: hsl(h + 25, 85, 70), str: hsl(h + 150, 55, 72), num: hsl(h - 40, 80, 74), com: hsl(h, 12, 55),
+    param: hsl(h + 100, 60, 80), type: hsl(h + 180, 50, 66), punct: hsl(h, 12, 62), err: "#ff8d8d", ok: "#6fd3a8",
+  };
+}
+
+/** Оттенок темы «Из фоновой картинки» — из настройки tulpar.photoTheme. */
+function photo(): PhotoTheme {
+  const t = settings()["tulpar.photoTheme"] as PhotoTheme | null | undefined;
+  return t && Number.isFinite(t.hue) ? t : { hue: 40, sat: 70, light: false };
+}
+
+function pal(id: string): Palette | undefined {
+  if (id === "photo") return photoPalette(photo());
+  return PALETTES[id as keyof typeof PALETTES];
+}
+
+/** Главный оттенок картинки: 24 корзины оттенка, вес = насыщенность × близость яркости к 55%. */
+export function photoThemeFromPixels(data: Uint8ClampedArray): PhotoTheme {
+  const weight = new Float64Array(24);
+  const satSum = new Float64Array(24);
+  let lightSum = 0;
+  let count = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 128) continue;
+    const r = data[i] / 255, g = data[i + 1] / 255, b = data[i + 2] / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const l = (max + min) / 2;
+    lightSum += l;
+    count++;
+    const d = max - min;
+    if (d < 0.02) continue;
+    const s = d / (1 - Math.abs(2 * l - 1));
+    let h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h = (h * 60 + 360) % 360;
+    const w = s * Math.max(0, 1 - Math.abs(l - 0.55) * 2);
+    const bin = Math.floor(h / 15) % 24;
+    weight[bin] += w;
+    satSum[bin] += s * w;
+  }
+  let best = 0;
+  for (let i = 1; i < 24; i++) {
+    // Соседние корзины тоже считаются — оттенок на границе не теряется
+    const score = (j: number) => weight[j] + 0.5 * (weight[(j + 23) % 24] + weight[(j + 1) % 24]);
+    if (score(i) > score(best)) best = i;
+  }
+  const w = weight[best];
+  const sat = w > 0 ? Math.round((satSum[best] / w) * 100) : 40;
+  return { hue: best * 15 + 7, sat, light: count > 0 && lightSum / count > 0.72 };
+}
+
 export function isLightTheme(id: string): boolean {
   if (id === "light") return true;
-  return PALETTES[id as keyof typeof PALETTES]?.light ?? false;
+  return pal(id)?.light ?? false;
 }
 
 /** Имя темы Monaco для настройки workbench.colorTheme. */
+let definedPhoto = "";
+
 export function monacoTheme(id: string): string {
+  if (id === "photo") {
+    // Оттенок мог смениться — переопределяем тему Monaco
+    const key = JSON.stringify(photo());
+    if (key !== definedPhoto) definePhotoMonacoTheme();
+    return "tulpar-photo";
+  }
   if (id in PALETTES) return `tulpar-${id}`;
   return id === "light" ? "vs" : "vs-dark";
 }
@@ -62,7 +163,17 @@ const strip = (hex: string) => hex.replace("#", "");
 
 /** Зарегистрировать темы Tulpar в Monaco — один раз при запуске. */
 export function defineMonacoThemes() {
-  for (const [id, p] of Object.entries(PALETTES)) {
+  for (const [id, p] of Object.entries(PALETTES)) defineOne(id, p);
+  definePhotoMonacoTheme();
+}
+
+function definePhotoMonacoTheme() {
+  definedPhoto = JSON.stringify(photo());
+  defineOne("photo", photoPalette(photo()));
+}
+
+function defineOne(id: string, p: Palette) {
+  {
     monaco.editor.defineTheme(`tulpar-${id}`, {
       base: p.light ? "vs" : "vs-dark",
       inherit: true,
@@ -134,7 +245,7 @@ export function defineMonacoThemes() {
 
 /** CSS-переменные интерфейса для тем Tulpar (классические темы — в base.css). */
 export function cssVars(id: string): Record<string, string> | null {
-  const p = PALETTES[id as keyof typeof PALETTES];
+  const p = pal(id);
   if (!p) return null;
   return {
     "--tp-bg": p.bg,
@@ -162,7 +273,7 @@ export function cssVars(id: string): Record<string, string> | null {
 
 /** Цвета терминала для тем Tulpar; null — классическая тема (её цвета в sessions.ts). */
 export function terminalTheme(id: string): ITheme | null {
-  const p = PALETTES[id as keyof typeof PALETTES];
+  const p = pal(id);
   if (!p) return null;
   return {
     background: p.code,

@@ -40,6 +40,7 @@ fn main() {
             workspace::project_create,
             workspace::user_file_write,
             workspace::user_file_read,
+            workspace::user_file_save_binary,
             pkg::pkg_search,
             testing::tests_run,
             sqlite::sqlite_tables,

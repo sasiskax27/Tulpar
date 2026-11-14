@@ -9,6 +9,7 @@ import ContextMenu from "./ContextMenu";
 import QuickPick from "./QuickPick";
 import Onboarding, { maybeShowOnboarding } from "./Onboarding";
 import ThemeGallery from "./ThemeGallery";
+import VideoStudio from "../video/VideoStudio";
 import { notices, dismiss } from "./notify";
 import { settings } from "../config/store";
 import { cssVars, isLightTheme } from "./themes";
@@ -61,6 +62,7 @@ export default function App() {
       <QuickPick />
       <Onboarding />
       <ThemeGallery />
+      <VideoStudio />
       <div class="notices">
         <For each={notices()}>
           {(n) => (

@@ -131,6 +131,8 @@ export const core = {
   ollamaDelete: (host: string, model: string) => invoke<void>("ollama_delete", { host, model }),
   createFile: (path: string) => invoke<string>("create_file", { path }),
   userFileWrite: (path: string, content: string) => invoke<void>("user_file_write", { path, content }),
+  userFileSaveBinary: (path: string, data: Uint8Array) =>
+    invoke<void>("user_file_save_binary", data, { headers: { "x-path": encodeURIComponent(path) } }),
   userFileRead: (path: string) => invoke<string>("user_file_read", { path }),
   projectCreate: (parent: string, name: string) => invoke<string>("project_create", { parent, name }),
   createDir: (path: string) => invoke<string>("create_dir", { path }),

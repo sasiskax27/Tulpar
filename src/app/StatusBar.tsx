@@ -1,4 +1,5 @@
 // Строка статуса: папка, ветка git, раскладка, несохранённые файлы, позиция курсора, язык.
+import { RecordingBadge } from "../video/VideoStudio";
 import { Show } from "solid-js";
 import { root } from "./workspace";
 import { tabs, activePath, cursor } from "../editor/tabs";
@@ -48,6 +49,7 @@ export default function StatusBar() {
         </Show>
       </div>
       <div class="status-right">
+        <RecordingBadge />
         <Show when={activeTab()}>
           {(tab) => (
             <>

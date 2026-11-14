@@ -359,3 +359,47 @@ pub async fn user_file_read(path: String) -> Result<String, String> {
     let bytes = std::fs::read(&p).map_err(|e| e.to_string())?;
     String::from_utf8(bytes).map_err(|_| "файл не в кодировке UTF-8".into())
 }
+
+/// Сохранить двоичный файл (видео, картинку), выбранный пользователем в окне
+/// «Сохранить». Данные идут сырыми байтами (без JSON), путь — в заголовке x-path.
+#[tauri::command]
+pub async fn user_file_save_binary(request: tauri::ipc::Request<'_>) -> Result<(), String> {
+    let tauri::ipc::InvokeBody::Raw(data) = request.body() else {
+        return Err("ожидались двоичные данные".into());
+    };
+    let encoded = request
+        .headers()
+        .get("x-path")
+        .and_then(|v| v.to_str().ok())
+        .ok_or("не указан путь")?;
+    let path = PathBuf::from(percent_decode(encoded)?);
+    let ext = path.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
+    if !matches!(ext.as_str(), "mp4" | "webm" | "gif" | "png") {
+        return Err("можно только видео и картинки".into());
+    }
+    if !path.is_absolute() {
+        return Err("некорректный путь".into());
+    }
+    if data.len() > 500 * 1024 * 1024 {
+        return Err("файл слишком большой".into());
+    }
+    std::fs::write(&path, data).map_err(|e| e.to_string())
+}
+
+/// encodeURIComponent → строка (пути с кириллицей не помещаются в заголовок как есть).
+fn percent_decode(s: &str) -> Result<String, String> {
+    let bytes = s.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'%' && i + 2 < bytes.len() {
+            let hex = std::str::from_utf8(&bytes[i + 1..i + 3]).map_err(|_| "некорректный путь")?;
+            out.push(u8::from_str_radix(hex, 16).map_err(|_| "некорректный путь")?);
+            i += 3;
+        } else {
+            out.push(bytes[i]);
+            i += 1;
+        }
+    }
+    String::from_utf8(out).map_err(|_| "некорректный путь".into())
+}

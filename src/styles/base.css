@@ -2120,3 +2120,21 @@ body.resizing .side-island { transition: none; }
 .activity-more { font-size: 18px; letter-spacing: 1px; }
 .view-switch.drop-target, .activity-item.drop-target { box-shadow: inset 0 0 0 2px var(--tp-accent); border-radius: 6px; }
 .view-switch[draggable="true"], .activity-item[draggable="true"] { -webkit-user-drag: element; }
+
+/* ---------- Код в видео ---------- */
+.rec-badge { color: #ff5f57 !important; font-weight: 600; }
+.rec-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ff3b30; margin-right: 4px; animation: rec-pulse 1s infinite; }
+@keyframes rec-pulse { 50% { opacity: 0.3; } }
+.vs-dialog { width: min(900px, 94vw); }
+.vs-empty { padding: 20px 24px 26px; line-height: 1.6; }
+.vs-empty ol { margin: 10px 0 18px; padding-left: 22px; color: var(--tp-fg-muted); }
+.vs-body { display: grid; grid-template-columns: auto 1fr; gap: 20px; padding: 16px; overflow: auto; }
+.vs-preview { position: relative; height: min(62vh, 560px); aspect-ratio: 9 / 16; border-radius: 14px; overflow: hidden; border: 1px solid var(--tp-border); background: #000; }
+.vs-preview.horizontal { height: auto; width: min(420px, 50vw); aspect-ratio: 16 / 9; align-self: start; }
+.vs-preview canvas { width: 100%; height: 100%; display: block; }
+.vs-progress { position: absolute; left: 12px; right: 12px; bottom: 12px; height: 34px; border-radius: 10px; background: rgba(0, 0, 0, 0.6); overflow: hidden; }
+.vs-progress div { position: absolute; inset: 0 auto 0 0; background: var(--tp-accent); opacity: 0.6; transition: width 0.2s linear; }
+.vs-progress span { position: relative; display: block; text-align: center; line-height: 34px; font-size: 12px; color: #fff; }
+.vs-controls { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.vs-controls input[type="range"] { width: 100%; }
+@media (max-width: 720px) { .vs-body { grid-template-columns: 1fr; } }

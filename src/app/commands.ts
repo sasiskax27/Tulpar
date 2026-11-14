@@ -180,6 +180,18 @@ export function registerBuiltinCommands() {
   reg({ id: "tulpar.sync.download", category: "Настройки", title: "Скачать настройки из GitHub", run: () => void import("../settings/sync").then((m) => m.downloadSettings()) });
   reg({ id: "tulpar.themes.gallery", category: "Вид", title: "Галерея тем", run: () => void import("./ThemeGallery").then((m) => m.showThemeGallery()) });
   reg({ id: "workbench.view.databases", category: "Вид", title: "Базы данных", run: (args) => showView("databases", args) });
+  reg({ id: "tulpar.video.studio", category: "Видео", title: "Код в видео (для ТикТока)…", run: () => void import("../video/VideoStudio").then((m) => m.showVideoStudio()) });
+  reg({
+    id: "tulpar.video.record",
+    category: "Видео",
+    title: "Начать / остановить запись кода",
+    run: async () => {
+      const r = await import("../video/recorder");
+      if (r.recording()) {
+        if (r.stopRecording()) (await import("../video/VideoStudio")).showVideoStudio();
+      } else r.startRecording();
+    },
+  });
   reg({ id: "workbench.view.testing", category: "Вид", title: "Тесты", run: (args) => showView("tests", args) });
   reg({ id: "testing.runAll", category: "Тесты", title: "Запустить все тесты", run: () => void import("../testing/tests").then((m) => m.runTests()) });
   reg({ id: "workbench.view.packages", category: "Вид", title: "Библиотеки: найти и подключить", run: (args) => showView("packages", args) });

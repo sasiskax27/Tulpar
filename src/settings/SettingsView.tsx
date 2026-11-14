@@ -9,6 +9,7 @@ import { providers } from "../ai/ai";
 import { focusEditor } from "../editor/instance";
 import { baseName } from "../ipc";
 import LocalAi from "./LocalAi";
+import { THEME_NAMES } from "../app/themes";
 import CustomActions from "./CustomActions";
 
 type Text = string | (() => string);
@@ -87,11 +88,32 @@ const sections: Section[] = [
     title: "Внешний вид",
     fields: [
       {
-        key: "workbench.colorTheme",
-        label: "Тема",
+        key: "workbench.style",
+        label: "Стиль интерфейса",
+        hint: "Дизайн 2 — верхняя панель с ИИ-островом, боковая панель выезжает при наведении на левый край.",
         type: "select",
-        options: [["dark", "Тёмная"], ["light", "Светлая"]],
+        options: [["classic", "Дизайн 1 — полоса иконок"], ["tulpar", "Дизайн 2 — Tulpar"]],
       },
+      { key: "workbench.colorTheme", label: "Тема", type: "select", options: THEME_NAMES },
+      { key: "workbench.islands", label: "Панели-острова", hint: "Скруглённые панели с промежутками. В Дизайне 2 включены всегда.", type: "toggle" },
+      {
+        key: "workbench.activityBar",
+        label: "Полоса иконок",
+        hint: "Дизайн 1. Если скрыть — разделы переключаются сверху боковой панели.",
+        type: "select",
+        options: [["left", "Слева"], ["right", "Справа"], ["hidden", "Скрыть"]],
+      },
+      {
+        key: "workbench.tabs.style",
+        label: "Вкладки",
+        type: "select",
+        options: [["pills", "Капсулы"], ["underline", "С подчёркиванием"], ["classic", "Классические"]],
+      },
+      { key: "workbench.radius", label: "Скругление углов", type: "range", min: 0, max: 20, step: 1, show: (v) => (v ? `${v} px` : "прямые") },
+      { key: "workbench.gap", label: "Промежуток между панелями", type: "range", min: 0, max: 16, step: 1, show: (v) => `${v} px` },
+      { key: "workbench.uiFontSize", label: "Шрифт интерфейса", type: "range", min: 11, max: 16, step: 1, show: (v) => `${v} px` },
+      { key: "workbench.statusBar.visible", label: "Строка статуса внизу", type: "toggle" },
+      { key: "workbench.sidebar.autoHide", label: "Прятать боковую панель", hint: "Дизайн 2: панель выезжает при наведении на левый край и прячется, когда уводишь мышь.", type: "toggle" },
       {
         key: "tulpar.background.opacity",
         label: "Яркость фона",
@@ -240,7 +262,14 @@ const sections: Section[] = [
 function Control(props: { def: FieldDef }) {
   const def = props.def;
   const value = () => settings()[def.key];
-  const set = (v: unknown) => updateSetting(def.key, v as Settings[typeof def.key]);
+  const set = (v: unknown) => {
+    updateSetting(def.key, v as Settings[typeof def.key]);
+    // Дизайн 2 задуман с темами Tulpar: с классической темой он выглядит чужим.
+    if (def.key === "workbench.style" && v === "tulpar") {
+      const theme = settings()["workbench.colorTheme"];
+      if (theme === "dark" || theme === "light") updateSetting("workbench.colorTheme", theme === "light" ? "dawn" : "steppe");
+    }
+  };
 
   switch (def.type) {
     case "toggle":

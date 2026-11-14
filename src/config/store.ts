@@ -17,7 +17,24 @@ export interface Settings {
   "editor.minimap.enabled": boolean;
   "editor.lineNumbers": "on" | "off" | "relative";
   "editor.cursorBlinking": "blink" | "smooth" | "phase" | "expand" | "solid";
-  "workbench.colorTheme": "dark" | "light";
+  "workbench.colorTheme": "steppe" | "berkut" | "dawn" | "dark" | "light";
+  /** Дизайн 1 (classic) или Дизайн 2 (tulpar: верхняя панель и выезжающий остров) */
+  "workbench.style": "classic" | "tulpar";
+  /** Панели — отдельные скруглённые острова с промежутками */
+  "workbench.islands": boolean;
+  /** Где полоса иконок в Дизайне 1 */
+  "workbench.activityBar": "left" | "right" | "hidden";
+  /** Вид вкладок */
+  "workbench.tabs.style": "pills" | "underline" | "classic";
+  /** Скругление углов, px */
+  "workbench.radius": number;
+  /** Размер шрифта интерфейса, px */
+  "workbench.uiFontSize": number;
+  /** Отступ между островами, px */
+  "workbench.gap": number;
+  "workbench.statusBar.visible": boolean;
+  /** Дизайн 2: боковой остров прячется сам и выезжает при наведении на левый край */
+  "workbench.sidebar.autoHide": boolean;
   "files.autoSave": "off" | "afterDelay" | "onFocusChange";
   "files.autoSaveDelay": number;
   /** Оболочка терминала; null — PowerShell на Windows, $SHELL на macOS и Linux */
@@ -62,7 +79,16 @@ export const defaultSettings: Settings = {
   "editor.minimap.enabled": true,
   "editor.lineNumbers": "on",
   "editor.cursorBlinking": "smooth",
-  "workbench.colorTheme": "dark",
+  "workbench.colorTheme": "steppe",
+  "workbench.style": "classic",
+  "workbench.islands": true,
+  "workbench.activityBar": "left",
+  "workbench.tabs.style": "pills",
+  "workbench.radius": 10,
+  "workbench.uiFontSize": 13,
+  "workbench.gap": 6,
+  "workbench.statusBar.visible": true,
+  "workbench.sidebar.autoHide": true,
   "files.autoSave": "off",
   "files.autoSaveDelay": 1000,
   "terminal.integrated.shell": null,

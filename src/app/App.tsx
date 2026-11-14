@@ -9,11 +9,32 @@ import ContextMenu from "./ContextMenu";
 import QuickPick from "./QuickPick";
 import { notices, dismiss } from "./notify";
 import { settings } from "../config/store";
+import { cssVars, isLightTheme } from "./themes";
+
+const clamp = (v: number, min: number, max: number, def: number) =>
+  Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : def;
 
 export default function App() {
-  // Тема интерфейса следует настройке workbench.colorTheme
+  // Тема и стиль интерфейса следуют настройкам workbench.*
+  let applied: string[] = [];
   createEffect(() => {
-    document.documentElement.dataset.theme = settings()["workbench.colorTheme"] === "light" ? "light" : "dark";
+    const s = settings();
+    const el = document.documentElement;
+    const theme = String(s["workbench.colorTheme"] ?? "steppe");
+    el.dataset.theme = theme;
+    el.dataset.tone = isLightTheme(theme) ? "light" : "dark";
+    el.dataset.style = s["workbench.style"] === "tulpar" ? "tulpar" : "classic";
+    el.dataset.islands = s["workbench.islands"] || s["workbench.style"] === "tulpar" ? "on" : "off";
+    el.dataset.tabs = String(s["workbench.tabs.style"] ?? "pills");
+    for (const name of applied) el.style.removeProperty(name);
+    const vars: Record<string, string> = {
+      ...(cssVars(theme) ?? {}),
+      "--tp-radius": `${clamp(Number(s["workbench.radius"]), 0, 20, 10)}px`,
+      "--tp-font-size-ui": `${clamp(Number(s["workbench.uiFontSize"]), 10, 18, 13)}px`,
+      "--tp-gap": `${clamp(Number(s["workbench.gap"]), 0, 16, 6)}px`,
+    };
+    for (const [name, value] of Object.entries(vars)) el.style.setProperty(name, value);
+    applied = Object.keys(vars);
   });
 
   onMount(() => document.body.classList.add("ready"));

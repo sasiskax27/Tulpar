@@ -7,6 +7,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
 import { core, events, baseName } from "../ipc";
 import { settings } from "../config/store";
+import { terminalTheme } from "../app/themes";
 import { root } from "../app/workspace";
 import { notifyError } from "../app/notify";
 import { bottomVisible, setBottomVisible } from "../app/ui";
@@ -57,7 +58,7 @@ function appearance() {
   return {
     fontFamily: s["editor.fontFamily"],
     fontSize: s["terminal.integrated.fontSize"],
-    theme: s["workbench.colorTheme"] === "light" ? lightTheme : darkTheme,
+    theme: terminalTheme(String(s["workbench.colorTheme"])) ?? (s["workbench.colorTheme"] === "light" ? lightTheme : darkTheme),
   };
 }
 

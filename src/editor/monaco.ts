@@ -6,6 +6,7 @@ import CssWorker from "monaco-editor/esm/vs/language/css/css.worker?worker";
 import HtmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker";
 import TsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
 import type { Settings } from "../config/store";
+import { defineMonacoThemes, monacoTheme } from "../app/themes";
 
 self.MonacoEnvironment = {
   getWorker(_id: string, label: string) {
@@ -29,6 +30,9 @@ self.MonacoEnvironment = {
   },
 };
 
+// Темы «Ночная степь», «Беркут», «Рассвет» — до создания первого редактора.
+defineMonacoThemes();
+
 // Настройки Tulpar и VS Code — это JSON с комментариями и висячими запятыми.
 // Без этого Monaco подчёркивает каждый комментарий как ошибку.
 monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
@@ -51,7 +55,7 @@ export function editorOptions(s: Settings): monaco.editor.IEditorOptions & monac
     minimap: { enabled: s["editor.minimap.enabled"] },
     lineNumbers: s["editor.lineNumbers"],
     cursorBlinking: s["editor.cursorBlinking"],
-    theme: s["workbench.colorTheme"] === "light" ? "vs" : "vs-dark",
+    theme: monacoTheme(String(s["workbench.colorTheme"])),
     automaticLayout: true,
     smoothScrolling: true,
     cursorSmoothCaretAnimation: "on",

@@ -12,6 +12,7 @@ import { baseName, core } from "../ipc";
 import { pick } from "../app/QuickPick";
 import { notify, notifyError } from "../app/notify";
 import LocalAi from "./LocalAi";
+import { copilotSignIn, copilotSignOut, copilotState, copilotUser } from "../ai/copilot";
 import { claudeModels, cloudCatalog, openaiModels, opencodeModels } from "../ai/models";
 import { installed, isInstalled } from "../ai/ollama";
 import { THEME_NAMES } from "../app/themes";
@@ -35,6 +36,51 @@ interface Section {
   extra?: () => JSX.Element;
   /** Показать extra после полей, а не перед ними */
   after?: boolean;
+}
+
+/** Строка «GitHub Copilot»: статус и вход. */
+function CopilotRow() {
+  const label = () =>
+    ({
+      off: "Не запущен",
+      starting: "Запускается…",
+      signedOut: "Не выполнен вход",
+      ready: `Работает${copilotUser() ? ` · ${copilotUser()}` : ""}`,
+      error: "Ошибка запуска",
+      missing: "Не установлен",
+    })[copilotState()];
+  return (
+    <div class="settings-row">
+      <div class="settings-label">
+        <span>GitHub Copilot</span>
+        <small>
+          {label()}. Подсказки Copilot при наборе — включите «Подсказки при наборе» и выберите «GitHub Copilot». Бесплатный тариф —
+          github.com/settings/copilot.
+        </small>
+      </div>
+      <div class="settings-control settings-buttons">
+        <Show
+          when={copilotState() === "ready"}
+          fallback={
+            <button
+              class="button"
+              onClick={() => {
+                updateSetting("tulpar.ai.inline", true);
+                updateSetting("tulpar.ai.inlineProvider", "copilot");
+                void copilotSignIn();
+              }}
+            >
+              Войти в Copilot
+            </button>
+          }
+        >
+          <button class="button-quiet" onClick={() => void copilotSignOut()}>
+            Выйти
+          </button>
+        </Show>
+      </div>
+    </div>
+  );
 }
 
 type ModelChoice = { label: string; detail?: string; value: string };
@@ -351,6 +397,8 @@ const sections: Section[] = [
     intro:
       "Выделите код, нажмите правую кнопку мыши и выберите действие «ИИ: …». Код отправляется только на сервер, указанный здесь, и только по вашей команде.",
     extra: () => (
+      <>
+      <CopilotRow />
       <Show when={String(settings()["tulpar.ai.provider"]) !== "none"}>
         <div class="settings-row">
           <div class="settings-label">
@@ -366,6 +414,7 @@ const sections: Section[] = [
           </div>
         </div>
       </Show>
+      </>
     ),
     fields: [
       {
@@ -440,6 +489,13 @@ const sections: Section[] = [
         label: "Подсказки при наборе",
         hint: "Серый текст продолжения кода, Tab — принять. Лучше всего с Ollama и маленькой моделью для кода.",
         type: "toggle",
+      },
+      {
+        key: "tulpar.ai.inlineProvider",
+        label: "Подсказки берутся из",
+        hint: "GitHub Copilot — официальный сервер Copilot от GitHub, работает и с бесплатным тарифом Copilot Free. Нужен вход в GitHub (кнопка ниже).",
+        type: "select",
+        options: [["model", "Модель ИИ выше"], ["copilot", "GitHub Copilot"]],
       },
       {
         key: "tulpar.ai.inlineModel",

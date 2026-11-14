@@ -156,6 +156,7 @@ export const core = {
   updateCheck: () => invoke<UpdateInfo | null>("update_check"),
   updateInstall: (url: string, name: string) => invoke<void>("update_install", { url, name }),
   updateOpenPage: (url: string) => invoke<void>("update_open_page", { url }),
+  openUrl: (url: string) => invoke<void>("open_url", { url }),
   aiAgentStep: (request: AgentStepRequest) => invoke<AgentReply>("ai_agent_step", { request }),
   agentWrite: (path: string, content: string) => invoke<string>("agent_write", { path, content }),
   agentRun: (command: string, timeoutSecs?: number) =>

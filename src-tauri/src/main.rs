@@ -79,6 +79,7 @@ fn main() {
             update::update_check,
             update::update_install,
             update::update_open_page,
+            update::open_url,
             backup::backup_put,
             backup::backup_delete,
             backup::backup_list,

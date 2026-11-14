@@ -84,6 +84,8 @@ export interface Settings {
   "tulpar.ai.language": string;
   /** Подсказки ИИ при наборе (серый текст, Tab — принять) */
   "tulpar.ai.inline": boolean;
+  /** Откуда брать подсказки при наборе: модель ИИ из настроек или GitHub Copilot */
+  "tulpar.ai.inlineProvider": "model" | "copilot";
   /** Отдельная быстрая модель для подсказок; пусто — та же, что для действий */
   "tulpar.ai.inlineModel": string;
   /** Ollama: память модели в токенах (больше — помнит больше, но нужно больше памяти компьютера) */
@@ -165,6 +167,7 @@ export const defaultSettings: Settings = {
   "tulpar.ai.apiKey": "",
   "tulpar.ai.language": "русский",
   "tulpar.ai.inline": false,
+  "tulpar.ai.inlineProvider": "model",
   "tulpar.chat.location": "bottom",
   "tulpar.ai.contextSize": 16384,
   "tulpar.update.check": true,

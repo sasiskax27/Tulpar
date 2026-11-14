@@ -153,6 +153,15 @@ fn open_path(target: &str) -> Result<(), String> {
     result.map(|_| ()).map_err(|e| e.to_string())
 }
 
+/// Открыть страницу GitHub в браузере (вход в Copilot и подобное).
+#[tauri::command]
+pub async fn open_url(url: String) -> Result<(), String> {
+    if !url.starts_with("https://github.com/") {
+        return Err("можно открыть только страницы github.com".into());
+    }
+    open_path(&url)
+}
+
 /// Открыть страницу релиза в браузере.
 #[tauri::command]
 pub async fn update_open_page(url: String) -> Result<(), String> {

@@ -20,7 +20,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function config() {
   const s = settings();
-  if (!s["tulpar.ai.inline"]) return null;
+  if (!s["tulpar.ai.inline"] || s["tulpar.ai.inlineProvider"] === "copilot") return null;
   const provider = s["tulpar.ai.provider"];
   const defaults = providers[provider];
   if (!defaults) return null;

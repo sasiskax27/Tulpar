@@ -1,12 +1,14 @@
 // Реестр панелей: id из layout.json → компонент.
 // Новые панели (поиск, git, терминал, агенты) добавляются сюда одной строкой.
 import type { Component } from "solid-js";
-import Explorer from "../explorer/Explorer";
+import SideView from "./SideView";
+import SearchPanel from "../search/SearchPanel";
 import EditorGroup from "../editor/EditorGroup";
 import TerminalPanel from "../terminal/TerminalPanel";
 
 export const panels: Record<string, Component> = {
-  explorer: Explorer,
+  explorer: SideView,
+  search: SearchPanel,
   editor: EditorGroup,
   terminal: TerminalPanel,
 };

@@ -18,6 +18,8 @@ const defaults: Keybinding[] = [
   // Второе нажатие и без Ctrl — так удобнее, а в VS Code многие ошибаются именно здесь
   { key: "mod+k o", command: "workbench.action.files.openFolder" },
   { key: "mod+b", command: "workbench.action.toggleSidebarVisibility" },
+  { key: "mod+shift+e", command: "workbench.view.explorer" },
+  { key: "mod+shift+f", command: "workbench.view.search" },
   { key: "ctrl+tab", command: "workbench.action.nextEditor" },
   { key: "ctrl+shift+tab", command: "workbench.action.previousEditor" },
   { key: "ctrl+pagedown", command: "workbench.action.nextEditor" },
@@ -37,6 +39,8 @@ const defaults: Keybinding[] = [
 const WORKS_IN_TERMINAL = new Set([
   "workbench.action.showCommands",
   "workbench.action.quickOpen",
+  "workbench.view.search",
+  "workbench.view.explorer",
   "workbench.action.terminal.toggleTerminal",
   "workbench.action.terminal.new",
   "workbench.action.focusActiveEditorGroup",

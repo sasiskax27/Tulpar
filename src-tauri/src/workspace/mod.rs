@@ -35,7 +35,7 @@ pub struct ChangeEvent {
     paths: Vec<String>,
 }
 
-fn to_string(p: &Path) -> String {
+pub(crate) fn to_string(p: &Path) -> String {
     p.to_string_lossy().into_owned()
 }
 
@@ -55,7 +55,7 @@ pub fn canonical(p: &Path) -> std::io::Result<PathBuf> {
     Ok(c)
 }
 
-fn current_root(state: &WorkspaceState) -> Result<PathBuf, String> {
+pub(crate) fn current_root(state: &WorkspaceState) -> Result<PathBuf, String> {
     state
         .root
         .lock()
@@ -67,7 +67,7 @@ fn current_root(state: &WorkspaceState) -> Result<PathBuf, String> {
 /// Приводит путь к каноническому виду и проверяет, что он внутри открытой папки
 /// или папки настроек Tulpar. Для ещё не существующего файла проверяется его
 /// родительская папка.
-fn resolve(state: &WorkspaceState, path: &str) -> Result<PathBuf, String> {
+pub(crate) fn resolve(state: &WorkspaceState, path: &str) -> Result<PathBuf, String> {
     let mut allowed: Vec<PathBuf> = Vec::new();
     if let Ok(root) = current_root(state) {
         allowed.push(root);
@@ -183,8 +183,23 @@ pub async fn read_file(state: State<'_, WorkspaceState>, path: String) -> Result
     String::from_utf8(bytes).map_err(|_| "файл не в кодировке UTF-8".into())
 }
 
-/// Записать файл атомарно: сначала во временный файл рядом, затем переименование.
+/// Записать байты атомарно: сначала во временный файл рядом, затем переименование.
 /// Так при сбое на диске не останется наполовину записанный файл.
+pub(crate) fn atomic_write(file: &Path, content: &[u8]) -> Result<(), String> {
+    let name = file
+        .file_name()
+        .ok_or("некорректный путь")?
+        .to_string_lossy()
+        .into_owned();
+    let tmp = file.with_file_name(format!(".{name}.tulpar-tmp"));
+    std::fs::write(&tmp, content).map_err(|e| e.to_string())?;
+    std::fs::rename(&tmp, file).map_err(|e| {
+        let _ = std::fs::remove_file(&tmp);
+        e.to_string()
+    })
+}
+
+/// Записать файл.
 #[tauri::command]
 pub async fn write_file(
     state: State<'_, WorkspaceState>,
@@ -192,17 +207,75 @@ pub async fn write_file(
     content: String,
 ) -> Result<(), String> {
     let file = resolve(&state, &path)?;
-    let name = file
-        .file_name()
-        .ok_or("некорректный путь")?
-        .to_string_lossy()
-        .into_owned();
-    let tmp = file.with_file_name(format!(".{name}.tulpar-tmp"));
-    std::fs::write(&tmp, content.as_bytes()).map_err(|e| e.to_string())?;
-    std::fs::rename(&tmp, &file).map_err(|e| {
-        let _ = std::fs::remove_file(&tmp);
-        e.to_string()
-    })
+    atomic_write(&file, content.as_bytes())
+}
+
+fn check_name(path: &Path) -> Result<(), String> {
+    let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+    if name.is_empty() || name == "." || name == ".." {
+        return Err("некорректное имя".into());
+    }
+    if cfg!(windows) && name.chars().any(|c| "<>:\"|?*".contains(c)) {
+        return Err("имя не может содержать < > : \" | ? *".into());
+    }
+    Ok(())
+}
+
+/// Создать пустой файл. Ошибка, если такой уже есть.
+#[tauri::command]
+pub async fn create_file(state: State<'_, WorkspaceState>, path: String) -> Result<String, String> {
+    let file = resolve(&state, &path)?;
+    check_name(&file)?;
+    std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&file)
+        .map_err(|e| match e.kind() {
+            std::io::ErrorKind::AlreadyExists => "файл с таким именем уже есть".to_string(),
+            _ => e.to_string(),
+        })?;
+    Ok(to_string(&file))
+}
+
+/// Создать папку.
+#[tauri::command]
+pub async fn create_dir(state: State<'_, WorkspaceState>, path: String) -> Result<String, String> {
+    let dir = resolve(&state, &path)?;
+    check_name(&dir)?;
+    if dir.exists() {
+        return Err("папка или файл с таким именем уже есть".into());
+    }
+    std::fs::create_dir(&dir).map_err(|e| e.to_string())?;
+    Ok(to_string(&dir))
+}
+
+/// Переименовать или переместить файл или папку внутри проекта.
+#[tauri::command]
+pub async fn rename_path(state: State<'_, WorkspaceState>, from: String, to: String) -> Result<String, String> {
+    let source = resolve(&state, &from)?;
+    let target = resolve(&state, &to)?;
+    check_name(&target)?;
+    if source == current_root(&state)? {
+        return Err("нельзя переименовать саму папку проекта".into());
+    }
+    // На Windows и macOS «file.txt» → «File.txt» — тот же файл, это разрешаем
+    let same_file = cfg!(any(windows, target_os = "macos"))
+        && source.to_string_lossy().to_lowercase() == target.to_string_lossy().to_lowercase();
+    if target.exists() && !same_file {
+        return Err("файл или папка с таким именем уже есть".into());
+    }
+    std::fs::rename(&source, &target).map_err(|e| e.to_string())?;
+    Ok(to_string(&target))
+}
+
+/// Удалить в корзину — чтобы случайное удаление можно было отменить.
+#[tauri::command]
+pub async fn delete_path(state: State<'_, WorkspaceState>, path: String) -> Result<(), String> {
+    let target = resolve(&state, &path)?;
+    if target == current_root(&state)? {
+        return Err("нельзя удалить саму папку проекта".into());
+    }
+    trash::delete(&target).map_err(|e| format!("не удалось переместить в корзину: {e}"))
 }
 
 /// Все файлы проекта (с учётом .gitignore) — для быстрого перехода Ctrl+P.

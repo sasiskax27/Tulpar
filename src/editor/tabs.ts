@@ -126,11 +126,22 @@ export async function saveAll() {
   for (const t of tabs.filter((t) => t.dirty)) await saveFile(t.path);
 }
 
-export async function closeTab(path: string | null = activePath()) {
+/** Вкладки файла или всех файлов внутри папки. */
+export function tabsUnder(path: string): Tab[] {
+  const lower = (p: string) => (navigator.userAgent.includes("Linux") ? p : p.toLowerCase());
+  const target = lower(path);
+  return tabs.filter((t) => {
+    const p = lower(t.path);
+    return p === target || p.startsWith(target + "/") || p.startsWith(target + "\\");
+  });
+}
+
+/** force — закрыть без вопроса о сохранении (файл удалён или переименован). */
+export async function closeTab(path: string | null = activePath(), force = false) {
   if (!path) return;
   const tab = tabs.find((t) => t.path === path);
   if (!tab) return;
-  if (tab.dirty) {
+  if (tab.dirty && !force) {
     const save = await ask(`Сохранить изменения в «${tab.title}»?`, {
       title: "Tulpar",
       kind: "warning",

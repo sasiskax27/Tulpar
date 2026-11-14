@@ -3,7 +3,9 @@ import { registerCommand } from "../commands/registry";
 import { showPalette } from "../palette/Palette";
 import { saveFile, saveAll, closeTab, cycleTab, openFile } from "../editor/tabs";
 import { openFolder } from "./workspace";
-import { setSidebarVisible, setSettingsVisible } from "./ui";
+import { setSidebarVisible, setSettingsVisible, setSidebarView, sidebarView, sidebarVisible, type SidebarView } from "./ui";
+import { focusSearch } from "../search/SearchPanel";
+import { editorInstance } from "../editor/instance";
 import { activeLayout, defaultSettings, layoutConfig, setActiveLayout, settings, updateSetting } from "../config/store";
 import { core, type ConfigName } from "../ipc";
 import { notify } from "./notify";
@@ -32,6 +34,32 @@ export function registerBuiltinCommands() {
   reg({ id: "workbench.action.closeActiveEditor", category: "Вид", title: "Закрыть вкладку", run: () => closeTab() });
   reg({ id: "workbench.action.nextEditor", category: "Вид", title: "Следующая вкладка", run: () => cycleTab(1) });
   reg({ id: "workbench.action.previousEditor", category: "Вид", title: "Предыдущая вкладка", run: () => cycleTab(-1) });
+
+  // Показать панель в боковой полосе. { toggle: true } — повторное нажатие прячет её.
+  const showView = (view: SidebarView, args: unknown) => {
+    const toggle = (args as { toggle?: boolean } | undefined)?.toggle;
+    if (toggle && sidebarVisible() && sidebarView() === view) {
+      setSidebarVisible(false);
+      return false;
+    }
+    setSidebarView(view);
+    setSidebarVisible(true);
+    return true;
+  };
+  reg({ id: "workbench.view.explorer", category: "Вид", title: "Проводник", run: (args) => showView("explorer", args) });
+  reg({
+    id: "workbench.view.search",
+    category: "Вид",
+    title: "Поиск по проекту",
+    run: (args) => {
+      if (!showView("search", args)) return;
+      // Выделенный в редакторе текст сразу становится запросом
+      const editor = editorInstance();
+      const sel = editor?.getSelection();
+      const text = sel && !sel.isEmpty() ? editor!.getModel()?.getValueInRange(sel) : undefined;
+      focusSearch(text && !text.includes("\n") ? text : undefined);
+    },
+  });
 
   reg({
     id: "workbench.action.toggleSidebarVisibility",

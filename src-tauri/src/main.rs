@@ -8,6 +8,7 @@ mod config;
 mod lsp;
 mod media;
 mod ollama;
+mod search;
 mod terminal;
 mod workspace;
 
@@ -30,6 +31,12 @@ fn main() {
             workspace::read_file,
             workspace::write_file,
             workspace::list_files,
+            workspace::create_file,
+            workspace::create_dir,
+            workspace::rename_path,
+            workspace::delete_path,
+            search::search_project,
+            search::replace_in_file,
             config::config_read,
             config::config_dir,
             config::config_ensure,

@@ -15,6 +15,30 @@ export interface ChangeEvent {
 
 export type ConfigName = "settings.json" | "keybindings.json" | "layout.json" | "languages.json";
 
+export interface SearchOptions {
+  query: string;
+  caseSensitive: boolean;
+  wholeWord: boolean;
+  regex: boolean;
+  include: string;
+  exclude: string;
+}
+
+export interface SearchMatch {
+  line: number;
+  startCol: number;
+  endCol: number;
+  before: string;
+  text: string;
+  after: string;
+}
+
+export interface SearchResult {
+  files: { path: string; rel: string; matches: SearchMatch[] }[];
+  total: number;
+  truncated: boolean;
+}
+
 export interface AiRequest {
   provider: string;
   baseUrl: string;
@@ -51,6 +75,13 @@ export const core = {
     invoke<{ running: boolean; models: { name: string; size: number }[] }>("ollama_status", { host }),
   ollamaPull: (host: string, model: string) => invoke<void>("ollama_pull", { host, model }),
   ollamaDelete: (host: string, model: string) => invoke<void>("ollama_delete", { host, model }),
+  createFile: (path: string) => invoke<string>("create_file", { path }),
+  createDir: (path: string) => invoke<string>("create_dir", { path }),
+  renamePath: (from: string, to: string) => invoke<string>("rename_path", { from, to }),
+  deletePath: (path: string) => invoke<void>("delete_path", { path }),
+  searchProject: (options: SearchOptions) => invoke<SearchResult>("search_project", { options }),
+  replaceInFile: (path: string, options: SearchOptions, replacement: string) =>
+    invoke<number>("replace_in_file", { path, options, replacement }),
   configEnsure: (name: ConfigName) => invoke<string>("config_ensure", { name }),
 };
 
@@ -75,6 +106,16 @@ export const events = {
 export function joinPath(root: string, rel: string): string {
   const sep = root.includes("\\") ? "\\" : "/";
   return root.replace(/[\\/]+$/, "") + sep + rel.split("/").join(sep);
+}
+
+/** Папка, в которой лежит файл или папка. */
+export function parentDir(path: string): string {
+  return path.replace(/[\\/][^\\/]*$/, "");
+}
+
+/** Разделитель путей, принятый в этом пути. */
+export function sepOf(path: string): string {
+  return path.includes("\\") ? "\\" : "/";
 }
 
 /** Имя файла из полного пути. */

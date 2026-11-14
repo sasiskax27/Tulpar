@@ -1,7 +1,7 @@
 // Открытая папка проекта и реакция на изменения файлов на диске.
 import { createSignal } from "solid-js";
 import { open } from "@tauri-apps/plugin-dialog";
-import { core, events } from "../ipc";
+import { core, events, parentDir } from "../ipc";
 import { closeAll, onDiskChange, setSessionRoot } from "../editor/tabs";
 import { notifyError } from "./notify";
 
@@ -18,8 +18,9 @@ export function onDirChanged(dir: string, reload: () => void): () => void {
   };
 }
 
-function parentDir(path: string): string {
-  return path.replace(/[\\/][^\\/]*$/, "");
+/** Перечитать папку в дереве файлов сразу, не дожидаясь события с диска. */
+export function reloadDir(dir: string) {
+  dirReloaders.get(dir)?.();
 }
 
 let pendingDirs = new Set<string>();

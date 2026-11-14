@@ -16,7 +16,7 @@ import Toolchains from "./Toolchains";
 import { copilotSignIn, copilotSignOut, copilotState, copilotUser } from "../ai/copilot";
 import { claudeModels, cloudCatalog, openaiModels, opencodeModels } from "../ai/models";
 import { installed, isInstalled } from "../ai/ollama";
-import { THEME_NAMES } from "../app/themes";
+import { allThemes } from "../app/themes";
 import CustomActions from "./CustomActions";
 
 type Text = string | (() => string);
@@ -26,7 +26,7 @@ type FieldDef = { key: keyof Settings & string; label: string; hint?: Text } & (
   | { type: "range"; min: number; max: number; step: number; show: (v: number) => string }
   | { type: "text"; placeholder?: Text }
   | { type: "password"; placeholder?: Text }
-  | { type: "select"; options: [value: string, label: string][] }
+  | { type: "select"; options: [value: string, label: string][] | (() => [value: string, label: string][]) }
   | { type: "toggle" }
 );
 
@@ -283,7 +283,7 @@ const sections: Section[] = [
         type: "select",
         options: [["classic", "Дизайн 1 — полоса иконок"], ["tulpar", "Дизайн 2 — Tulpar"]],
       },
-      { key: "workbench.colorTheme", label: "Тема", type: "select", options: THEME_NAMES },
+      { key: "workbench.colorTheme", label: "Тема", type: "select", options: allThemes },
       { key: "workbench.islands", label: "Панели-острова", hint: "Скруглённые панели с промежутками. В Дизайне 2 включены всегда.", type: "toggle" },
       {
         key: "workbench.activityBar",
@@ -616,7 +616,7 @@ function Control(props: { def: FieldDef }) {
     case "select":
       return (
         <select class="settings-input" onChange={(e) => set(e.currentTarget.value)}>
-          <For each={def.options}>
+          <For each={typeof def.options === "function" ? def.options() : def.options}>
             {([v, label]) => (
               <option value={v} selected={v === String(value())}>
                 {label}

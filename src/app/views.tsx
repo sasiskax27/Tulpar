@@ -22,6 +22,7 @@ export const icons = {
   settings: (size?: number) => svg(<><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></>, size),
   outline: (size?: number) => svg(<><path d="M4 6h16M8 12h12M8 18h12" /><circle cx="4" cy="12" r="1" /><circle cx="4" cy="18" r="1" /></>, size),
   build: (size?: number) => svg(<><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" /><path d="M4 7.5l8 4.5 8-4.5M12 12v9" /></>, size),
+  extensions: (size?: number) => svg(<><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" /><path d="M17 3.5v7M13.5 7h7" /></>, size),
   sidebar: (size?: number) => svg(<><rect x="3" y="4" width="18" height="16" rx="2.5" /><path d="M9 4v16" /></>, size),
 };
 
@@ -45,6 +46,7 @@ export const VIEWS: ViewDef[] = [
   { view: "git", title: "Git", command: "workbench.view.scm", icon: icons.git, badge: () => gitStatus()?.files.length },
   { view: "outline", title: "Структура", command: "outline.focus", icon: icons.outline },
   { view: "build", title: "Сборка", command: "workbench.view.build", icon: icons.build },
+  { view: "extensions", title: "Расширения", command: "workbench.view.extensions", icon: icons.extensions },
   { view: "chat", title: "Чат с ИИ", command: "workbench.action.chat.open", icon: icons.chat },
 ];
 

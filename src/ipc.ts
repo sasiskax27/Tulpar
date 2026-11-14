@@ -159,6 +159,11 @@ export const core = {
   aiModels: (provider: string, baseUrl: string, apiKey: string) =>
     invoke<{ id: string; free: boolean }[]>("ai_models", { provider, baseUrl, apiKey }),
   updateCheck: () => invoke<UpdateInfo | null>("update_check"),
+  extSearch: (query: string, category?: string) => invoke<ExtSearchItem[]>("ext_search", { query, category: category ?? null }),
+  extInstall: (namespace: string, name: string) => invoke<InstalledExt>("ext_install", { namespace, name }),
+  extList: () => invoke<InstalledExt[]>("ext_list"),
+  extRead: (id: string, file: string) => invoke<string>("ext_read", { id, file }),
+  extUninstall: (id: string) => invoke<void>("ext_uninstall", { id }),
   updateInstall: (url: string, name: string) => invoke<void>("update_install", { url, name }),
   updateOpenPage: (url: string) => invoke<void>("update_open_page", { url }),
   openUrl: (url: string) => invoke<void>("open_url", { url }),
@@ -213,4 +218,23 @@ export function sepOf(path: string): string {
 /** Имя файла из полного пути. */
 export function baseName(path: string): string {
   return path.split(/[\\/]/).pop() ?? path;
+}
+
+export interface ExtSearchItem {
+  namespace: string;
+  name: string;
+  displayName: string;
+  description?: string;
+  version?: string;
+  downloads?: number;
+  icon?: string;
+}
+
+export interface InstalledExt {
+  id: string;
+  displayName: string;
+  version: string;
+  description: string;
+  themes: { label: string; uiTheme: string; file: string }[];
+  snippets: { language: string; file: string }[];
 }

@@ -132,6 +132,7 @@ export function registerBuiltinCommands() {
     },
   });
   reg({ id: "outline.focus", category: "Вид", title: "Структура файла", run: (args) => showView("outline", args) });
+  reg({ id: "workbench.view.extensions", category: "Вид", title: "Расширения: темы и сниппеты", run: (args) => showView("extensions", args) });
   reg({ id: "workbench.view.build", category: "Вид", title: "Сборка и проекты", run: (args) => showView("build", args) });
   reg({ id: "tulpar.chat.new", category: "ИИ", title: "Новый чат", run: () => newChat() });
   reg({ id: "tulpar.opencode.open", category: "ИИ", title: "Открыть OpenCode (бесплатные облачные модели)", run: () => openOpenCode() });

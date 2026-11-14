@@ -44,7 +44,8 @@ export interface Settings {
   "terminal.integrated.fontFamily": string;
   "terminal.integrated.cursorStyle": "block" | "underline" | "bar";
   "terminal.integrated.scrollback": number;
-  "workbench.colorTheme": "steppe" | "berkut" | "dawn" | "photo" | "dark" | "light";
+  /** steppe | berkut | dawn | photo | dark | light | ext:<расширение>/<номер> */
+  "workbench.colorTheme": string;
   /** Дизайн 1 (classic) или Дизайн 2 (tulpar: верхняя панель и выезжающий остров) */
   "workbench.style": "classic" | "tulpar";
   "workbench.language": "auto" | "ru" | "en";

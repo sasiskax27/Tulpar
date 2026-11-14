@@ -8,6 +8,7 @@ import ChatPanel from "../ai/ChatPanel";
 import EditorGroup from "../editor/EditorGroup";
 import TerminalPanel from "../terminal/TerminalPanel";
 import BuildPanel from "../tasks/BuildPanel";
+import ExtensionsPanel from "../extensions/ExtensionsPanel";
 
 export const panels: Record<string, Component> = {
   explorer: SideView,
@@ -17,6 +18,7 @@ export const panels: Record<string, Component> = {
   editor: EditorGroup,
   terminal: TerminalPanel,
   build: BuildPanel,
+  extensions: ExtensionsPanel,
 };
 
 export function UnknownPanel(props: { id: string }) {

@@ -3,6 +3,7 @@
 // Встроенные — для популярных языков; свои — в snippets.json (формат VS Code).
 import { monaco } from "./monaco";
 import { userSnippets, type UserSnippet } from "../config/store";
+import { extSnippets } from "../extensions/extensions";
 
 type Snip = { prefix: string; body: string; description: string };
 
@@ -101,6 +102,13 @@ function userFor(language: string): Snip[] {
     for (const prefix of Array.isArray(s.prefix) ? s.prefix : [s.prefix]) {
       out.push({ prefix, body, description: s.description ?? name });
     }
+  }
+  // Сниппеты из расширений Open VSX
+  for (const s of extSnippets()) {
+    const scopes = s.language.split(",").map((x) => x.trim());
+    if (!scopes.includes(language)) continue;
+    const body = Array.isArray(s.body) ? s.body.join("\n") : String(s.body);
+    for (const prefix of Array.isArray(s.prefix) ? s.prefix : [s.prefix]) out.push({ prefix, body, description: s.description ?? prefix });
   }
   return out;
 }

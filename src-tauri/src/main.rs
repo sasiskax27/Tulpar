@@ -6,6 +6,7 @@ use tauri::Manager;
 mod ai;
 mod backup;
 mod config;
+mod ext;
 mod git;
 mod lsp;
 mod media;
@@ -32,6 +33,11 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             workspace::workspace_open,
+            ext::ext_search,
+            ext::ext_install,
+            ext::ext_list,
+            ext::ext_read,
+            ext::ext_uninstall,
             workspace::workspace_root,
             workspace::read_dir,
             workspace::read_file,

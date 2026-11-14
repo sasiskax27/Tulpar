@@ -16,6 +16,7 @@ import { initGitGutter } from "./git/gutter";
 import { initProblems } from "./problems/problems";
 import { scheduleUpdateCheck } from "./app/update";
 import { initCopilot } from "./ai/copilot";
+import { initExtensions } from "./extensions/extensions";
 import { initOutline } from "./editor/outline";
 import { registerSnippets } from "./editor/snippets";
 import { initBlame } from "./git/blame";
@@ -31,7 +32,7 @@ async function start() {
   installKeybindings();
   render(() => <App />, document.getElementById("root")!);
 
-  await Promise.all([initConfig(), initWorkspaceEvents()]);
+  await Promise.all([initConfig(), initWorkspaceEvents(), initExtensions()]);
   // Язык из настроек; при смене — перезагрузить окно, чтобы перевести всё сразу
   createRoot(() =>
     createEffect(

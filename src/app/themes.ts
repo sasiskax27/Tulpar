@@ -5,16 +5,11 @@
 import type { ITheme } from "@xterm/xterm";
 import * as monaco from "monaco-editor";
 import { settings } from "../config/store";
+import { extThemes } from "../extensions/extensions";
+import type { Palette } from "../extensions/vscodeTheme";
 
 export type ThemeId = "dark" | "light" | "steppe" | "berkut" | "dawn" | "photo";
 
-interface Palette {
-  light: boolean;
-  bg: string; island: string; panel: string; line: string; code: string;
-  text: string; muted: string; strong: string; accent: string; onAccent: string; selection: string;
-  kw: string; fn: string; str: string; num: string; com: string; param: string; type: string; punct: string;
-  err: string; ok: string;
-}
 
 const PALETTES: Record<"steppe" | "berkut" | "dawn", Palette> = {
   steppe: {
@@ -40,7 +35,7 @@ const PALETTES: Record<"steppe" | "berkut" | "dawn", Palette> = {
   },
 };
 
-export const THEME_NAMES: [ThemeId, string][] = [
+export const THEME_NAMES: [string, string][] = [
   ["steppe", "Ночная степь"],
   ["berkut", "Беркут"],
   ["dawn", "Рассвет"],
@@ -48,6 +43,12 @@ export const THEME_NAMES: [ThemeId, string][] = [
   ["dark", "Тёмная (классическая)"],
   ["light", "Светлая (классическая)"],
 ];
+
+/** Все темы: встроенные и из установленных расширений. */
+export function allThemes(): [string, string][] {
+  const ext = [...extThemes().values()].map((t): [string, string] => [t.id, `${t.label} · ${t.ext.split(".").pop()}`]);
+  return [...THEME_NAMES, ...ext];
+}
 
 // ---------- тема из фото ----------
 
@@ -103,6 +104,7 @@ function photo(): PhotoTheme {
 
 function pal(id: string): Palette | undefined {
   if (id === "photo") return photoPalette(photo());
+  if (id.startsWith("ext:")) return extThemes().get(id)?.palette;
   return PALETTES[id as keyof typeof PALETTES];
 }
 
@@ -147,6 +149,7 @@ export function isLightTheme(id: string): boolean {
 
 /** Имя темы Monaco для настройки workbench.colorTheme. */
 let definedPhoto = "";
+const definedExt = new Map<string, unknown>();
 
 export function monacoTheme(id: string): string {
   if (id === "photo") {
@@ -156,6 +159,15 @@ export function monacoTheme(id: string): string {
     return "tulpar-photo";
   }
   if (id in PALETTES) return `tulpar-${id}`;
+  const ext = extThemes().get(id);
+  if (ext) {
+    const name = "tulpar-" + id.replace(/[^a-zA-Z0-9]+/g, "-");
+    if (definedExt.get(name) !== ext) {
+      defineOne(name.slice("tulpar-".length), ext.palette, ext.monaco);
+      definedExt.set(name, ext);
+    }
+    return name;
+  }
   return id === "light" ? "vs" : "vs-dark";
 }
 
@@ -172,7 +184,7 @@ function definePhotoMonacoTheme() {
   defineOne("photo", photoPalette(photo()));
 }
 
-function defineOne(id: string, p: Palette) {
+function defineOne(id: string, p: Palette, extra: Record<string, string> = {}) {
   {
     monaco.editor.defineTheme(`tulpar-${id}`, {
       base: p.light ? "vs" : "vs-dark",
@@ -238,6 +250,7 @@ function defineOne(id: string, p: Palette) {
         "diffEditor.insertedTextBackground": p.ok + "22",
         "diffEditor.removedTextBackground": p.err + "22",
         "stickyScroll.background": p.code,
+        ...extra,
       },
     });
   }
@@ -275,6 +288,14 @@ export function cssVars(id: string): Record<string, string> | null {
 export function terminalTheme(id: string): ITheme | null {
   const p = pal(id);
   if (!p) return null;
+  const own = extThemes().get(id)?.terminal ?? {};
+  return {
+    ...terminalBase(p),
+    ...own,
+  };
+}
+
+function terminalBase(p: Palette): ITheme {
   return {
     background: p.code,
     foreground: p.text,

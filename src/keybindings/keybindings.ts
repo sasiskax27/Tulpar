@@ -21,6 +21,7 @@ const defaults: Keybinding[] = [
   { key: "mod+shift+e", command: "workbench.view.explorer" },
   { key: "mod+shift+f", command: "workbench.view.search" },
   { key: "ctrl+shift+g", command: "workbench.view.scm" },
+  { key: "ctrl+shift+x", command: "workbench.view.extensions" },
   { key: "mod+alt+i", command: "workbench.action.chat.open" },
   { key: "mod+shift+b", command: "workbench.action.tasks.runTask" },
   { key: "ctrl+f5", command: "tulpar.run.file" },

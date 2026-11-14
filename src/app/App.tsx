@@ -21,7 +21,9 @@ export default function App() {
   createEffect(() => {
     const s = settings();
     const el = document.documentElement;
-    const theme = String(s["workbench.colorTheme"] ?? "steppe");
+    const wanted = String(s["workbench.colorTheme"] ?? "steppe");
+    // Тема из расширения ещё не загрузилась или удалена — показываем «Ночную степь»
+    const theme = wanted === "dark" || wanted === "light" || cssVars(wanted) ? wanted : "steppe";
     el.dataset.theme = theme;
     el.dataset.tone = isLightTheme(theme) ? "light" : "dark";
     el.dataset.style = s["workbench.style"] === "tulpar" ? "tulpar" : "classic";

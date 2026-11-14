@@ -7,6 +7,7 @@ import HtmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker";
 import TsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
 import type { Settings } from "../config/store";
 import { defineMonacoThemes, monacoTheme } from "../app/themes";
+import { emmetCSS, emmetHTML } from "emmet-monaco-es";
 
 self.MonacoEnvironment = {
   getWorker(_id: string, label: string) {
@@ -32,6 +33,10 @@ self.MonacoEnvironment = {
 
 // Темы «Ночная степь», «Беркут», «Рассвет» — до создания первого редактора.
 defineMonacoThemes();
+
+// Emmet: div.box>p*3 + Tab → готовая разметка. Тоже до создания редакторов.
+emmetHTML(monaco, ["html", "php", "vue", "svelte", "xml"]);
+emmetCSS(monaco, ["css", "scss", "less"]);
 
 // Настройки Tulpar и VS Code — это JSON с комментариями и висячими запятыми.
 // Без этого Monaco подчёркивает каждый комментарий как ошибку.

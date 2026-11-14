@@ -440,6 +440,7 @@ export async function send(text: string) {
       id,
       ...base,
       system: systemPrompt(),
+      contextSize: Number(settings()["tulpar.ai.contextSize"]) || 16384,
       messages: [...history, { role: "user", content: context ? `<context>\n${context}\n</context>\n\n${question}` : question }],
     });
     // Если события потерялись — показываем полный ответ

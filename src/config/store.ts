@@ -57,6 +57,8 @@ export interface Settings {
   "tulpar.ai.inline": boolean;
   /** Отдельная быстрая модель для подсказок; пусто — та же, что для действий */
   "tulpar.ai.inlineModel": string;
+  /** Ollama: память модели в токенах (больше — помнит больше, но нужно больше памяти компьютера) */
+  "tulpar.ai.contextSize": number;
   /** Сколько символов кода проекта отдавать ИИ в режиме «Весь проект» */
   "tulpar.ai.projectChars": number;
   /** Проверять новую версию Tulpar на GitHub (раз в 12 часов, один запрос без данных о вас) */
@@ -115,6 +117,7 @@ export const defaultSettings: Settings = {
   "tulpar.ai.language": "русский",
   "tulpar.ai.inline": false,
   "tulpar.chat.location": "bottom",
+  "tulpar.ai.contextSize": 16384,
   "tulpar.update.check": true,
   "tulpar.agent.approve": "ask",
   "tulpar.agent.maxSteps": 30,

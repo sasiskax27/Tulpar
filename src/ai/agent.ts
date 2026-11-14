@@ -553,6 +553,7 @@ function systemPrompt() {
   return [
     "You are an autonomous coding agent built into Tulpar, a code editor. You work inside the user's project and complete their task using tools.",
     `Project folder: ${baseName(root()!)}. OS: ${isWindows ? "Windows (PowerShell)" : navigator.userAgent.includes("Mac") ? "macOS" : "Linux"}.`,
+    "IMPORTANT: you have direct access to the project through tools. Never ask the user to paste file contents — read files yourself with read_file. Never tell the user to edit or create files manually — do it yourself with edit_file or write_file. Never say you cannot access files.",
     "How to work:",
     "- Explore first: list_files, search and read_file to understand the code before changing it.",
     "- Change existing files with small edit_file calls; create new files with write_file. Keep the project's style.",
@@ -592,7 +593,13 @@ export async function runAgent(question: string, attachedNote: string): Promise<
   try {
     for (let i = 0; i < maxSteps; i++) {
       if (stopRequested) break;
-      const reply = await core.aiAgentStep({ ...base, system: systemPrompt(), messages: history, tools: TOOLS });
+      const reply = await core.aiAgentStep({
+        ...base,
+        system: systemPrompt(),
+        messages: history,
+        tools: TOOLS,
+        contextSize: Number(settings()["tulpar.ai.contextSize"]) || 16384,
+      });
       if (stopRequested || streaming() !== runId) break;
       if (!reply.toolCalls.length) {
         const parsed = textToolCalls(reply.text);

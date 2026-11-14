@@ -59,6 +59,9 @@ pub struct AgentRequest {
     system: String,
     messages: Vec<AgentMessage>,
     tools: Vec<ToolSpec>,
+    /// Ollama: сколько токенов разговора держать в памяти модели
+    #[serde(default)]
+    context_size: Option<u32>,
 }
 
 #[derive(Serialize)]
@@ -135,6 +138,36 @@ fn anthropic_messages(messages: &[AgentMessage]) -> Vec<Value> {
     out
 }
 
+/// Родной формат Ollama (/api/chat): аргументы — объект, у результата — имя инструмента.
+fn ollama_messages(system: &str, messages: &[AgentMessage]) -> Vec<Value> {
+    let mut names: std::collections::HashMap<&str, &str> = std::collections::HashMap::new();
+    let mut out = vec![json!({ "role": "system", "content": system })];
+    for m in messages {
+        match m.role.as_str() {
+            "assistant" => {
+                let mut msg = json!({ "role": "assistant", "content": m.content });
+                if !m.tool_calls.is_empty() {
+                    for c in &m.tool_calls {
+                        names.insert(c.id.as_str(), c.name.as_str());
+                    }
+                    msg["tool_calls"] = m
+                        .tool_calls
+                        .iter()
+                        .map(|c| json!({ "function": { "name": c.name, "arguments": if c.args.is_object() { c.args.clone() } else { json!({}) } } }))
+                        .collect();
+                }
+                out.push(msg);
+            }
+            "tool" => {
+                let name = names.get(m.tool_call_id.as_str()).copied().unwrap_or("");
+                out.push(json!({ "role": "tool", "content": m.content, "tool_name": name }));
+            }
+            _ => out.push(json!({ "role": "user", "content": m.content })),
+        }
+    }
+    out
+}
+
 /// Аргументы вызова: строка JSON (OpenAI) или уже объект (Ollama, Claude).
 fn parse_args(v: &Value) -> Value {
     match v {
@@ -160,7 +193,8 @@ fn parse_reply(provider: &str, v: &Value) -> AgentReply {
             }
         }
     } else {
-        let msg = &v["choices"][0]["message"];
+        // OpenAI: choices[0].message; родной Ollama: message
+        let msg = if v["message"].is_object() { &v["message"] } else { &v["choices"][0]["message"] };
         text = msg["content"].as_str().unwrap_or("").to_owned();
         for (i, c) in msg["tool_calls"].as_array().into_iter().flatten().enumerate() {
             tool_calls.push(ToolCall {
@@ -207,6 +241,23 @@ pub async fn ai_agent_step(request: AgentRequest) -> Result<AgentReply, String> 
                 "messages": anthropic_messages(&request.messages),
                 "tools": tools,
             }))
+    } else if request.provider == "ollama" {
+        // Родной API Ollama: только в нём можно задать размер контекста. Через /v1
+        // Ollama обрезает разговор до 2–4 тысяч токенов, и модель теряет инструкции
+        // и описание инструментов.
+        let host = base.trim_end_matches("/v1").trim_end_matches('/').to_owned();
+        let tools: Vec<Value> = request
+            .tools
+            .iter()
+            .map(|t| json!({ "type": "function", "function": { "name": t.name, "description": t.description, "parameters": t.parameters } }))
+            .collect();
+        client.post(format!("{host}/api/chat")).json(&json!({
+            "model": request.model.trim(),
+            "messages": ollama_messages(&request.system, &request.messages),
+            "tools": tools,
+            "stream": false,
+            "options": { "num_ctx": request.context_size.unwrap_or(16384).clamp(2048, 131072) },
+        }))
     } else {
         let tools: Vec<Value> = request
             .tools
@@ -434,6 +485,26 @@ mod tests {
         a.tool_calls = vec![ToolCall { id: "1".into(), name: "x".into(), args: json!({"p": 1}) }];
         let out = openai_messages("sys", &[a]);
         assert_eq!(out[1]["tool_calls"][0]["function"]["arguments"], "{\"p\":1}");
+    }
+
+    #[test]
+    fn parses_ollama_native() {
+        let v = json!({"message":{"role":"assistant","content":"","tool_calls":[{"function":{"name":"read_file","arguments":{"path":"a.py"}}}]}});
+        let r = parse_reply("ollama", &v);
+        assert_eq!(r.tool_calls[0].name, "read_file");
+        assert_eq!(r.tool_calls[0].args["path"], "a.py");
+        assert_eq!(r.tool_calls[0].id, "call_0");
+    }
+
+    #[test]
+    fn ollama_tool_results_have_names() {
+        let mut a = msg("assistant", "");
+        a.tool_calls = vec![ToolCall { id: "c1".into(), name: "read_file".into(), args: json!({"path": "a"}) }];
+        let mut t = msg("tool", "text");
+        t.tool_call_id = "c1".into();
+        let out = ollama_messages("sys", &[msg("user", "q"), a, t]);
+        assert_eq!(out[2]["tool_calls"][0]["function"]["arguments"]["path"], "a");
+        assert_eq!(out[3]["tool_name"], "read_file");
     }
 
     #[test]

@@ -45,6 +45,7 @@ export interface AgentStepRequest {
   system: string;
   messages: AgentMessage[];
   tools: { name: string; description: string; parameters: unknown }[];
+  contextSize?: number;
 }
 
 export interface AgentReply {
@@ -157,7 +158,7 @@ export const core = {
   agentWrite: (path: string, content: string) => invoke<string>("agent_write", { path, content }),
   agentRun: (command: string, timeoutSecs?: number) =>
     invoke<{ code: number | null; output: string; timedOut: boolean }>("agent_run", { command, timeoutSecs }),
-  aiChat: (request: { id: string; provider: string; baseUrl: string; model: string; apiKey: string; system: string; messages: { role: string; content: string }[] }) =>
+  aiChat: (request: { id: string; provider: string; baseUrl: string; model: string; apiKey: string; system: string; messages: { role: string; content: string }[]; contextSize?: number }) =>
     invoke<string>("ai_chat", { request }),
   aiChatCancel: (id: string) => invoke<void>("ai_chat_cancel", { id }),
   backupPut: (name: string, data: string) => invoke<void>("backup_put", { name, data }),

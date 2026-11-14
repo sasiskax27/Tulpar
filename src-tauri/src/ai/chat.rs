@@ -34,6 +34,9 @@ pub struct ChatRequest {
     api_key: String,
     system: String,
     messages: Vec<ChatMessage>,
+    /// Ollama: размер контекста в токенах
+    #[serde(default)]
+    context_size: Option<u32>,
 }
 
 #[derive(Serialize, Clone)]
@@ -54,7 +57,10 @@ fn delta_text(provider: &str, data: &str) -> Option<String> {
         }
         None
     } else {
-        v.pointer("/choices/0/delta/content").and_then(Value::as_str).map(str::to_owned)
+        v.pointer("/choices/0/delta/content")
+            .or_else(|| v.pointer("/message/content")) // родной поток Ollama
+            .and_then(Value::as_str)
+            .map(str::to_owned)
     }
 }
 
@@ -94,6 +100,18 @@ pub async fn ai_chat(app: AppHandle, state: State<'_, ChatState>, request: ChatR
                 "messages": request.messages,
                 "stream": true,
             }))
+    } else if request.provider == "ollama" {
+        // Родной API Ollama: можно задать размер контекста (через /v1 он 2–4 тыс. токенов,
+        // и длинный вопрос с кодом проекта молча обрезается)
+        let host = base.trim_end_matches("/v1").trim_end_matches('/').to_owned();
+        let mut messages = vec![ChatMessage { role: "system".into(), content: request.system.clone() }];
+        messages.extend(request.messages.iter().cloned());
+        client.post(format!("{host}/api/chat")).json(&json!({
+            "model": request.model.trim(),
+            "messages": messages,
+            "stream": true,
+            "options": { "num_ctx": request.context_size.unwrap_or(16384).clamp(2048, 131072) },
+        }))
     } else {
         let mut messages = vec![ChatMessage { role: "system".into(), content: request.system.clone() }];
         messages.extend(request.messages.iter().cloned());
@@ -129,8 +147,13 @@ pub async fn ai_chat(app: AppHandle, state: State<'_, ChatState>, request: ChatR
             while let Some(pos) = buffer.iter().position(|&b| b == b'\n') {
                 let line: Vec<u8> = buffer.drain(..=pos).collect();
                 let line = String::from_utf8_lossy(&line);
-                let Some(data) = line.trim().strip_prefix("data:") else { continue };
-                if let Some(text) = delta_text(&request.provider, data.trim()) {
+                // Ollama присылает строки JSON без «data:»
+                let data = match line.trim().strip_prefix("data:") {
+                    Some(d) => d.trim(),
+                    None if request.provider == "ollama" => line.trim(),
+                    None => continue,
+                };
+                if let Some(text) = delta_text(&request.provider, data) {
                     if !text.is_empty() {
                         full.push_str(&text);
                         let _ = app.emit("ai:chunk", Chunk { id: request.id.clone(), text });
@@ -171,5 +194,6 @@ mod tests {
             Some("вет")
         );
         assert_eq!(delta_text("anthropic", r#"{"type":"message_start"}"#), None);
+        assert_eq!(delta_text("ollama", r#"{"model":"q","message":{"role":"assistant","content":"Hi"},"done":false}"#).as_deref(), Some("Hi"));
     }
 }

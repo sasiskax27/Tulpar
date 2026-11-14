@@ -1456,3 +1456,4 @@ body.resizing .side-island { transition: none; }
 .git-user { color: var(--tp-ok); }
 .git-identity { color: var(--tp-fg-muted); }
 .git-warn { display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 8px; border: 1px solid color-mix(in srgb, var(--tp-gold) 50%, transparent); background: color-mix(in srgb, var(--tp-gold) 8%, transparent); font-size: 12px; }
+.model-badge.ok { background: color-mix(in srgb, var(--tp-ok) 18%, transparent); color: var(--tp-ok); }

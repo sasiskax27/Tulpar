@@ -6,7 +6,7 @@ import { monaco } from "../editor/monaco";
 import { openFile } from "../editor/tabs";
 import { executeCommand } from "../commands/registry";
 import { root } from "../app/workspace";
-import { bottomTab, bottomVisible, setBottomTab, setBottomVisible } from "../app/ui";
+import { bottomTab, bottomVisible, setBottomTab, setBottomVisible, setSettingsVisible } from "../app/ui";
 import { notify } from "../app/notify";
 import { parseErrors, stripAnsi } from "./terminalErrors";
 
@@ -135,8 +135,42 @@ export function feedTerminal(id: string, data: string) {
   termTimers.set(id, window.setTimeout(() => parseTerminal(id), 400));
 }
 
+/** Команды сборщиков и языков, которых может не быть на компьютере. */
+const TOOL_NAMES: Record<string, string> = {
+  mvn: "Maven", gradle: "Gradle", java: "Java (JDK)", javac: "Java (JDK)", python: "Python", python3: "Python",
+  pip: "Python", node: "Node.js", npm: "Node.js", npx: "Node.js", dotnet: ".NET SDK", go: "Go", cargo: "Rust",
+  rustc: "Rust", git: "Git", gh: "GitHub CLI", cmake: "CMake",
+};
+const warnedTools = new Set<string>();
+
+/** «mvn не распознано», «command not found» — предложить установить. */
+function checkMissingTool(lines: string[]) {
+  for (const line of lines.slice(-30)) {
+    const m =
+      line.match(/(?:^|\s)'?([\w.]+)'?\s*:?\s*(?:The term '([\w.]+)' is not recognized|is not recognized as)/i) ??
+      line.match(/The term '([\w.]+)' is not recognized/i) ??
+      line.match(/Имя "([\w.]+)" не распознано/i) ??
+      line.match(/(?:^|\s)([\w.]+): command not found/i) ??
+      line.match(/'([\w.]+)' is not recognized as an internal or external command/i);
+    const cmd = (m?.[2] ?? m?.[1] ?? "").toLowerCase().replace(/\.exe$/, "");
+    const tool = TOOL_NAMES[cmd];
+    if (!tool || warnedTools.has(tool)) continue;
+    warnedTools.add(tool);
+    notify(`${tool} не установлен на компьютере — поэтому команда «${cmd}» не нашлась.`, "error", [
+      {
+        label: "Установить…",
+        run: () => {
+          setSettingsVisible(true);
+          setTimeout(() => document.querySelector(".toolchains")?.scrollIntoView({ behavior: "smooth" }), 200);
+        },
+      },
+    ]);
+  }
+}
+
 function parseTerminal(id: string) {
   const lines = [...(termLines.get(id) ?? []), termTail.get(id) ?? ""];
+  checkMissingTool(lines);
   const before = terminalStore.get(id)?.length ?? 0;
   const found: Problem[] = [];
   for (const e of parseErrors(lines)) {

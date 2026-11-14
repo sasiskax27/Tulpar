@@ -12,6 +12,7 @@ import { baseName, core } from "../ipc";
 import { pick } from "../app/QuickPick";
 import { notify, notifyError } from "../app/notify";
 import LocalAi from "./LocalAi";
+import Toolchains from "./Toolchains";
 import { copilotSignIn, copilotSignOut, copilotState, copilotUser } from "../ai/copilot";
 import { claudeModels, cloudCatalog, openaiModels, opencodeModels } from "../ai/models";
 import { installed, isInstalled } from "../ai/ollama";
@@ -391,6 +392,12 @@ const sections: Section[] = [
       },
       { key: "terminal.integrated.scrollback", label: "Строк в истории терминала", type: "number", min: 500, max: 100000 },
     ],
+  },
+  {
+    title: "SDK и инструменты",
+    intro: "Языки и сборщики для запуска проектов: если чего-то нет — установка одной кнопкой (во вкладке терминала).",
+    fields: [],
+    extra: () => <Toolchains />,
   },
   {
     title: "ИИ",

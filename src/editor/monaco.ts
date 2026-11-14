@@ -61,6 +61,7 @@ export function editorOptions(s: Settings): monaco.editor.IEditorOptions & monac
     stickyScroll: { enabled: true },
     scrollBeyondLastLine: true,
     fixedOverflowWidgets: true,
+    inlineSuggest: { enabled: true, mode: "subwordSmart" },
   };
 }
 

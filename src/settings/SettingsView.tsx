@@ -190,6 +190,19 @@ const sections: Section[] = [
         type: "password",
       },
       {
+        key: "tulpar.ai.inline",
+        label: "Подсказки при наборе",
+        hint: "Серый текст продолжения кода, Tab — принять. Лучше всего с Ollama и маленькой моделью для кода.",
+        type: "toggle",
+      },
+      {
+        key: "tulpar.ai.inlineModel",
+        label: "Модель для подсказок",
+        hint: "Быстрая модель только для подсказок, например qwen2.5-coder:1.5b. Пусто — та же, что выше.",
+        type: "text",
+        placeholder: "qwen2.5-coder:1.5b",
+      },
+      {
         key: "tulpar.ai.language",
         label: "Язык комментариев",
         hint: "На каком языке ИИ пишет комментарии и объяснения.",

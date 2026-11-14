@@ -34,6 +34,10 @@ export interface Settings {
   "tulpar.ai.apiKey": string;
   /** На каком языке ИИ пишет комментарии и объяснения */
   "tulpar.ai.language": string;
+  /** Подсказки ИИ при наборе (серый текст, Tab — принять) */
+  "tulpar.ai.inline": boolean;
+  /** Отдельная быстрая модель для подсказок; пусто — та же, что для действий */
+  "tulpar.ai.inlineModel": string;
   [key: string]: unknown;
 }
 
@@ -61,6 +65,8 @@ export const defaultSettings: Settings = {
   "tulpar.ai.model": "",
   "tulpar.ai.apiKey": "",
   "tulpar.ai.language": "русский",
+  "tulpar.ai.inline": false,
+  "tulpar.ai.inlineModel": "",
 };
 
 // ---------- keybindings.json (формат VS Code) ----------

@@ -66,6 +66,7 @@ fn main() {
             media::background_import,
             media::image_read,
             ai::ai_complete,
+            ai::ai_fill,
             ollama::system_memory,
             ollama::ollama_status,
             ollama::ollama_pull,

@@ -111,6 +111,8 @@ export const core = {
   gitCheckout: (branch: string, create: boolean) => invoke<void>("git_checkout", { branch, create }),
   gitSync: (action: "push" | "pull" | "fetch") => invoke<string>("git_sync", { action }),
   gitDiffForMessage: () => invoke<string>("git_diff_for_message"),
+  aiFill: (request: { host: string; model: string; prefix: string; suffix: string; maxTokens: number }) =>
+    invoke<string>("ai_fill", { request }),
   configEnsure: (name: ConfigName) => invoke<string>("config_ensure", { name }),
 };
 

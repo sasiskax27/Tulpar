@@ -11,6 +11,7 @@ import { initTerminals } from "./terminal/sessions";
 import { initFileDrop } from "./explorer/dnd";
 import { initGit, refresh as refreshGit } from "./git/git";
 import { initGitGutter } from "./git/gutter";
+import { registerInlineCompletions } from "./ai/inline";
 import { root } from "./app/workspace";
 import { createEffect, createRoot, on } from "solid-js";
 
@@ -25,6 +26,7 @@ async function start() {
   await initFileDrop();
   await initGit();
   initGitGutter();
+  registerInlineCompletions();
   // Другая папка — свой репозиторий
   createRoot(() => createEffect(on(root, () => void refreshGit())));
 

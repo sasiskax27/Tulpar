@@ -141,3 +141,50 @@ pub async fn ai_complete(request: AiRequest) -> Result<String, String> {
     }
     Ok(text)
 }
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FillRequest {
+    /// Адрес Ollama без «/v1», например http://localhost:11434
+    host: String,
+    model: String,
+    prefix: String,
+    suffix: String,
+    max_tokens: u32,
+}
+
+/// Дописать код в месте курсора (fill-in-the-middle) через Ollama: модель видит
+/// текст до курсора и после него. Модели для кода (Qwen Coder и др.) обучены
+/// именно на этом, поэтому подсказки быстрые и точные даже у маленьких моделей.
+#[tauri::command]
+pub async fn ai_fill(request: FillRequest) -> Result<String, String> {
+    let host = request.host.trim().trim_end_matches('/').trim_end_matches("/v1").to_owned();
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(30))
+        .build()
+        .map_err(|e| e.to_string())?;
+    let response = client
+        .post(format!("{host}/api/generate"))
+        .json(&json!({
+            "model": request.model,
+            "prompt": request.prefix,
+            "suffix": request.suffix,
+            "stream": false,
+            "options": {
+                "num_predict": request.max_tokens,
+                "temperature": 0.2,
+                "top_p": 0.9,
+                "stop": ["\n\n\n"]
+            }
+        }))
+        .send()
+        .await
+        .map_err(|e| if e.is_connect() { "Ollama не запущена".to_string() } else { e.to_string() })?;
+    let status = response.status();
+    let body = response.text().await.map_err(|e| e.to_string())?;
+    if !status.is_success() {
+        return Err(format!("Ollama: {}", server_error(&body)));
+    }
+    let value: Value = serde_json::from_str(&body).map_err(|_| snippet(&body))?;
+    Ok(value["response"].as_str().unwrap_or_default().to_owned())
+}

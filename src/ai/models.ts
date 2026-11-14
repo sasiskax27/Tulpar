@@ -11,7 +11,7 @@ export interface CatalogModel {
 }
 
 export const catalog: CatalogModel[] = [
-  { tag: "qwen2.5-coder:1.5b", title: "Qwen 2.5 Coder 1.5B", sizeGb: 1.0, kind: "код", note: "Самая лёгкая. Хорошо объясняет и пишет комментарии, но ошибки почти не находит." },
+  { tag: "qwen2.5-coder:1.5b", title: "Qwen 2.5 Coder 1.5B", sizeGb: 1.0, kind: "код", note: "Самая лёгкая. Отлично подходит для подсказок при наборе и комментариев, но ошибки почти не находит." },
   { tag: "qwen3.5:0.8b", title: "Qwen 3.5 0.8B", sizeGb: 1.3, kind: "общая", note: "Крошечная. Для самых слабых машин, код понимает плохо." },
   { tag: "lfm3:1.7b", title: "LFM3 1.7B", sizeGb: 1.7, kind: "общая", note: "Быстрая на процессоре. Для простых задач." },
   { tag: "qwen2.5-coder:3b", title: "Qwen 2.5 Coder 3B", sizeGb: 1.9, kind: "код", note: "Лёгкая модель для кода: комментарии и простые правки." },

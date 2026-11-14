@@ -1,6 +1,15 @@
 // Generated: Russian UI text -> English. Keys are exact Russian strings;
 // pattern keys use {0}, {1}… for inserted values.
 export const EXACT: Record<string, string> = {
+ "Карта проекта": "Project map",
+ "Строю карту…": "Building the map…",
+ "Читаю файлы…": "Reading files…",
+ "Раскладываю…": "Laying out…",
+ "Найти файл на карте…": "Find a file on the map…",
+ "Показать всю карту": "Show the whole map",
+ "Перестроить": "Rebuild",
+ "✦ Объясни проект": "✦ Explain the project",
+ "Подключите ИИ в настройках, чтобы он объяснил устройство проекта.": "Connect AI in settings so it can explain the project structure.",
  "Учебный режим": "Learning mode",
  "🎓": "🎓",
  "Уровень": "Level",
@@ -1324,6 +1333,10 @@ export const EXACT: Record<string, string> = {
 };
 
 export const PATTERNS: Record<string, string> = {
+ "Читаю файлы… {0} из {1}": "Reading files… {0} of {1}",
+ "Показаны первые {0} файлов": "Showing the first {0} files",
+ "{0} файлов · {1} связей": "{0} files · {1} links",
+ "{0} строк · связей: {1}": "{0} lines · links: {1}",
  "✅ Верно! +{0} опыта": "✅ Correct! +{0} XP",
  "⭐ {0}": "⭐ {0}",
  "Пока не так: {0}": "Not quite yet: {0}",

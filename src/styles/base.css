@@ -2076,3 +2076,28 @@ body.resizing .side-island { transition: none; }
 .tg-editor-right .tg-code { font-size: 13px; }
 .tg-editor-buttons { display: flex; gap: 8px; margin-top: 12px; }
 @media (max-width: 720px) { .tg-editor { grid-template-columns: 1fr; } }
+
+/* ---------- Базы данных ---------- */
+.db-conn { margin-bottom: 2px; }
+.db-conn-head { display: flex; align-items: center; gap: 6px; padding: 5px 6px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.db-conn-head:hover { background: var(--tp-bg-hover); }
+.db-conn-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.db-conn-actions { display: flex; gap: 1px; opacity: 0; }
+.db-conn-head:hover .db-conn-actions { opacity: 1; }
+.db-badge { font-size: 9px; font-weight: 800; padding: 2px 4px; border-radius: 4px; color: #fff; }
+.db-badge.postgres { background: #336791; }
+.db-badge.mysql { background: #00758f; }
+.db-badge.mongodb { background: #13aa52; }
+.db-tree { padding-left: 18px; }
+.db-schema > summary { font-size: 12px; color: var(--tp-fg-muted); padding: 3px 4px; cursor: pointer; }
+.db-object { width: 100%; display: flex; gap: 6px; align-items: center; padding: 3px 6px 3px 14px; border-radius: 6px; background: none; border: 0; color: var(--tp-fg); text-align: left; cursor: pointer; font-size: 12px; }
+.db-object:hover { background: var(--tp-bg-hover); }
+.db-object-icon { width: 18px; color: var(--tp-fg-muted); font-size: 10px; text-align: center; }
+.db-form { border: 1px solid var(--tp-border); border-radius: 10px; padding: 10px; margin: 4px 4px 10px; display: flex; flex-direction: column; gap: 8px; }
+.db-kinds { display: flex; gap: 4px; flex-wrap: wrap; }
+.db-kinds button { padding: 3px 9px; border-radius: 999px; border: 1px solid var(--tp-border); background: transparent; color: var(--tp-fg-muted); cursor: pointer; font-size: 12px; }
+.db-kinds button.on { background: var(--tp-accent); border-color: var(--tp-accent); color: var(--tp-on-accent); }
+.db-form-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+.db-delete { margin-left: auto; color: var(--tp-error); }
+.db-ok { color: var(--tp-ok); font-size: 12px; margin: 0; }
+.db-view { position: absolute; inset: 0; }

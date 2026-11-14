@@ -79,6 +79,8 @@ export interface Settings {
   "tulpar.photoTheme": { hue: number; sat: number; light: boolean } | null;
   /** Свои темы из галереи: id → название и палитра */
   "tulpar.customThemes": Record<string, { name: string; palette: Record<string, string | boolean> }>;
+  /** Подключения к базам данных (строки подключения с паролями — только на этом компьютере) */
+  "tulpar.databases": { id: string; name: string; kind: "postgres" | "mysql" | "mongodb"; url: string }[];
   /** Фоновая картинка: путь к файлу или null */
   "tulpar.background.image": string | null;
   "tulpar.background.opacity": number;
@@ -175,6 +177,7 @@ export const defaultSettings: Settings = {
   "terminal.integrated.fontSize": 13,
   "tulpar.photoTheme": null,
   "tulpar.customThemes": {},
+  "tulpar.databases": [],
   "tulpar.background.image": null,
   "tulpar.background.opacity": 0.15,
   "tulpar.background.blur": 0,

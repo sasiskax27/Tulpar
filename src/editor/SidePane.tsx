@@ -8,6 +8,7 @@ import { closeSide, setSide, side, type SideView } from "./side";
 import { markdownToHtml } from "./markdown";
 import SqliteView from "./SqliteView";
 import NotebookView from "../notebook/NotebookView";
+import DbView from "../databases/DbView";
 import WebPreview from "./WebPreview";
 
 const MIME: Record<string, string> = {
@@ -172,6 +173,7 @@ const TITLES: Record<SideView["kind"], string> = {
   text: "",
   sqlite: "База · ",
   notebook: "Блокнот · ",
+  db: "",
   web: "Сайт · ",
 };
 
@@ -179,11 +181,11 @@ export default function SidePane() {
   const view = () => side()!;
   const others = () => tabs.filter((t) => !t.diffOf && t.path !== view().path);
   return (
-    <div class="side-pane" classList={{ wide: ["notebook", "sqlite", "web"].includes(view().kind) }}>
+    <div class="side-pane" classList={{ wide: ["notebook", "sqlite", "web", "db"].includes(view().kind) }}>
       <div class="side-pane-header">
         <span class="side-pane-title" title={view().path}>
           {TITLES[view().kind]}
-          {view().kind === "text" ? (view() as { title: string }).title : view().kind === "web" ? view().path : baseName(view().path)}
+          {view().kind === "text" ? (view() as { title: string }).title : view().kind === "web" || view().kind === "db" ? view().path : baseName(view().path)}
         </span>
         <Show when={view().kind === "editor" && others().length}>
           <select
@@ -213,6 +215,9 @@ export default function SidePane() {
           </Match>
           <Match when={view().kind === "html"}>
             <HtmlPreview path={view().path} />
+          </Match>
+          <Match when={view().kind === "db" && (view() as Extract<SideView, { kind: "db" }>)}>
+            {(v) => <DbView connId={v().connId} schema={v().schema} table={v().table} />}
           </Match>
           <Match when={view().kind === "notebook"}>
             <NotebookView path={view().path} />

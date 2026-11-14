@@ -1,6 +1,24 @@
 // Generated: Russian UI text -> English. Keys are exact Russian strings;
 // pattern keys use {0}, {1}… for inserted values.
 export const EXACT: Record<string, string> = {
+ ". Строка подключения хранится только на этом компьютере и не попадает в профиль настроек.": ". The connection string stays on this computer and is not included in the settings profile.",
+ "Базы данных": "Databases",
+ "Подключение удалено": "Connection removed",
+ "Новый запрос": "New query",
+ "Изменить": "Edit",
+ "Новое подключение": "New connection",
+ "Подключитесь к PostgreSQL, MySQL или MongoDB — смотрите таблицы и выполняйте запросы прямо в Tulpar.": "Connect to PostgreSQL, MySQL or MongoDB — browse tables and run queries right in Tulpar.",
+ "＋ Подключить базу": "＋ Connect a database",
+ "Файлы SQLite (.db, .sqlite) открываются просто кликом в проводнике.": "SQLite files (.db, .sqlite) open with a click in the explorer.",
+ "Название, например «Сайт — прод»": "Name, e.g. “Website — prod”",
+ "Supabase, Neon, Railway — строка подключения из их панели": "Supabase, Neon, Railway — the connection string from their dashboard",
+ "Укажите имя базы в конце адреса": "Put the database name at the end of the address",
+ "MongoDB Atlas: mongodb+srv://user:password@cluster…": "MongoDB Atlas: mongodb+srv://user:password@cluster…",
+ "Строка подключения хранится только на этом компьютере и не попадает в профиль настроек.": "The connection string stays on this computer and is not included in the settings profile.",
+ "Подключение удалено ": "Connection removed",
+ "▶ Найти": "▶ Find",
+ "Защита от случайных UPDATE, DELETE, DROP": "Protection against accidental UPDATE, DELETE, DROP",
+ "Это изменяющий запрос. Включите «Разрешить изменения», если уверены.": "This query changes data. Turn on “Allow changes” if you're sure.",
  "Галерея тем": "Theme gallery",
  "Фон окна": "Window background",
  "Фон кода": "Code background",
@@ -1256,6 +1274,10 @@ export const EXACT: Record<string, string> = {
 };
 
 export const PATTERNS: Record<string, string> = {
+ "Подключаюсь к {0}…": "Connecting to {0}…",
+ "Подключено ✓ · объектов: {0}": "Connected ✓ · objects: {0}",
+ "{0} · запрос": "{0} · query",
+ "{0}. Строка подключения хранится только на этом компьютере и не попадает в профиль настроек.": "{0}. The connection string stays on this computer and is not included in the settings profile.",
  "Код темы «{0}» скопирован — отправьте его другу. Он вставит его в «Галерея тем → Импорт».": "Theme code “{0}” copied — send it to a friend. They paste it in “Theme gallery → Import”.",
  "Тема «{0}» добавлена и включена": "Theme “{0}” added and applied",
  "Тема «{0}» сохранена и включена": "Theme “{0}” saved and applied",

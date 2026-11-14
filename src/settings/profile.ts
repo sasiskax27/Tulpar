@@ -22,7 +22,7 @@ import { ask, open, saveAs } from "../i18n/dialog";
 import { notify, notifyError } from "../app/notify";
 
 /** Ключи, которые нельзя переносить между компьютерами. */
-const PRIVATE: (keyof Settings)[] = ["tulpar.ai.apiKey", "tulpar.background.image", "tulpar.photoTheme"];
+const PRIVATE: (keyof Settings)[] = ["tulpar.ai.apiKey", "tulpar.background.image", "tulpar.photoTheme", "tulpar.databases"];
 
 export interface TulparProfile {
   app: "tulpar-profile";

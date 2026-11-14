@@ -167,6 +167,11 @@ export const core = {
   testsJunitReports: (dirs: string[]) => invoke<string[]>("tests_junit_reports", { dirs }),
   sqliteTables: (path: string) => invoke<SqliteTable[]>("sqlite_tables", { path }),
   sqliteQuery: (path: string, sql: string, write = false) => invoke<SqliteResult>("sqlite_query", { path, sql, write }),
+  dbQuery: (kind: string, url: string, sql: string) => invoke<SqliteResult>("db_query", { kind, url, sql }),
+  dbTables: (kind: string, url: string) => invoke<DbObject[]>("db_tables", { kind, url }),
+  mongoCollections: (url: string) => invoke<DbObject[]>("mongo_collections", { url }),
+  mongoFind: (url: string, db: string, collection: string, filter: string, limit?: number) =>
+    invoke<SqliteResult>("mongo_find", { url, db, collection, filter, limit: limit ?? null }),
   pkgSearch: (registry: string, query: string) => invoke<PkgItem[]>("pkg_search", { registry, query }),
   extSearch: (query: string, category?: string) => invoke<ExtSearchItem[]>("ext_search", { query, category: category ?? null }),
   extInstall: (namespace: string, name: string) => invoke<InstalledExt>("ext_install", { namespace, name }),
@@ -270,4 +275,10 @@ export interface SqliteResult {
   truncated: boolean;
   changes: number | null;
   millis: number;
+}
+
+export interface DbObject {
+  schema: string;
+  name: string;
+  kind: "table" | "view" | "collection";
 }

@@ -11,6 +11,7 @@ export type SideView =
   | { kind: "media"; path: string }
   | { kind: "sqlite"; path: string }
   | { kind: "notebook"; path: string }
+  | { kind: "db"; path: string; connId: string; schema?: string; table?: string }
   | { kind: "web"; path: string; url: string }
   | { kind: "text"; path: string; title: string; text: string; language: string };
 
@@ -57,6 +58,11 @@ export function previewHtml(path = current()) {
 }
 
 export const isSqlite = (path: string) => /\.(db|sqlite|sqlite3|db3)$/i.test(path);
+
+/** Таблица или коллекция серверной базы справа. path — подпись для заголовка. */
+export function showDb(connId: string, title: string, schema?: string, table?: string) {
+  setSide({ kind: "db", path: title, connId, schema, table });
+}
 
 export function showNotebook(path: string) {
   setSide({ kind: "notebook", path });

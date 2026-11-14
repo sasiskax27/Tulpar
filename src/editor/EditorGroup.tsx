@@ -225,7 +225,7 @@ export default function EditorGroup() {
         )}
       </Show>
       <div class="editor-row">
-      <div class="editor-host" classList={{ collapsed: !activePath() && !!side() && ["notebook", "sqlite", "web"].includes(side()!.kind) }}>
+      <div class="editor-host" classList={{ collapsed: !activePath() && !!side() && ["notebook", "sqlite", "web", "db"].includes(side()!.kind) }}>
         <div ref={container} class="monaco-container" classList={{ hidden: !activePath() || diffMode() }} />
         <div ref={diffContainer} class="monaco-container" classList={{ hidden: !diffMode() }} />
         <Show when={!activePath()}>

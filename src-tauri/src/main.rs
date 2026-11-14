@@ -14,6 +14,7 @@ mod ollama;
 mod pkg;
 mod testing;
 mod sqlite;
+mod db;
 mod search;
 mod terminal;
 mod transfer;
@@ -42,6 +43,10 @@ fn main() {
             pkg::pkg_search,
             testing::tests_run,
             sqlite::sqlite_tables,
+            db::db_query,
+            db::db_tables,
+            db::mongo_collections,
+            db::mongo_find,
             sqlite::sqlite_query,
             testing::tests_junit_reports,
             ext::ext_search,

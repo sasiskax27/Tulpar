@@ -9,6 +9,7 @@ import OutlinePanel from "../editor/OutlinePanel";
 import ExtensionsPanel from "../extensions/ExtensionsPanel";
 import PackagesPanel from "../packages/PackagesPanel";
 import TestsPanel from "../testing/TestsPanel";
+import DatabasesPanel from "../databases/DatabasesPanel";
 import { sidebarView } from "./ui";
 
 export default function SideView() {
@@ -25,6 +26,9 @@ export default function SideView() {
       </Match>
       <Match when={sidebarView() === "build"}>
         <BuildPanel />
+      </Match>
+      <Match when={sidebarView() === "databases"}>
+        <DatabasesPanel />
       </Match>
       <Match when={sidebarView() === "tests"}>
         <TestsPanel />

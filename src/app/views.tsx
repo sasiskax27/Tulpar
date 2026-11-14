@@ -25,6 +25,7 @@ export const icons = {
   extensions: (size?: number) => svg(<><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" /><path d="M17 3.5v7M13.5 7h7" /></>, size),
   packages: (size?: number) => svg(<><path d="M4 7.5L12 3l8 4.5-8 4.5z" /><path d="M4 7.5v9L12 21l8-4.5v-9" /><path d="M8 5.3l8 4.5" /></>, size),
   tests: (size?: number) => svg(<><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3" /><path d="M7.5 14h9" /></>, size),
+  databases: (size?: number) => svg(<><ellipse cx="12" cy="5.5" rx="7" ry="2.8" /><path d="M5 5.5v13c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8v-13" /><path d="M5 12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8" /></>, size),
   sidebar: (size?: number) => svg(<><rect x="3" y="4" width="18" height="16" rx="2.5" /><path d="M9 4v16" /></>, size),
 };
 
@@ -48,6 +49,7 @@ export const VIEWS: ViewDef[] = [
   { view: "git", title: "Git", command: "workbench.view.scm", icon: icons.git, badge: () => gitStatus()?.files.length },
   { view: "outline", title: "Структура", command: "outline.focus", icon: icons.outline },
   { view: "build", title: "Сборка", command: "workbench.view.build", icon: icons.build },
+  { view: "databases", title: "Базы данных", command: "workbench.view.databases", icon: icons.databases },
   { view: "tests", title: "Тесты", command: "workbench.view.testing", icon: icons.tests },
   { view: "packages", title: "Библиотеки", command: "workbench.view.packages", icon: icons.packages },
   { view: "extensions", title: "Расширения", command: "workbench.view.extensions", icon: icons.extensions },

@@ -2,7 +2,7 @@
 // Вкладки следуют за файлами: при переименовании переоткрываются по новому пути,
 // при удалении закрываются.
 import { createSignal } from "solid-js";
-import { ask } from "@tauri-apps/plugin-dialog";
+import { ask } from "../i18n/dialog";
 import { core, baseName, parentDir, sepOf } from "../ipc";
 import { reloadDir } from "../app/workspace";
 import { notify, notifyError } from "../app/notify";

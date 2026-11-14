@@ -1,4 +1,5 @@
 // Чат с ИИ: история разговора, контекст из проекта, потоковый ответ.
+import { aiLanguage } from "../i18n/translate";
 import { createSignal } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 import { core, events, baseName, sepOf, joinPath, parentDir } from "../ipc";
@@ -413,7 +414,7 @@ async function buildContext(question: string): Promise<{ text: string; labels: s
 }
 
 function systemPrompt() {
-  const lang = settings()["tulpar.ai.language"].trim() || "русский";
+  const lang = aiLanguage(settings()["tulpar.ai.language"]);
   return (
     "You are the assistant built into Tulpar, a code editor. Help the user with their project. " +
     `Answer in this language: ${lang}. Be concise and practical. ` +

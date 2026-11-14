@@ -2,7 +2,7 @@
 // Текст каждого файла хранится в модели Monaco; вкладка — лёгкая запись о ней.
 import { createSignal } from "solid-js";
 import { createStore, produce } from "solid-js/store";
-import { ask } from "@tauri-apps/plugin-dialog";
+import { ask } from "../i18n/dialog";
 import { monaco, detectLanguage } from "./monaco";
 import { core, baseName } from "../ipc";
 import { notifyError } from "../app/notify";

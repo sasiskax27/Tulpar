@@ -4,7 +4,7 @@
 // его текст пишется в резервную копию. Сохранили или закрыли без сохранения —
 // копия удаляется. Если Tulpar закрылся с несохранёнными файлами, при следующем
 // запуске он предложит их вернуть.
-import { ask } from "@tauri-apps/plugin-dialog";
+import { ask } from "../i18n/dialog";
 import { monaco } from "./monaco";
 import { core, baseName } from "../ipc";
 import { tabs, onDidSave, openFile, modelFor } from "./tabs";

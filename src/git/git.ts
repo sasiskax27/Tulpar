@@ -1,7 +1,8 @@
 // Состояние git и действия с ним. Статус обновляется после наших действий,
 // после изменений файлов на диске и при возвращении в окно.
+import { aiLanguage } from "../i18n/translate";
 import { createSignal } from "solid-js";
-import { ask } from "@tauri-apps/plugin-dialog";
+import { ask } from "../i18n/dialog";
 import { core, events, baseName, type GitFile, type GitStatus } from "../ipc";
 import { root } from "../app/workspace";
 import { notify, notifyError } from "../app/notify";
@@ -182,7 +183,7 @@ export async function suggestMessage() {
       notify("Нет изменений для коммита");
       return;
     }
-    const lang = settings()["tulpar.ai.language"].trim() || "русский";
+    const lang = aiLanguage(settings()["tulpar.ai.language"]);
     const answer = await core.aiComplete({
       ...base,
       system:

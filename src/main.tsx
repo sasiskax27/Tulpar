@@ -1,4 +1,6 @@
 import { render } from "solid-js/web";
+import { startTranslator, setLang, resolveLang } from "./i18n/translate";
+import { settings } from "./config/store";
 import "./styles/base.css";
 import App from "./app/App";
 import { initConfig } from "./config/store";
@@ -24,11 +26,23 @@ import { root } from "./app/workspace";
 import { createEffect, createRoot, on } from "solid-js";
 
 async function start() {
+  startTranslator();
   registerBuiltinCommands();
   installKeybindings();
   render(() => <App />, document.getElementById("root")!);
 
   await Promise.all([initConfig(), initWorkspaceEvents()]);
+  // Язык из настроек; при смене — перезагрузить окно, чтобы перевести всё сразу
+  createRoot(() =>
+    createEffect(
+      on(
+        () => settings()["workbench.language"],
+        (value) => {
+          if (setLang(resolveLang(value))) location.reload();
+        },
+      ),
+    ),
+  );
   await initLsp();
   await initTerminals();
   await initFileDrop();

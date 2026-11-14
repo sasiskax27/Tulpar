@@ -1,6 +1,7 @@
 // ИИ-действия над кодом: выделите фрагмент → правый клик → «ИИ: …».
 // Результат заменяет выделение одной правкой, которую можно отменить через Ctrl+Z.
 // Если ничего не выделено, действие применяется ко всему файлу.
+import { t, aiLanguage } from "../i18n/translate";
 import { createEffect, createRoot, createSignal } from "solid-js";
 import { monaco, languageName } from "../editor/monaco";
 import { editorInstance } from "../editor/instance";
@@ -199,7 +200,7 @@ export async function runAiTask(taskId: string) {
     return;
   }
 
-  const instruction = await task.instruction(cfg["tulpar.ai.language"].trim() || "русский");
+  const instruction = await task.instruction(aiLanguage(cfg["tulpar.ai.language"]));
   if (!instruction) return;
 
   // Помечаем фрагмент: подсветка показывает, что над ним работает ИИ, а сама метка
@@ -268,7 +269,7 @@ export async function runAiTask(taskId: string) {
 export function registerAiActions(editor: monaco.editor.IStandaloneCodeEditor) {
   editor.addAction({
     id: "tulpar.chat.askSelectionAction",
-    label: "ИИ: Спросить в чате",
+    label: t("ИИ: Спросить в чате"),
     contextMenuGroupId: "0_tulpar_ai",
     contextMenuOrder: -1,
     run: () => void executeCommand("tulpar.chat.askSelection"),
@@ -276,7 +277,7 @@ export function registerAiActions(editor: monaco.editor.IStandaloneCodeEditor) {
   tasks.forEach((task, i) => {
     editor.addAction({
       id: task.id,
-      label: task.label,
+      label: t(task.label),
       contextMenuGroupId: "0_tulpar_ai",
       contextMenuOrder: i,
       keybindings: task.id === "tulpar.ai.custom" ? [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI] : undefined,
@@ -292,7 +293,7 @@ export function registerAiActions(editor: monaco.editor.IStandaloneCodeEditor) {
       customTasks().forEach((task, i) => {
         const action = editor.addAction({
           id: task.id,
-          label: task.label,
+          label: t(task.label),
           contextMenuGroupId: "0_tulpar_ai",
           contextMenuOrder: tasks.length + i,
           run: () => runAiTask(task.id),

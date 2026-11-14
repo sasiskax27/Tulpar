@@ -1,6 +1,7 @@
 // Агент в чате: ИИ сам смотрит файлы, ищет по проекту, правит код и запускает
 // команды, пока не выполнит задачу. Каждый шаг виден в чате; правки и команды
 // по умолчанию ждут разрешения (настройка tulpar.agent.approve).
+import { aiLanguage } from "../i18n/translate";
 import { produce } from "solid-js/store";
 import { core, baseName, joinPath, parentDir, type AgentMessage, type ToolCall } from "../ipc";
 import { settings } from "../config/store";
@@ -549,7 +550,7 @@ export function showStepDiff(step: AgentStep) {
 // ---------- цикл ----------
 
 function systemPrompt() {
-  const lang = settings()["tulpar.ai.language"].trim() || "русский";
+  const lang = aiLanguage(settings()["tulpar.ai.language"]);
   return [
     "You are an autonomous coding agent built into Tulpar, a code editor. You work inside the user's project and complete their task using tools.",
     `Project folder: ${baseName(root()!)}. OS: ${isWindows ? "Windows (PowerShell)" : navigator.userAgent.includes("Mac") ? "macOS" : "Linux"}.`,

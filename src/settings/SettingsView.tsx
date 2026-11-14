@@ -1,7 +1,7 @@
 // Окно настроек (Ctrl+,). Каждое изменение применяется сразу и записывается
 // в settings.json — тот же файл можно править и руками.
 import { createSignal, For, onCleanup, onMount, Show, type JSX } from "solid-js";
-import { ask } from "@tauri-apps/plugin-dialog";
+import { ask } from "../i18n/dialog";
 import { settings, updateSetting, type Settings } from "../config/store";
 import { settingsVisible, setSettingsVisible } from "../app/ui";
 import { executeCommand } from "../commands/registry";
@@ -270,6 +270,13 @@ const sections: Section[] = [
     title: "Внешний вид",
     fields: [
       {
+        key: "workbench.language",
+        label: "Язык интерфейса · Language",
+        hint: "Окно перезагрузится, открытые файлы останутся.",
+        type: "select",
+        options: [["auto", "Как в системе"], ["ru", "Русский"], ["en", "English"]],
+      },
+      {
         key: "workbench.style",
         label: "Стиль интерфейса",
         hint: "Дизайн 2 — верхняя панель с ИИ-островом, боковая панель выезжает при наведении на левый край.",
@@ -526,7 +533,7 @@ const sections: Section[] = [
         label: "Язык комментариев",
         hint: "На каком языке ИИ пишет комментарии и объяснения.",
         type: "text",
-        placeholder: "русский",
+        placeholder: "как язык интерфейса",
       },
     ],
   },

@@ -47,6 +47,7 @@ export interface Settings {
   "workbench.colorTheme": "steppe" | "berkut" | "dawn" | "photo" | "dark" | "light";
   /** Дизайн 1 (classic) или Дизайн 2 (tulpar: верхняя панель и выезжающий остров) */
   "workbench.style": "classic" | "tulpar";
+  "workbench.language": "auto" | "ru" | "en";
   /** Панели — отдельные скруглённые острова с промежутками */
   "workbench.islands": boolean;
   /** Где полоса иконок в Дизайне 1 */
@@ -147,6 +148,7 @@ export const defaultSettings: Settings = {
   "terminal.integrated.scrollback": 5000,
   "workbench.colorTheme": "steppe",
   "workbench.style": "classic",
+  "workbench.language": "auto",
   "workbench.islands": true,
   "workbench.activityBar": "left",
   "workbench.tabs.style": "pills",
@@ -171,7 +173,7 @@ export const defaultSettings: Settings = {
   "tulpar.ai.baseUrl": "",
   "tulpar.ai.model": "",
   "tulpar.ai.apiKey": "",
-  "tulpar.ai.language": "русский",
+  "tulpar.ai.language": "",
   "tulpar.ai.inline": false,
   "tulpar.ai.inlineProvider": "model",
   "tulpar.chat.location": "bottom",

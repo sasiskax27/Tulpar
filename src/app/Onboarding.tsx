@@ -1,5 +1,6 @@
 // Мастер первого запуска: дизайн, тема и ИИ за три шага. Каждый выбор
 // применяется сразу — видно, как меняется Tulpar за окном мастера.
+import { currentLang } from "../i18n/translate";
 import { createMemo, createSignal, For, Match, onMount, Show, Switch } from "solid-js";
 import { settings, updateSetting } from "../config/store";
 import { THEME_NAMES, themePreview } from "./themes";
@@ -110,6 +111,14 @@ export default function Onboarding() {
                 <div class="ob-logo">T</div>
                 <h1>Добро пожаловать в Tulpar</h1>
                 <p>Быстрый редактор кода с ИИ-агентом, без слежки и лишней нагрузки на компьютер. Настроим его под вас за минуту.</p>
+                <div class="ob-lang" data-no-translate>
+                  <button classList={{ on: currentLang() === "ru" }} onClick={() => void updateSetting("workbench.language", "ru")}>
+                    Русский
+                  </button>
+                  <button classList={{ on: currentLang() === "en" }} onClick={() => void updateSetting("workbench.language", "en")}>
+                    English
+                  </button>
+                </div>
               </div>
             </Match>
 

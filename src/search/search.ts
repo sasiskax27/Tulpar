@@ -2,7 +2,7 @@
 // Ищет ядро на Rust; открытые файлы при замене меняются прямо в редакторе,
 // чтобы правку можно было отменить через Ctrl+Z.
 import { createSignal } from "solid-js";
-import { ask } from "@tauri-apps/plugin-dialog";
+import { ask } from "../i18n/dialog";
 import { core, type SearchOptions, type SearchResult } from "../ipc";
 import { monaco } from "../editor/monaco";
 import { modelFor } from "../editor/tabs";

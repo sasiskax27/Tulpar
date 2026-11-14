@@ -2,7 +2,7 @@
 // публикация проекта. Команды выполняются через git и GitHub CLI (gh),
 // установленные на компьютере.
 import { createSignal } from "solid-js";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open } from "../i18n/dialog";
 import { core } from "../ipc";
 import { notify, notifyError } from "../app/notify";
 import { askInput } from "../app/InputBox";

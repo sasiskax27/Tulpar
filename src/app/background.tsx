@@ -3,7 +3,7 @@
 //  • «за панелями» — фон под окном, а панели становятся полупрозрачными «стеклом»
 //    с размытием (прозрачность и размытие — в настройках).
 import { createEffect, createSignal, on, onCleanup, Show } from "solid-js";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open } from "../i18n/dialog";
 import { core } from "../ipc";
 import { settings, updateSetting } from "../config/store";
 import { notify, notifyError } from "./notify";

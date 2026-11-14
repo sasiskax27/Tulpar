@@ -12,6 +12,7 @@ mod lsp;
 mod media;
 mod ollama;
 mod pkg;
+mod testing;
 mod search;
 mod terminal;
 mod transfer;
@@ -36,6 +37,8 @@ fn main() {
             workspace::workspace_open,
             workspace::project_create,
             pkg::pkg_search,
+            testing::tests_run,
+            testing::tests_junit_reports,
             ext::ext_search,
             ext::ext_install,
             ext::ext_list,

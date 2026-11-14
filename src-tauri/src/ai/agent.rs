@@ -347,7 +347,7 @@ pub struct RunResult {
 
 const MAX_OUTPUT: usize = 30_000;
 
-fn shell_command(command: &str) -> Command {
+pub(crate) fn shell_command(command: &str) -> Command {
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;

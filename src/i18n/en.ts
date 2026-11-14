@@ -1,6 +1,29 @@
 // Generated: Russian UI text -> English. Keys are exact Russian strings;
 // pattern keys use {0}, {1}… for inserted values.
 export const EXACT: Record<string, string> = {
+ "Тесты": "Tests",
+ "Запустить все тесты": "Run all tests",
+ "Найти тесты заново": "Detect tests again",
+ "Откройте папку проекта.": "Open a project folder.",
+ "Тесты не найдены. Tulpar понимает pytest, Vitest, Jest, cargo test, go test, Maven, Gradle и .NET.": "No tests found. Tulpar understands pytest, Vitest, Jest, cargo test, go test, Maven, Gradle and .NET.",
+ "Запускаю…": "Running…",
+ "▶ Этот файл": "▶ This file",
+ "Запустить в терминале с живым выводом": "Run in the terminal with live output",
+ "только упавшие": "failed only",
+ "Результатов нет — посмотрите вывод ниже.": "No results — see the output below.",
+ "▾ Скрыть вывод": "▾ Hide output",
+ "▸ Показать вывод": "▸ Show output",
+ "Открыть": "Open",
+ "Запустить только этот тест": "Run only this test",
+ "файл не запустился": "file failed to run",
+ "тесты": "tests",
+ "В проекте не нашлось тестов: pytest, Vitest, Jest, cargo, go test, Maven, Gradle или .NET": "No tests found in the project: pytest, Vitest, Jest, cargo, go test, Maven, Gradle or .NET",
+ "Для тестов Python нужен pytest. Установить?": "Python tests need pytest. Install it?",
+ "Зависимости проекта не установлены. Выполнить npm install?": "Project dependencies aren't installed. Run npm install?",
+ "Тесты остановлены: шли дольше 15 минут": "Tests stopped: ran longer than 15 minutes",
+ "Тесты не запустились — посмотрите вывод внизу панели": "Tests didn't run — see the output at the bottom of the panel",
+ "Не удалось разобрать результаты тестов": "Could not parse test results",
+ "Не удалось запустить тесты": "Could not run tests",
  "Проверить": "Check",
  "Проверить изменения перед коммитом: ключи и пароли в коде, забытая отладка, баги (с ИИ, если он подключён)": "Check changes before committing: keys and passwords in code, leftover debug code, bugs (with AI if connected)",
  "Проблем не найдено ✓": "No problems found ✓",
@@ -1138,6 +1161,8 @@ export const EXACT: Record<string, string> = {
 };
 
 export const PATTERNS: Record<string, string> = {
+ "▶ Все тесты · {0}": "▶ All tests · {0}",
+ "{0} с": "{0} s",
  "@ошибки: {0}": "@errors: {0}",
  "Программа завершилась, код {0}.": "The program exited with code {0}.",
  "строка {0}": "line {0}",

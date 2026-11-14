@@ -1948,3 +1948,37 @@ body.resizing .side-island { transition: none; }
 .git-finding-loc { font-size: 11px; color: var(--tp-fg-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .git-finding.error .git-finding-msg { color: var(--tp-error); }
 .git-review-summary { font-size: 12px; color: var(--tp-fg-muted); padding: 4px 2px 0; }
+
+/* ---------- Тесты ---------- */
+.tests-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.tests-empty { padding: 8px 12px; color: var(--tp-fg-muted); font-size: 12px; line-height: 1.5; }
+.tests-top { padding: 4px 10px 8px; display: flex; flex-direction: column; gap: 6px; }
+.tests-fw { padding: 4px 6px; border-radius: 6px; border: 1px solid var(--tp-border); background: var(--tp-bg-input); color: var(--tp-fg); }
+.tests-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+.tests-buttons .button { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tests-summary { display: flex; gap: 10px; align-items: center; padding: 0 12px 6px; font-size: 12px; flex-wrap: wrap; }
+.tests-summary .ok, .tests-group .ok { color: var(--tp-ok); }
+.tests-summary .bad, .tests-group .bad { color: var(--tp-error); }
+.tests-summary .skip, .tests-time { color: var(--tp-fg-muted); }
+.tests-filter { display: inline-flex; gap: 4px; align-items: center; margin-left: auto; color: var(--tp-fg-muted); cursor: pointer; }
+.tests-list { flex: 1; overflow: auto; padding: 0 6px 8px; }
+.tests-group > summary { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 6px; cursor: pointer; list-style: none; font-size: 12px; }
+.tests-group > summary::-webkit-details-marker { display: none; }
+.tests-group > summary:hover { background: var(--tp-bg-hover); }
+.tests-group-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.tests-group-count { color: var(--tp-fg-muted); font-size: 11px; }
+.test-row { margin-left: 14px; }
+.test-line { display: flex; align-items: center; gap: 6px; padding: 3px 6px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+.test-line:hover { background: var(--tp-bg-hover); }
+.test-icon { width: 12px; text-align: center; }
+.test-row.passed .test-icon { color: var(--tp-ok); }
+.test-row.failed .test-icon, .test-row.failed .test-name { color: var(--tp-error); }
+.test-row.skipped { opacity: 0.6; }
+.test-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.test-time { color: var(--tp-fg-muted); font-size: 11px; }
+.test-actions { display: flex; gap: 2px; opacity: 0; }
+.test-line:hover .test-actions { opacity: 1; }
+.test-message { margin: 2px 0 4px 18px; padding: 6px 8px; border-radius: 6px; background: var(--tp-bg-hover); font-size: 11px; white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto; }
+.test-fix-row { margin: 0 0 6px 18px; }
+.tests-output { border-top: 1px solid var(--tp-border); padding: 4px 10px 8px; }
+.tests-output pre { max-height: 200px; overflow: auto; font-size: 11px; white-space: pre-wrap; margin: 4px 0 0; }

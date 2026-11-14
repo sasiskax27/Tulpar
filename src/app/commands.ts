@@ -145,6 +145,8 @@ export function registerBuiltinCommands() {
     },
   });
   reg({ id: "outline.focus", category: "Вид", title: "Структура файла", run: (args) => showView("outline", args) });
+  reg({ id: "workbench.view.testing", category: "Вид", title: "Тесты", run: (args) => showView("tests", args) });
+  reg({ id: "testing.runAll", category: "Тесты", title: "Запустить все тесты", run: () => void import("../testing/tests").then((m) => m.runTests()) });
   reg({ id: "workbench.view.packages", category: "Вид", title: "Библиотеки: найти и подключить", run: (args) => showView("packages", args) });
   reg({ id: "workbench.view.extensions", category: "Вид", title: "Расширения: темы и сниппеты", run: (args) => showView("extensions", args) });
   reg({ id: "workbench.view.build", category: "Вид", title: "Сборка и проекты", run: (args) => showView("build", args) });

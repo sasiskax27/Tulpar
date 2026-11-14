@@ -160,6 +160,9 @@ export const core = {
   aiModels: (provider: string, baseUrl: string, apiKey: string) =>
     invoke<{ id: string; free: boolean }[]>("ai_models", { provider, baseUrl, apiKey }),
   updateCheck: () => invoke<UpdateInfo | null>("update_check"),
+  testsRun: (command: string, reportExt?: string) =>
+    invoke<{ code: number | null; output: string; report: string | null; timedOut: boolean; millis: number }>("tests_run", { command, reportExt: reportExt ?? null }),
+  testsJunitReports: (dirs: string[]) => invoke<string[]>("tests_junit_reports", { dirs }),
   pkgSearch: (registry: string, query: string) => invoke<PkgItem[]>("pkg_search", { registry, query }),
   extSearch: (query: string, category?: string) => invoke<ExtSearchItem[]>("ext_search", { query, category: category ?? null }),
   extInstall: (namespace: string, name: string) => invoke<InstalledExt>("ext_install", { namespace, name }),

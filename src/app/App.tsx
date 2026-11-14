@@ -7,6 +7,7 @@ import SettingsView from "../settings/SettingsView";
 import AiOverlay from "../ai/AiOverlay";
 import ContextMenu from "./ContextMenu";
 import QuickPick from "./QuickPick";
+import Onboarding, { maybeShowOnboarding } from "./Onboarding";
 import { notices, dismiss } from "./notify";
 import { settings } from "../config/store";
 import { cssVars, isLightTheme } from "./themes";
@@ -37,7 +38,11 @@ export default function App() {
     applied = Object.keys(vars);
   });
 
-  onMount(() => document.body.classList.add("ready"));
+  onMount(() => {
+    document.body.classList.add("ready");
+    // Мастер — чуть позже, когда загрузятся настройки
+    setTimeout(maybeShowOnboarding, 600);
+  });
 
   return (
     <>
@@ -49,6 +54,7 @@ export default function App() {
       <AiOverlay />
       <ContextMenu />
       <QuickPick />
+      <Onboarding />
       <div class="notices">
         <For each={notices()}>
           {(n) => (

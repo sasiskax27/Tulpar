@@ -286,3 +286,11 @@ export function terminalTheme(id: string): ITheme | null {
     brightBlue: p.param, brightMagenta: p.kw, brightCyan: p.type, brightWhite: p.strong,
   };
 }
+
+/** Главные цвета темы — для карточек выбора темы. */
+export function themePreview(id: string): { bg: string; island: string; text: string; accent: string; kw: string; str: string } {
+  const p = pal(id);
+  if (p) return { bg: p.bg, island: p.island, text: p.text, accent: p.accent, kw: p.kw, str: p.str };
+  if (id === "light") return { bg: "#ffffff", island: "#f3f3f3", text: "#333333", accent: "#0078d4", kw: "#0000ff", str: "#a31515" };
+  return { bg: "#1e1e1e", island: "#181818", text: "#cccccc", accent: "#0078d4", kw: "#569cd6", str: "#ce9178" };
+}

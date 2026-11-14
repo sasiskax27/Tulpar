@@ -1,5 +1,6 @@
 // Строка статуса: папка, ветка git, раскладка, несохранённые файлы, позиция курсора, язык.
 import { RecordingBadge } from "../video/VideoStudio";
+import { stats, minutesOf, dayKey, formatMinutes, focusEnd } from "../tools/stats";
 import { phoneInfo, setPhoneDialog } from "../phone/phone";
 import { Show } from "solid-js";
 import { root } from "./workspace";
@@ -51,6 +52,9 @@ export default function StatusBar() {
       </div>
       <div class="status-right">
         <RecordingBadge />
+        <button class="status-item" title="Моя статистика и фокус-таймер" onClick={() => void executeCommand("tulpar.stats")}>
+          {focusEnd() ? "🍅" : "📊"} {formatMinutes(minutesOf(stats()[dayKey()]))}
+        </button>
         <Show when={phoneInfo()}>
           <button class="status-item" title="Телефон подключён как второй экран" onClick={() => setPhoneDialog(true)}>
             📱

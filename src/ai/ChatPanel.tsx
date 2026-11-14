@@ -273,6 +273,19 @@ export async function showChatHistory() {
   }
 }
 
+/** Кнопка «OpenCode»: агент OpenCode с бесплатными облачными моделями во вкладке терминала. */
+export function OpenCodeButton() {
+  return (
+    <button
+      class="chat-opencode"
+      title="Открыть OpenCode во вкладке терминала: агент для кода с бесплатными облачными моделями (работает в папке проекта)"
+      onClick={() => void executeCommand("tulpar.opencode.open")}
+    >
+      OpenCode
+    </button>
+  );
+}
+
 export function HistoryButton() {
   return (
     <button class="icon-button" aria-label="История чатов" title="История чатов" onClick={() => void showChatHistory()}>
@@ -334,6 +347,7 @@ export default function ChatPanel(props: { embedded?: boolean }) {
         <div class="panel-header">
           <span>Чат с ИИ</span>
           <div class="panel-actions">
+            <OpenCodeButton />
             <MoveChatButton />
             <HistoryButton />
             <NewChatButton />

@@ -2,7 +2,7 @@
 import { registerCommand } from "../commands/registry";
 import { showPalette } from "../palette/Palette";
 import { saveFile, saveAll, closeTab, cycleTab, openFile } from "../editor/tabs";
-import { openFolder } from "./workspace";
+import { openFolder, root } from "./workspace";
 import { bottomTab, bottomVisible, setBottomTab, setBottomVisible, setSidebarVisible, setSettingsVisible, setSidebarView, sidebarView, sidebarVisible, type SidebarView } from "./ui";
 import { focusSearch } from "../search/SearchPanel";
 import { switchBranch, commit, sync, refresh as gitRefresh } from "../git/git";
@@ -14,11 +14,37 @@ import { activeLayout, defaultSettings, layoutConfig, setActiveLayout, settings,
 import { core, type ConfigName } from "../ipc";
 import { notify } from "./notify";
 import { restartLanguageServers } from "../lsp/manager";
-import { toggleTerminal, newTerminal, killSession } from "../terminal/sessions";
+import { toggleTerminal, newTerminal, killSession, runInTerminal } from "../terminal/sessions";
 import { focusEditor } from "../editor/instance";
 import { chooseBackground, clearBackground, usePhotoTheme } from "./background";
 import { fixWithAi, problems, showProblems } from "../problems/problems";
 import { cancelAi, runAiTask, tasks } from "../ai/ai";
+
+/**
+ * OpenCode — агент для кода в терминале. Его бесплатные облачные модели работают
+ * только в самой программе OpenCode, поэтому Tulpar запускает её во вкладке
+ * терминала в папке проекта, а не обращается к моделям напрямую.
+ */
+async function openOpenCode() {
+  if (!root()) {
+    notify("Сначала откройте папку проекта — OpenCode будет работать в ней");
+    return;
+  }
+  const check = await core.agentRun("opencode --version", 20).catch(() => null);
+  if (!check || check.code !== 0) {
+    notify("OpenCode не установлен. Он ставится одной командой через npm (Node.js у вас уже есть).", "info", [
+      {
+        label: "Установить",
+        run: () => {
+          void runInTerminal("npm install -g opencode-ai", "Установка OpenCode");
+          notify("Когда установка закончится, снова нажмите «OpenCode».");
+        },
+      },
+    ]);
+    return;
+  }
+  await runInTerminal("opencode", "OpenCode");
+}
 
 async function openConfig(name: ConfigName) {
   const path = await core.configEnsure(name);
@@ -107,6 +133,7 @@ export function registerBuiltinCommands() {
   });
   reg({ id: "workbench.view.build", category: "Вид", title: "Сборка и проекты", run: (args) => showView("build", args) });
   reg({ id: "tulpar.chat.new", category: "ИИ", title: "Новый чат", run: () => newChat() });
+  reg({ id: "tulpar.opencode.open", category: "ИИ", title: "Открыть OpenCode (бесплатные облачные модели)", run: () => openOpenCode() });
   reg({ id: "tulpar.chat.history", category: "ИИ", title: "История чатов…", run: () => import("../ai/ChatPanel").then((m) => m.showChatHistory()) });
   reg({
     id: "tulpar.chat.askSelection",

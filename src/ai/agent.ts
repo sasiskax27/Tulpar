@@ -10,7 +10,7 @@ import { modelFor, openDiff, saveFile, tabs } from "../editor/tabs";
 import { notifyError } from "../app/notify";
 import { aiBase } from "./ai";
 import { closeReview, setReviewHandlers, setReviewPending, showReview, type Review } from "./review";
-import { chatInternals, relPath, saveChatSoon, streaming, type AgentStep, type ChatMsg } from "./chat";
+import { chatInternals, currentFolder, relPath, saveChatSoon, streaming, type AgentStep, type ChatMsg } from "./chat";
 
 const isWindows = navigator.userAgent.includes("Windows");
 const READ_CHARS = 24_000;
@@ -568,11 +568,26 @@ function systemPrompt() {
 }
 
 function contextNote(): string {
+  const parts: string[] = [];
   const model = editorInstance()?.getModel();
-  if (!model || model.uri.scheme !== "file") return "";
-  const sel = editorInstance()!.getSelection();
-  const where = sel && !sel.isEmpty() ? `, selected lines ${sel.startLineNumber}-${sel.endLineNumber}` : `, cursor at line ${editorInstance()!.getPosition()?.lineNumber ?? 1}`;
-  return `\n\n(For reference only: the editor currently shows ${relPath(model.uri.fsPath)}${where}. Do not change or run this file unless the task is about it.)`;
+  if (model && model.uri.scheme === "file") {
+    const editor = editorInstance()!;
+    const sel = editor.getSelection();
+    const rel = relPath(model.uri.fsPath);
+    if (sel && !sel.isEmpty()) {
+      const text = model.getValueInRange(sel);
+      parts.push(
+        `The user is working in file ${rel} and has selected lines ${sel.startLineNumber}-${sel.endLineNumber}` +
+          (text.length <= 3000 ? `:\n\`\`\`\n${text}\n\`\`\`` : "."),
+      );
+    } else {
+      parts.push(`The user is working in file ${rel}, cursor at line ${editor.getPosition()?.lineNumber ?? 1}.`);
+    }
+    parts.push(`If the task does not name another file, it is about ${rel}${sel && !sel.isEmpty() ? " (the selected lines)" : ""}: read it and change it there.`);
+  }
+  const folder = currentFolder();
+  if (folder) parts.push(`Current folder: ${folder === "." ? "the project root" : folder + "/"}. Create new files there unless the user says otherwise (use paths like ${folder === "." ? "" : folder + "/"}name.py).`);
+  return parts.length ? `\n\n(Context: ${parts.join(" ")})` : "";
 }
 
 /** Выполнить задачу агентом. Возвращает false, если модель не умеет инструменты. */

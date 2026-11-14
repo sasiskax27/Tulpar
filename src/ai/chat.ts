@@ -1,7 +1,8 @@
 // Чат с ИИ: история разговора, контекст из проекта, потоковый ответ.
 import { createSignal } from "solid-js";
 import { createStore, produce } from "solid-js/store";
-import { core, events, baseName, sepOf, joinPath } from "../ipc";
+import { core, events, baseName, sepOf, joinPath, parentDir } from "../ipc";
+import { selected as selectedInTree } from "../explorer/fileOps";
 import { settings } from "../config/store";
 import { root } from "../app/workspace";
 import { editorInstance } from "../editor/instance";
@@ -290,6 +291,29 @@ export async function stop() {
   stopAgent();
   const id = streaming();
   if (id) await core.aiChatCancel(id).catch(() => undefined);
+}
+
+/**
+ * Папка, в которой сейчас работает пользователь (относительно проекта; "." — корень):
+ * выбранная в проводнике папка, иначе папка открытого файла.
+ */
+export function currentFolder(): string | null {
+  const r = root();
+  if (!r) return null;
+  const chosen = selectedInTree();
+  let dir: string | null = null;
+  if (chosen) {
+    const item = document.querySelector<HTMLElement>(`.tree-item[data-path="${CSS.escape(chosen)}"]`);
+    dir = item?.dataset.dir === "1" ? chosen : null;
+  }
+  if (!dir) {
+    activePath();
+    const model = editorInstance()?.getModel();
+    if (model && model.uri.scheme === "file") dir = parentDir(model.uri.fsPath);
+  }
+  if (!dir || !dir.toLowerCase().startsWith(r.toLowerCase())) return ".";
+  const rel = relPath(dir);
+  return rel === dir || !rel ? "." : rel;
 }
 
 /** Что сейчас приложится к вопросу (для подписи под полем ввода). */

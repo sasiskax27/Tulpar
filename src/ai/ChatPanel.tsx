@@ -4,7 +4,7 @@ import {
   messages, streaming, useFile, setUseFile, attached, attach, detach, newChat, stop, send,
   useProject, setUseProject, collecting, attachedDirs, agentMode, setAgentMode, type AgentStep,
   currentFileLabel, insertIntoEditor, relPath,
-  loadChats, openChat, deleteChat, clearChats, type SavedChat,
+  loadChats, openChat, deleteChat, clearChats, currentFolder, type SavedChat,
 } from "./chat";
 import { core, baseName, joinPath } from "../ipc";
 import { root } from "../app/workspace";
@@ -449,6 +449,11 @@ export default function ChatPanel(props: { embedded?: boolean }) {
             >
               {useFile() ? "📎" : "○"} {currentFileLabel()}
             </button>
+          </Show>
+          <Show when={agentMode() && root() && currentFolder()}>
+            <span class="chat-chip folder" title="Агент создаёт новые файлы здесь. Выберите другую папку в проводнике, чтобы сменить">
+              📂 {currentFolder() === "." ? baseName(root()!) : currentFolder()}
+            </span>
           </Show>
           <For each={attached()}>
             {(p) => (

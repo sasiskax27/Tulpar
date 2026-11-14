@@ -15,6 +15,8 @@ const defaults: Keybinding[] = [
   { key: "mod+alt+s", command: "workbench.action.files.saveAll" },
   { key: "mod+w", command: "workbench.action.closeActiveEditor" },
   { key: "mod+k mod+o", command: "workbench.action.files.openFolder" },
+  // Второе нажатие и без Ctrl — так удобнее, а в VS Code многие ошибаются именно здесь
+  { key: "mod+k o", command: "workbench.action.files.openFolder" },
   { key: "mod+b", command: "workbench.action.toggleSidebarVisibility" },
   { key: "ctrl+tab", command: "workbench.action.nextEditor" },
   { key: "ctrl+shift+tab", command: "workbench.action.previousEditor" },

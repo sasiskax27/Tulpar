@@ -107,6 +107,7 @@ export function registerBuiltinCommands() {
   });
   reg({ id: "workbench.view.build", category: "Вид", title: "Сборка и проекты", run: (args) => showView("build", args) });
   reg({ id: "tulpar.chat.new", category: "ИИ", title: "Новый чат", run: () => newChat() });
+  reg({ id: "tulpar.chat.history", category: "ИИ", title: "История чатов…", run: () => import("../ai/ChatPanel").then((m) => m.showChatHistory()) });
   reg({
     id: "tulpar.chat.askSelection",
     category: "ИИ",

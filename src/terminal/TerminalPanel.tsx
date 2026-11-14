@@ -6,7 +6,7 @@ import {
 } from "./sessions";
 import { bottomTab, setBottomTab, setBottomVisible } from "../app/ui";
 import { settings } from "../config/store";
-import ChatPanel, { focusChat, MoveChatButton, NewChatButton } from "../ai/ChatPanel";
+import ChatPanel, { focusChat, HistoryButton, MoveChatButton, NewChatButton } from "../ai/ChatPanel";
 import { streaming } from "../ai/chat";
 import ProblemsPanel from "../problems/ProblemsPanel";
 import { counts } from "../problems/problems";
@@ -105,6 +105,7 @@ export default function TerminalPanel() {
         <div class="terminal-actions">
           <Show when={tab() === "chat"}>
             <MoveChatButton />
+            <HistoryButton />
             <NewChatButton />
           </Show>
           <Show when={tab() === "terminal"}>

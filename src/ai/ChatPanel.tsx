@@ -4,6 +4,7 @@ import {
   messages, streaming, useFile, setUseFile, attached, attach, detach, newChat, stop, send,
   useProject, setUseProject, collecting, attachedDirs, agentMode, setAgentMode, type AgentStep,
   currentFileLabel, insertIntoEditor, relPath,
+  loadChats, openChat, deleteChat, clearChats, type SavedChat,
 } from "./chat";
 import { core, baseName, joinPath } from "../ipc";
 import { root } from "../app/workspace";
@@ -14,7 +15,7 @@ import { notify } from "../app/notify";
 import { settings, updateSetting } from "../config/store";
 import { executeCommand } from "../commands/registry";
 import { chatDrop } from "../explorer/dnd";
-import { answerStep, showStepDiff, undoStep } from "./agent";
+import { answerStep, rollbackTask, showStepDiff, undoStep } from "./agent";
 
 let input: HTMLTextAreaElement | undefined;
 
@@ -225,6 +226,61 @@ export function MoveChatButton() {
   );
 }
 
+function when(ts: number): string {
+  const d = new Date(ts);
+  const today = new Date();
+  const time = d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  if (d.toDateString() === today.toDateString()) return `сегодня ${time}`;
+  return `${d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" })} ${time}`;
+}
+
+/** История чатов: открыть прошлый разговор, удалить, очистить. */
+export async function showChatHistory() {
+  const chats = loadChats();
+  if (!chats.length) {
+    notify("История пуста — чаты сохраняются после первого ответа ИИ");
+    return;
+  }
+  const r = root();
+  // Сначала чаты этого проекта
+  const sorted = [...chats].sort((a, b) => Number(b.root === r) - Number(a.root === r) || b.updated - a.updated);
+  type Choice = { kind: "open" | "delete" | "clear"; chat?: SavedChat };
+  const choice = await pick<Choice>(
+    [
+      ...sorted.map((c) => ({
+        label: c.title,
+        detail: `${when(c.updated)}${c.root ? " · " + baseName(c.root) : ""} · сообщений: ${c.messages.length}`,
+        value: { kind: "open" as const, chat: c },
+      })),
+      { label: "🗑 Удалить чат из истории…", value: { kind: "delete" as const } },
+      { label: "🗑 Очистить всю историю", value: { kind: "clear" as const } },
+    ],
+    "История чатов — начните печатать для поиска",
+  );
+  if (!choice) return;
+  if (choice.kind === "open" && choice.chat) {
+    openChat(choice.chat);
+    void executeCommand("workbench.action.chat.open");
+  } else if (choice.kind === "delete") {
+    const target = await pick(
+      sorted.map((c) => ({ label: c.title, detail: when(c.updated), value: c.id })),
+      "Какой чат удалить?",
+    );
+    if (target) deleteChat(target);
+  } else if (choice.kind === "clear") {
+    clearChats();
+    notify("История чатов очищена");
+  }
+}
+
+export function HistoryButton() {
+  return (
+    <button class="icon-button" aria-label="История чатов" title="История чатов" onClick={() => void showChatHistory()}>
+      <svg aria-hidden="true" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9M2.5 2.5v2.6h2.6M8 5v3.2l2.2 1.4" /></svg>
+    </button>
+  );
+}
+
 export function NewChatButton() {
   return (
     <button class="icon-button" aria-label="Новый чат" title="Новый чат" onClick={newChat}>
@@ -279,6 +335,7 @@ export default function ChatPanel(props: { embedded?: boolean }) {
           <span>Чат с ИИ</span>
           <div class="panel-actions">
             <MoveChatButton />
+            <HistoryButton />
             <NewChatButton />
           </div>
         </div>
@@ -336,6 +393,18 @@ export default function ChatPanel(props: { embedded?: boolean }) {
                     <Show when={m.steps?.length}>
                       <div class="agent-steps">
                         <For each={m.steps}>{(st) => <StepView step={st} />}</For>
+                      </div>
+                    </Show>
+                    <Show when={m.checkpoint?.length && !(streaming() && i() === messages.length - 1)}>
+                      <div class="agent-checkpoint" classList={{ done: m.rolledBack }}>
+                        <span>
+                          {m.rolledBack ? "Изменения откачены" : `Изменено файлов: ${m.checkpoint!.length}`}
+                        </span>
+                        <Show when={!m.rolledBack}>
+                          <button class="button-quiet" title="Вернуть все файлы к состоянию до этой задачи" onClick={() => void rollbackTask(m)}>
+                            ↶ Откатить всё
+                          </button>
+                        </Show>
                       </div>
                     </Show>
                     <Show

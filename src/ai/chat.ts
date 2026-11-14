@@ -9,7 +9,7 @@ import { activePath, cursor } from "../editor/tabs";
 import { languageName } from "../editor/monaco";
 import { notifyError } from "../app/notify";
 import { aiBase } from "./ai";
-import { resetAgent, runAgent, stopAgent } from "./agent";
+import { loadAgentHistory, resetAgent, runAgent, stopAgent } from "./agent";
 
 export interface AgentStep {
   id: string;
@@ -34,6 +34,10 @@ export interface ChatMsg {
   error?: boolean;
   /** Шаги агента: что он смотрел, менял и запускал */
   steps?: AgentStep[];
+  /** Файлы, которые агент изменил за задачу, и их прежний текст (для «Откатить всё») */
+  checkpoint?: { path: string; before: string | null }[];
+  /** Изменения задачи уже откачены */
+  rolledBack?: boolean;
 }
 
 const HISTORY = 12;
@@ -59,6 +63,12 @@ function setAgentMode(on: boolean) {
 }
 export { messages, streaming, useFile, setUseFile, attached, useProject, setUseProject, collecting, agentMode, setAgentMode };
 /** Для agent.ts: он пишет в ту же ленту чата */
+let saveTimer: number | undefined;
+/** Сохранить чат в историю чуть позже (после ответа) */
+export function saveChatSoon() {
+  clearTimeout(saveTimer);
+  saveTimer = window.setTimeout(saveChat, 500);
+}
 export const chatInternals = { setMessages, setStreaming };
 
 // ---------- весь проект ----------
@@ -174,10 +184,106 @@ export function detach(path: string) {
 
 export function newChat() {
   if (streaming()) void stop();
+  saveChat();
   resetAgent();
   setMessages([]);
   setAttached([]);
   setAttachedDirs([]);
+  chatId = crypto.randomUUID();
+}
+
+// ---------- история чатов ----------
+
+export interface SavedChat {
+  id: string;
+  title: string;
+  /** Папка проекта, в которой шёл разговор */
+  root: string | null;
+  updated: number;
+  messages: ChatMsg[];
+}
+
+const HISTORY_KEY = "tulpar.chats";
+const MAX_CHATS = 60;
+const MAX_SAVED_OUTPUT = 4_000;
+let chatId: string = crypto.randomUUID();
+
+export function loadChats(): SavedChat[] {
+  try {
+    const list = JSON.parse(localStorage.getItem(HISTORY_KEY) ?? "[]");
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+function storeChats(list: SavedChat[]) {
+  // Хранилище браузера ограничено — при нехватке места выбрасываем старые чаты
+  let items = list.slice(0, MAX_CHATS);
+  while (items.length) {
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
+      return;
+    } catch {
+      items = items.slice(0, Math.floor(items.length * 0.7));
+    }
+  }
+}
+
+/** Сохранить текущий чат (без огромных выводов команд и прежнего текста файлов). */
+export function saveChat() {
+  const msgs = messages.filter((m) => m.content || m.steps?.length);
+  if (!msgs.some((m) => m.role === "user")) return;
+  const slim: ChatMsg[] = msgs.map((m) => ({
+    role: m.role,
+    content: m.content,
+    context: m.context,
+    error: m.error,
+    rolledBack: m.rolledBack,
+    steps: m.steps?.map((st) => ({
+      id: st.id,
+      tool: st.tool,
+      title: st.title,
+      status: st.status === "pending" || st.status === "running" ? "denied" : st.status,
+      result: st.result,
+      detail: st.detail?.slice(0, MAX_SAVED_OUTPUT),
+      output: st.output?.slice(-MAX_SAVED_OUTPUT),
+      undone: st.undone,
+    })),
+  }));
+  const first = slim.find((m) => m.role === "user")!.content.replace(/\s+/g, " ").trim();
+  const entry: SavedChat = {
+    id: chatId,
+    title: first.length > 70 ? first.slice(0, 70) + "…" : first,
+    root: root(),
+    updated: Date.now(),
+    messages: slim,
+  };
+  storeChats([entry, ...loadChats().filter((c) => c.id !== chatId)]);
+}
+
+/** Открыть чат из истории. */
+export function openChat(saved: SavedChat) {
+  if (streaming()) void stop();
+  saveChat();
+  chatId = saved.id;
+  setMessages(saved.messages);
+  setAttached([]);
+  setAttachedDirs([]);
+  loadAgentHistory(saved.messages);
+}
+
+export function deleteChat(id: string) {
+  storeChats(loadChats().filter((c) => c.id !== id));
+  if (id === chatId) {
+    resetAgent();
+    setMessages([]);
+    chatId = crypto.randomUUID();
+  }
+}
+
+export function clearChats() {
+  storeChats([]);
 }
 
 export async function stop() {
@@ -352,6 +458,7 @@ export async function send(text: string) {
     if (!String(e).includes("отмен")) notifyError("ИИ", e);
   } finally {
     setStreaming(null);
+    saveChatSoon();
   }
 }
 

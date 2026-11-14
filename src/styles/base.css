@@ -1338,3 +1338,6 @@ body.resizing .side-island { transition: none; }
 .problems-file .problems-fix { margin-left: auto; }
 .problems-row:hover .problems-fix, .problems-file:hover .problems-fix { opacity: 1; }
 .problems-fix:hover { background: color-mix(in srgb, var(--tp-gold) 15%, transparent); }
+.agent-checkpoint { display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; padding: 4px 6px 4px 10px; border-radius: calc(var(--tp-radius) * 0.8); border: 1px dashed var(--tp-border); font-size: 12px; color: var(--tp-fg-muted); }
+.agent-checkpoint .button-quiet { margin-left: auto; font-size: 12px; padding: 2px 10px; }
+.agent-checkpoint.done { opacity: 0.7; }

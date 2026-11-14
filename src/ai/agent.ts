@@ -10,7 +10,7 @@ import { modelFor, openDiff, saveFile, tabs } from "../editor/tabs";
 import { notifyError } from "../app/notify";
 import { aiBase } from "./ai";
 import { closeReview, setReviewHandlers, setReviewPending, showReview, type Review } from "./review";
-import { chatInternals, relPath, streaming, type AgentStep } from "./chat";
+import { chatInternals, relPath, saveChatSoon, streaming, type AgentStep, type ChatMsg } from "./chat";
 
 const isWindows = navigator.userAgent.includes("Windows");
 const READ_CHARS = 24_000;
@@ -24,6 +24,23 @@ const waiting = new Map<string, (ok: boolean) => void>();
 
 export function resetAgent() {
   history = [];
+}
+
+/** Чат открыт из истории: агенту хватит текста разговора без вызовов инструментов. */
+export function loadAgentHistory(msgs: { role: string; content: string; steps?: { title: string; status: string }[] }[]) {
+  history = [];
+  for (const m of msgs) {
+    if (m.role === "user") {
+      history.push({ role: "user", content: m.content });
+    } else {
+      const done = (m.steps ?? []).filter((st) => st.status === "done").map((st) => `- ${st.title}`);
+      const text = [m.content, done.length ? `(Done steps:\n${done.join("\n")})` : ""].filter(Boolean).join("\n\n");
+      if (history[history.length - 1]?.role === "assistant") continue;
+      history.push({ role: "assistant", content: text || "…" });
+    }
+  }
+  // Разговор должен заканчиваться ответом, а начинаться с вопроса
+  while (history.length && history[0].role !== "user") history.shift();
 }
 
 let waitingStopByUser = false;
@@ -228,6 +245,16 @@ function updateStep(stepId: string, patch: Partial<AgentStep>) {
   }));
 }
 
+/** Запомнить прежний текст файла для «Откатить всё» (только первый раз за задачу). */
+function remember(path: string, before: string | null) {
+  chatInternals.setMessages(produce((list) => {
+    const last = list[list.length - 1];
+    if (last?.role !== "assistant") return;
+    const cp = (last.checkpoint ??= []);
+    if (!cp.some((c) => c.path.toLowerCase() === path.toLowerCase())) cp.push({ path, before });
+  }));
+}
+
 function addStep(step: AgentStep) {
   chatInternals.setMessages(produce((list) => {
     const last = list[list.length - 1];
@@ -346,6 +373,7 @@ async function executeOnce(call: ToolCall): Promise<string> {
         const saved = await applyChange(stepId, "edit_file", path, before, after);
         if (!saved) return "Пользователь отклонил эту правку.";
         updateStep(stepId, { status: "done", undo: { path: saved, before } });
+        remember(saved, before);
         return "Готово, файл изменён.";
       }
       case "write_file": {
@@ -356,6 +384,7 @@ async function executeOnce(call: ToolCall): Promise<string> {
         const saved = await applyChange(stepId, "write_file", path, before, content);
         if (!saved) return "Пользователь отклонил запись файла.";
         updateStep(stepId, { status: "done", undo: { path: saved, before } });
+        remember(saved, before);
         return before === null ? "Файл создан." : "Файл перезаписан.";
       }
       case "run_command": {
@@ -483,6 +512,35 @@ setReviewHandlers({
   },
 });
 
+/** Вернуть все файлы, изменённые агентом за задачу, к состоянию до неё. */
+export async function rollbackTask(msg: ChatMsg) {
+  if (!msg.checkpoint?.length || msg.rolledBack) return;
+  const failed: string[] = [];
+  for (const { path, before } of msg.checkpoint) {
+    closeReview(path);
+    try {
+      if (before === null) {
+        await core.deletePath(path);
+        reloadDir(parentDir(path));
+      } else {
+        await writeText(path, before);
+      }
+    } catch {
+      failed.push(baseName(path));
+    }
+  }
+  chatInternals.setMessages(produce((list) => {
+    const m = list.find((x) => x.checkpoint === msg.checkpoint) ?? list.find((x) => x === msg);
+    if (!m) return;
+    m.rolledBack = true;
+    for (const st of m.steps ?? []) if (st.undo) st.undone = true;
+  }));
+  if (failed.length) notifyError("Не всё удалось откатить", failed.join(", "));
+  // Агент должен знать, что его правки отменены
+  history.push({ role: "user", content: "(The user rolled back all file changes from your previous task. The files are back to their earlier state.)" });
+  history.push({ role: "assistant", content: "Понял, изменения отменены." });
+}
+
 export function showStepDiff(step: AgentStep) {
   if (!step.undo) return;
   void openDiff(step.undo.path, step.undo.before ?? "", `${baseName(step.undo.path)} (правка ИИ)`);
@@ -578,5 +636,6 @@ export async function runAgent(question: string, attachedNote: string): Promise<
     const lastRole = history[history.length - 1]?.role;
     if (lastRole === "tool" || (lastRole === "user" && stopRequested)) history.push({ role: "assistant", content: "Остановлено." });
     if (streaming() === runId) chatInternals.setStreaming(null);
+    saveChatSoon();
   }
 }

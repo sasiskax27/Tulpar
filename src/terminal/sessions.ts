@@ -8,6 +8,7 @@ import "@xterm/xterm/css/xterm.css";
 import { core, events, baseName } from "../ipc";
 import { settings } from "../config/store";
 import { terminalTheme } from "../app/themes";
+import { feedTerminal, resetTerminalErrors } from "../problems/problems";
 import { root } from "../app/workspace";
 import { notifyError } from "../app/notify";
 import { bottomTab, bottomVisible, setBottomTab, setBottomVisible } from "../app/ui";
@@ -85,7 +86,11 @@ export async function createSession(fixedTitle?: string): Promise<void> {
   const [title, setTitle] = createSignal(fixedTitle ?? "терминал");
   const session: Session = { id, title, term, fit, el, opened: false };
 
-  term.onData((data) => void core.terminalWrite(id, data).catch(() => undefined));
+  term.onData((data) => {
+    // Enter — новая команда: старые ошибки этого терминала больше не актуальны
+    if (data.includes("\r")) resetTerminalErrors(id);
+    void core.terminalWrite(id, data).catch(() => undefined);
+  });
   term.onResize(({ cols, rows }) => void core.terminalResize(id, cols, rows).catch(() => undefined));
 
   // Копирование и вставка. Ctrl+C копирует, только если что-то выделено, —
@@ -177,7 +182,10 @@ export async function runInTerminal(command: string, title?: string) {
     await started;
   }
   const id = activeId();
-  if (id) await core.terminalWrite(id, command + "\r").catch(() => undefined);
+  if (id) {
+    resetTerminalErrors(id);
+    await core.terminalWrite(id, command + "\r").catch(() => undefined);
+  }
 }
 
 export function newTerminal() {
@@ -190,7 +198,10 @@ export function newTerminal() {
 export async function initTerminals() {
   // После перезагрузки интерфейса в ядре могли остаться оболочки без окна
   await core.terminalReset().catch(() => undefined);
-  await events.onTerminalData((id, data) => byId.get(id)?.term.write(data));
+  await events.onTerminalData((id, data) => {
+    byId.get(id)?.term.write(data);
+    feedTerminal(id, data);
+  });
   await events.onTerminalExit(removeSession);
 
   // Шрифт и тема из settings.json применяются на лету

@@ -8,6 +8,7 @@ import { chooseBackground, clearBackground } from "../app/background";
 import { providers } from "../ai/ai";
 import { focusEditor } from "../editor/instance";
 import { baseName } from "../ipc";
+import LocalAi from "./LocalAi";
 
 type Text = string | (() => string);
 
@@ -25,6 +26,8 @@ interface Section {
   intro?: Text;
   fields: FieldDef[];
   extra?: () => JSX.Element;
+  /** Показать extra после полей, а не перед ними */
+  after?: boolean;
 }
 
 const resolve = (t: Text | undefined) => (typeof t === "function" ? t() : t);
@@ -195,6 +198,14 @@ const sections: Section[] = [
       },
     ],
   },
+  {
+    title: "Локальный ИИ",
+    intro:
+      "Модель работает на вашем компьютере: бесплатно, без интернета, код никуда не отправляется. Чем больше модель, тем она умнее и тем больше ей нужно памяти.",
+    fields: [],
+    extra: () => <LocalAi />,
+    after: true,
+  },
 ];
 
 function Control(props: { def: FieldDef }) {
@@ -313,7 +324,7 @@ function Panel() {
                 <Show when={section.intro}>
                   <p class="settings-intro">{resolve(section.intro)}</p>
                 </Show>
-                {section.extra?.()}
+                <Show when={!section.after}>{section.extra?.()}</Show>
                 <For each={section.fields}>
                   {(def) => (
                     <div class="settings-row">
@@ -329,6 +340,7 @@ function Panel() {
                     </div>
                   )}
                 </For>
+                <Show when={section.after}>{section.extra?.()}</Show>
               </section>
             )}
           </For>

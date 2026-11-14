@@ -7,6 +7,7 @@ mod ai;
 mod config;
 mod lsp;
 mod media;
+mod ollama;
 mod terminal;
 mod workspace;
 
@@ -43,6 +44,10 @@ fn main() {
             media::background_import,
             media::image_read,
             ai::ai_complete,
+            ollama::system_memory,
+            ollama::ollama_status,
+            ollama::ollama_pull,
+            ollama::ollama_delete,
         ])
         .build(tauri::generate_context!())
         .expect("не удалось запустить Tulpar")

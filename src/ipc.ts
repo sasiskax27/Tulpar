@@ -46,6 +46,11 @@ export const core = {
   backgroundImport: (path: string) => invoke<string>("background_import", { path }),
   imageRead: (path: string) => invoke<{ mime: string; base64: string }>("image_read", { path }),
   aiComplete: (request: AiRequest) => invoke<string>("ai_complete", { request }),
+  systemMemory: () => invoke<{ ramGb: number | null; vramGb: number | null }>("system_memory"),
+  ollamaStatus: (host: string) =>
+    invoke<{ running: boolean; models: { name: string; size: number }[] }>("ollama_status", { host }),
+  ollamaPull: (host: string, model: string) => invoke<void>("ollama_pull", { host, model }),
+  ollamaDelete: (host: string, model: string) => invoke<void>("ollama_delete", { host, model }),
   configEnsure: (name: ConfigName) => invoke<string>("config_ensure", { name }),
 };
 
@@ -60,6 +65,8 @@ export const events = {
     listen<{ id: string; data: string }>("terminal:data", (e) => cb(e.payload.id, e.payload.data)),
   onTerminalExit: (cb: (id: string) => void): Promise<UnlistenFn> =>
     listen<{ id: string }>("terminal:exit", (e) => cb(e.payload.id)),
+  onOllamaProgress: (cb: (p: { model: string; status: string; completed: number; total: number }) => void): Promise<UnlistenFn> =>
+    listen<{ model: string; status: string; completed: number; total: number }>("ollama:progress", (e) => cb(e.payload)),
   onConfigChanged: (cb: (name: ConfigName) => void): Promise<UnlistenFn> =>
     listen<{ name: ConfigName }>("config:changed", (e) => cb(e.payload.name)),
 };

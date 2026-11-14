@@ -118,6 +118,9 @@ export default function Onboarding() {
                   <button classList={{ on: currentLang() === "en" }} onClick={() => void updateSetting("workbench.language", "en")}>
                     English
                   </button>
+                  <button classList={{ on: currentLang() === "kk" }} onClick={() => void updateSetting("workbench.language", "kk")}>
+                    Қазақша
+                  </button>
                 </div>
               </div>
             </Match>

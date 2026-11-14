@@ -54,7 +54,7 @@ export interface Settings {
   "workbench.colorTheme": string;
   /** Дизайн 1 (classic) или Дизайн 2 (tulpar: верхняя панель и выезжающий остров) */
   "workbench.style": "classic" | "tulpar";
-  "workbench.language": "auto" | "ru" | "en";
+  "workbench.language": "auto" | "ru" | "en" | "kk";
   /** Порядок разделов (перетаскиванием) и какие убраны в меню «⋯» */
   "workbench.views.order": string[];
   "workbench.views.hidden": string[];

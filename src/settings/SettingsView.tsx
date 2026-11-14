@@ -488,7 +488,7 @@ const sectionList: Section[] = [
         label: "Язык интерфейса · Language",
         hint: "Окно перезагрузится, открытые файлы останутся.",
         type: "select",
-        options: [["auto", "Как в системе"], ["ru", "Русский"], ["en", "English"]],
+        options: [["auto", "Как в системе"], ["ru", "Русский"], ["en", "English"], ["kk", "Қазақша"]],
       },
       {
         key: "workbench.style",

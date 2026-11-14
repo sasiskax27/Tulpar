@@ -1,25 +1,27 @@
 // Перевод интерфейса. Tulpar написан по-русски, а для английского языка
 // надписи подменяются на лету по словарю: и в окне (через MutationObserver),
 // и там, куда DOM не дотягивается (системные диалоги, меню Monaco) — через t().
-import { EXACT, PATTERNS } from "./en";
+import { EXACT as EN_EXACT, PATTERNS } from "./en";
+import { KK } from "./kk";
 
-export type Lang = "ru" | "en";
+export type Lang = "ru" | "en" | "kk";
 const KEY = "tulpar.lang";
 
 function detect(): Lang {
   const nav = (navigator.language || "").toLowerCase();
-  return /^(ru|kk|uk|be|ky|uz|tt)/.test(nav) ? "ru" : "en";
+  if (/^kk/.test(nav)) return "kk";
+  return /^(ru|uk|be|ky|uz|tt)/.test(nav) ? "ru" : "en";
 }
 
 /** Значение настройки workbench.language → итоговый язык. */
 export function resolveLang(setting: unknown): Lang {
-  return setting === "ru" || setting === "en" ? setting : detect();
+  return setting === "ru" || setting === "en" || setting === "kk" ? setting : detect();
 }
 
 let lang: Lang = (() => {
   try {
     const saved = localStorage.getItem(KEY);
-    if (saved === "ru" || saved === "en") return saved;
+    if (saved === "ru" || saved === "en" || saved === "kk") return saved;
   } catch {
     /* хранилище недоступно */
   }
@@ -72,11 +74,19 @@ const FRAGMENTS: [RegExp, string][] = [
 ];
 
 const cache = new Map<string, string>();
+// Словарь текущего языка. Для казахского нет шаблонов: чего нет в словаре,
+// остаётся по-русски — это понятнее, чем смесь с английским.
+const EXACT: Record<string, string> = lang === "kk" ? KK : EN_EXACT;
+const KK_FRAGMENTS: [RegExp, string][] = [
+  [/сегодня/g, "бүгін"],
+  [/сообщений:/g, "хабар:"],
+  [/— строка (\d+)/g, "— $1-жол"],
+];
 
 function translateCore(s: string): string {
   const exact = EXACT[s];
   if (exact !== undefined) return exact;
-  for (const p of patterns) {
+  for (const p of lang === "kk" ? [] : patterns) {
     const m = p.re.exec(s);
     if (!m) continue;
     let out = p.out;
@@ -89,9 +99,9 @@ function translateCore(s: string): string {
   // Склеенный текст: переводим по строкам
   if (s.includes("\n")) return s.split("\n").map((line) => (CYR.test(line) ? t(line) : line)).join("\n");
   let out = s;
-  for (const [re, rep] of FRAGMENTS) out = out.replace(re, rep);
+  for (const [re, rep] of lang === "kk" ? KK_FRAGMENTS : FRAGMENTS) out = out.replace(re, rep);
   // Отдельные известные слова («файлах», «совпадения») внутри составной строки
-  if (CYR.test(out) && /\s/.test(out)) {
+  if (lang !== "kk" && CYR.test(out) && /\s/.test(out)) {
     out = out.replace(/[А-Яа-яЁё][А-Яа-яЁё-]*/g, (w) => EXACT[w] ?? w);
   }
   return out;
@@ -181,5 +191,5 @@ export function startTranslator() {
 
 /** Язык ответов ИИ: из настройки, а если она пустая — язык интерфейса. */
 export function aiLanguage(value: string | undefined): string {
-  return value?.trim() || (lang === "en" ? "English" : "русский");
+  return value?.trim() || (lang === "en" ? "English" : lang === "kk" ? "қазақ тілі" : "русский");
 }

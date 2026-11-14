@@ -2103,3 +2103,16 @@ body.resizing .side-island { transition: none; }
 .db-view { position: absolute; inset: 0; }
 .tab-preview-btn { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; border-radius: 999px; border: 1px solid var(--tp-border); background: transparent; color: var(--tp-fg); font-size: 12px; cursor: pointer; margin-right: 4px; }
 .tab-preview-btn:hover { border-color: var(--tp-accent); color: var(--tp-accent); }
+
+/* Переключатель разделов в боковой панели: разделов стало много — иконки
+   переносятся на вторую строку, а не вылезают за край и не сплющиваются */
+.slot-left .view-switcher, .side-island .view-switcher { flex-wrap: wrap; row-gap: 2px; }
+.slot-left .view-switcher .view-switch, .side-island .view-switcher .view-switch { flex: 1 0 28px; min-width: 28px; height: 26px; padding: 0 4px; }
+.slot-left .view-switcher .view-switch span:not(.activity-badge), .side-island .view-switch span:not(.activity-badge) { display: none; }
+.slot-left .view-switcher .view-switch svg, .side-island .view-switch svg { flex: none; }
+.side-head { align-items: flex-start; }
+/* Узкое окно: панель не съедает весь код */
+.side-island.open, .side-island .side-inner { max-width: 60vw; }
+.slot-left { min-width: 0; }
+.slot-left .panel-header { min-width: 0; }
+.slot-left .panel-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -13,6 +13,7 @@ mod ollama;
 mod search;
 mod terminal;
 mod transfer;
+mod update;
 mod workspace;
 
 fn main() {
@@ -74,6 +75,9 @@ fn main() {
             ai::agent::ai_agent_step,
             ai::agent::agent_write,
             ai::agent::agent_run,
+            update::update_check,
+            update::update_install,
+            update::update_open_page,
             backup::backup_put,
             backup::backup_delete,
             backup::backup_list,

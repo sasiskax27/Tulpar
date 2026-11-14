@@ -194,6 +194,7 @@ export function registerBuiltinCommands() {
     },
   });
   reg({ id: "tulpar.problems.fixAll", category: "ИИ", title: "Исправить все проблемы с ИИ", run: () => fixWithAi(problems()) });
+  reg({ id: "tulpar.update.check", category: "Справка", title: "Проверить обновления", run: () => import("./update").then((m) => m.checkForUpdates(true)) });
   reg({ id: "tulpar.theme.fromPhoto", category: "Вид", title: "Тема из фоновой картинки", run: () => usePhotoTheme() });
   reg({ id: "tulpar.background.clear", category: "Вид", title: "Убрать фоновую картинку", run: () => clearBackground() });
 

@@ -15,6 +15,15 @@ export interface ChangeEvent {
 
 export type ConfigName = "settings.json" | "keybindings.json" | "layout.json" | "languages.json";
 
+export interface UpdateInfo {
+  current: string;
+  version: string;
+  page: string;
+  notes: string;
+  assetUrl: string | null;
+  assetName: string | null;
+}
+
 export interface ToolCall {
   id: string;
   name: string;
@@ -141,6 +150,9 @@ export const core = {
   gitDiffForMessage: () => invoke<string>("git_diff_for_message"),
   aiFill: (request: { host: string; model: string; prefix: string; suffix: string; maxTokens: number }) =>
     invoke<string>("ai_fill", { request }),
+  updateCheck: () => invoke<UpdateInfo | null>("update_check"),
+  updateInstall: (url: string, name: string) => invoke<void>("update_install", { url, name }),
+  updateOpenPage: (url: string) => invoke<void>("update_open_page", { url }),
   aiAgentStep: (request: AgentStepRequest) => invoke<AgentReply>("ai_agent_step", { request }),
   agentWrite: (path: string, content: string) => invoke<string>("agent_write", { path, content }),
   agentRun: (command: string, timeoutSecs?: number) =>

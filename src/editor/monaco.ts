@@ -29,6 +29,14 @@ self.MonacoEnvironment = {
   },
 };
 
+// Настройки Tulpar и VS Code — это JSON с комментариями и висячими запятыми.
+// Без этого Monaco подчёркивает каждый комментарий как ошибку.
+monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+  validate: true,
+  allowComments: true,
+  trailingCommas: "ignore",
+});
+
 export { monaco };
 
 /** Опции Monaco из settings.json. */

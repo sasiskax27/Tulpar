@@ -12,6 +12,15 @@ import { keybindingFor } from "../keybindings/keybindings";
 import { setEditorInstance } from "./instance";
 import { registerAiActions } from "../ai/ai";
 import SidePane from "./SidePane";
+import { currentPath, revealSymbol } from "./outline";
+import { KIND } from "./symbols";
+
+/** Путь файла относительно проекта, по частям. */
+function crumbsOf(path: string): string[] {
+  const r = root();
+  const rel = r && path.toLowerCase().startsWith(r.toLowerCase()) ? path.slice(r.length + 1) : path;
+  return rel.split(/[\\/]/).filter(Boolean);
+}
 import { isHtml, isMarkdown, previewHtml, previewMarkdown, side, splitEditor } from "./side";
 import { forgetRecent, openFolder, recent, root } from "../app/workspace";
 import { baseName, parentDir } from "../ipc";
@@ -161,6 +170,29 @@ export default function EditorGroup() {
           </div>
         </Show>
       </div>
+      <Show when={activePath() && !activePath()!.startsWith("diff:") && settings()["breadcrumbs.enabled"] !== false}>
+        <div class="breadcrumbs">
+          <For each={crumbsOf(activePath()!)}>
+            {(part, i) => (
+              <>
+                <Show when={i() > 0}><span class="crumb-sep">›</span></Show>
+                <span class="crumb">{part}</span>
+              </>
+            )}
+          </For>
+          <For each={currentPath()}>
+            {(sym) => (
+              <>
+                <span class="crumb-sep">›</span>
+                <button class="crumb crumb-symbol" onClick={() => revealSymbol(sym)}>
+                  <span class="outline-kind" style={{ color: (KIND[sym.kind] ?? ["", "#8B8B8B"])[1] }}>{(KIND[sym.kind] ?? ["•"])[0]}</span>
+                  {sym.name}
+                </button>
+              </>
+            )}
+          </For>
+        </div>
+      </Show>
       <Show when={reviewFor(activePath())}>
         {(r) => (
           <div class="ai-review-bar" classList={{ pending: r().pending }} role="status">

@@ -5,6 +5,7 @@ import SearchPanel from "../search/SearchPanel";
 import GitPanel from "../git/GitPanel";
 import ChatPanel from "../ai/ChatPanel";
 import BuildPanel from "../tasks/BuildPanel";
+import OutlinePanel from "../editor/OutlinePanel";
 import { sidebarView } from "./ui";
 
 export default function SideView() {
@@ -15,6 +16,9 @@ export default function SideView() {
       </Match>
       <Match when={sidebarView() === "git"}>
         <GitPanel />
+      </Match>
+      <Match when={sidebarView() === "outline"}>
+        <OutlinePanel />
       </Match>
       <Match when={sidebarView() === "build"}>
         <BuildPanel />

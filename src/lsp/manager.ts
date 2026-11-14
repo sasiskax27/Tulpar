@@ -85,6 +85,7 @@ const clientCapabilities = {
     },
     definition: { linkSupport: true },
     references: {},
+    documentSymbol: { hierarchicalDocumentSymbolSupport: true },
     rename: { prepareSupport: false },
     formatting: {},
     publishDiagnostics: { relatedInformation: false },

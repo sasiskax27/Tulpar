@@ -35,6 +35,8 @@ export interface Settings {
   "editor.formatOnSave": boolean;
   "editor.guides.indentation": boolean;
   "editor.folding": boolean;
+  /** Хлебные крошки над кодом: путь файла и функция, в которой курсор */
+  "breadcrumbs.enabled": boolean;
   "files.trimTrailingWhitespace": boolean;
   "files.insertFinalNewline": boolean;
   "terminal.integrated.fontFamily": string;
@@ -134,6 +136,7 @@ export const defaultSettings: Settings = {
   "editor.formatOnSave": false,
   "editor.guides.indentation": true,
   "editor.folding": true,
+  "breadcrumbs.enabled": true,
   "files.trimTrailingWhitespace": false,
   "files.insertFinalNewline": false,
   "terminal.integrated.fontFamily": "",

@@ -57,7 +57,9 @@ const lightTheme: ITheme = {
 function appearance() {
   const s = settings();
   return {
-    fontFamily: s["editor.fontFamily"],
+    fontFamily: String(s["terminal.integrated.fontFamily"] ?? "").trim() || s["editor.fontFamily"],
+    cursorStyle: (s["terminal.integrated.cursorStyle"] ?? "block") as "block" | "underline" | "bar",
+    scrollback: Math.max(500, Math.min(100000, Number(s["terminal.integrated.scrollback"]) || 5000)),
     fontSize: s["terminal.integrated.fontSize"],
     theme: terminalTheme(String(s["workbench.colorTheme"])) ?? (s["workbench.colorTheme"] === "light" ? lightTheme : darkTheme),
   };
@@ -78,7 +80,7 @@ export function refit(session = activeSession()) {
 /** title — своё имя вкладки (например, «Задача»); иначе — имя оболочки. */
 export async function createSession(fixedTitle?: string): Promise<void> {
   const id = crypto.randomUUID();
-  const term = new Terminal({ ...appearance(), cursorBlink: true, scrollback: 5000 });
+  const term = new Terminal({ ...appearance(), cursorBlink: true });
   const fit = new FitAddon();
   term.loadAddon(fit);
   const el = document.createElement("div");
@@ -210,6 +212,8 @@ export async function initTerminals() {
       const look = appearance();
       for (const s of byId.values()) {
         s.term.options.fontFamily = look.fontFamily;
+        s.term.options.cursorStyle = look.cursorStyle;
+        s.term.options.scrollback = look.scrollback;
         s.term.options.fontSize = look.fontSize;
         s.term.options.theme = look.theme;
       }

@@ -17,6 +17,29 @@ export interface Settings {
   "editor.minimap.enabled": boolean;
   "editor.lineNumbers": "on" | "off" | "relative";
   "editor.cursorBlinking": "blink" | "smooth" | "phase" | "expand" | "solid";
+  "editor.cursorStyle": "line" | "block" | "underline" | "line-thin";
+  /** Лигатуры шрифта (=> != ===), если шрифт их поддерживает */
+  "editor.fontLigatures": boolean;
+  "editor.renderWhitespace": "none" | "selection" | "boundary" | "all";
+  /** Строка с началом функции/класса прилипает к верху при прокрутке */
+  "editor.stickyScroll.enabled": boolean;
+  /** Парные скобки разными цветами */
+  "editor.bracketPairColorization.enabled": boolean;
+  "editor.smoothScrolling": boolean;
+  /** Вертикальные линии-ограничители, например "80, 120" */
+  "editor.rulers": string;
+  "editor.autoClosingBrackets": "always" | "languageDefined" | "never";
+  /** Ctrl + колесо мыши меняет размер шрифта */
+  "editor.mouseWheelZoom": boolean;
+  /** Форматировать файл при сохранении (через языковой сервер) */
+  "editor.formatOnSave": boolean;
+  "editor.guides.indentation": boolean;
+  "editor.folding": boolean;
+  "files.trimTrailingWhitespace": boolean;
+  "files.insertFinalNewline": boolean;
+  "terminal.integrated.fontFamily": string;
+  "terminal.integrated.cursorStyle": "block" | "underline" | "bar";
+  "terminal.integrated.scrollback": number;
   "workbench.colorTheme": "steppe" | "berkut" | "dawn" | "photo" | "dark" | "light";
   /** Дизайн 1 (classic) или Дизайн 2 (tulpar: верхняя панель и выезжающий остров) */
   "workbench.style": "classic" | "tulpar";
@@ -91,6 +114,23 @@ export const defaultSettings: Settings = {
   "editor.minimap.enabled": true,
   "editor.lineNumbers": "on",
   "editor.cursorBlinking": "smooth",
+  "editor.cursorStyle": "line",
+  "editor.fontLigatures": true,
+  "editor.renderWhitespace": "selection",
+  "editor.stickyScroll.enabled": true,
+  "editor.bracketPairColorization.enabled": true,
+  "editor.smoothScrolling": true,
+  "editor.rulers": "",
+  "editor.autoClosingBrackets": "languageDefined",
+  "editor.mouseWheelZoom": true,
+  "editor.formatOnSave": false,
+  "editor.guides.indentation": true,
+  "editor.folding": true,
+  "files.trimTrailingWhitespace": false,
+  "files.insertFinalNewline": false,
+  "terminal.integrated.fontFamily": "",
+  "terminal.integrated.cursorStyle": "block",
+  "terminal.integrated.scrollback": 5000,
   "workbench.colorTheme": "steppe",
   "workbench.style": "classic",
   "workbench.islands": true,

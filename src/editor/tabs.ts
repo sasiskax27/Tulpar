@@ -149,11 +149,41 @@ export function onDidSave(cb: SaveListener) {
   saveListeners.push(cb);
 }
 
+/** Перед сохранением: форматирование, лишние пробелы в конце строк, последняя пустая строка. */
+async function beforeSave(model: monaco.editor.ITextModel) {
+  if (setting("editor.formatOnSave")) {
+    const { editorInstance } = await import("./instance");
+    const editor = editorInstance();
+    const action = editor?.getModel() === model ? editor.getAction("editor.action.formatDocument") : null;
+    // Медленный языковой сервер не должен задерживать сохранение надолго
+    if (action) await Promise.race([action.run().catch(() => undefined), new Promise((r) => setTimeout(r, 1500))]);
+  }
+  const edits: monaco.editor.IIdentifiedSingleEditOperation[] = [];
+  if (setting("files.trimTrailingWhitespace")) {
+    for (let line = 1; line <= model.getLineCount(); line++) {
+      const text = model.getLineContent(line);
+      const trimmed = text.replace(/[ \t]+$/, "");
+      if (trimmed.length !== text.length) {
+        edits.push({ range: new monaco.Range(line, trimmed.length + 1, line, text.length + 1), text: "" });
+      }
+    }
+  }
+  if (setting("files.insertFinalNewline")) {
+    const last = model.getLineCount();
+    if (model.getLineContent(last) !== "") {
+      const col = model.getLineMaxColumn(last);
+      edits.push({ range: new monaco.Range(last, col, last, col), text: model.getEOL() });
+    }
+  }
+  if (edits.length) model.pushEditOperations([], edits, () => null);
+}
+
 export async function saveFile(path: string | null = activePath()) {
   if (!path) return;
   if (path.startsWith(DIFF_PREFIX)) path = path.slice(DIFF_PREFIX.length);
   const model = models.get(path);
   if (!model) return;
+  await beforeSave(model);
   const version = model.getAlternativeVersionId();
   await core.writeFile(path, model.getValue());
   savedVersion.set(path, version);

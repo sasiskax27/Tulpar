@@ -1,6 +1,7 @@
 // Окно настроек (Ctrl+,). Каждое изменение применяется сразу и записывается
 // в settings.json — тот же файл можно править и руками.
-import { For, onCleanup, onMount, Show, type JSX } from "solid-js";
+import { createSignal, For, onCleanup, onMount, Show, type JSX } from "solid-js";
+import { ask } from "@tauri-apps/plugin-dialog";
 import { settings, updateSetting, type Settings } from "../config/store";
 import { settingsVisible, setSettingsVisible } from "../app/ui";
 import { executeCommand } from "../commands/registry";
@@ -108,6 +109,30 @@ async function chooseModel() {
 const resolve = (t: Text | undefined) => (typeof t === "function" ? t() : t);
 const provider = () => providers[String(settings()["tulpar.ai.provider"])];
 
+async function resetSettings() {
+  const ok = await ask("Вернуть все настройки к стандартным? Ключи API и выбранная модель тоже сбросятся.", { title: "Сброс настроек", kind: "warning" });
+  if (!ok) return;
+  try {
+    const path = await core.configEnsure("settings.json");
+    await core.writeFile(path, "{\n}\n");
+    notify("Настройки сброшены");
+  } catch (e) {
+    notifyError("Не удалось сбросить настройки", e);
+  }
+}
+
+const fileButton = (label: string, command: string) => (
+  <button
+    class="button-quiet"
+    onClick={() => {
+      setSettingsVisible(false);
+      void executeCommand(command);
+    }}
+  >
+    {label}
+  </button>
+);
+
 const sections: Section[] = [
   {
     title: "Редактор",
@@ -143,6 +168,35 @@ const sections: Section[] = [
         options: [["on", "Показывать"], ["relative", "Относительные"], ["off", "Скрыть"]],
       },
       { key: "editor.minimap.enabled", label: "Мини-карта", type: "toggle" },
+      {
+        key: "editor.cursorStyle",
+        label: "Вид курсора",
+        type: "select",
+        options: [["line", "Полоска"], ["line-thin", "Тонкая полоска"], ["block", "Блок"], ["underline", "Подчёркивание"]],
+      },
+      { key: "editor.fontLigatures", label: "Лигатуры шрифта", hint: "=> != === рисуются одним знаком, если шрифт это умеет (JetBrains Mono, Fira Code).", type: "toggle" },
+      { key: "editor.bracketPairColorization.enabled", label: "Цветные скобки", hint: "Парные скобки разными цветами.", type: "toggle" },
+      { key: "editor.stickyScroll.enabled", label: "Липкие заголовки", hint: "Строка с началом функции или класса остаётся наверху при прокрутке.", type: "toggle" },
+      { key: "editor.guides.indentation", label: "Линии отступов", type: "toggle" },
+      { key: "editor.folding", label: "Сворачивание блоков", hint: "Стрелки слева от кода, чтобы скрыть функцию или цикл.", type: "toggle" },
+      {
+        key: "editor.renderWhitespace",
+        label: "Показывать пробелы",
+        type: "select",
+        options: [["none", "Нет"], ["selection", "В выделении"], ["boundary", "По краям слов"], ["all", "Все"]],
+      },
+      { key: "editor.rulers", label: "Линии-ограничители", hint: "Номера столбцов через запятую, например 80, 120. Пусто — без линий.", type: "text", placeholder: "80, 120" },
+      {
+        key: "editor.autoClosingBrackets",
+        label: "Закрывать скобки сами",
+        type: "select",
+        options: [["languageDefined", "По правилам языка"], ["always", "Всегда"], ["never", "Никогда"]],
+      },
+      { key: "editor.smoothScrolling", label: "Плавная прокрутка и курсор", type: "toggle" },
+      { key: "editor.mouseWheelZoom", label: "Ctrl + колесо мыши — размер шрифта", type: "toggle" },
+      { key: "editor.formatOnSave", label: "Форматировать при сохранении", hint: "Через языковой сервер (например, ruff, prettier, rustfmt), если он умеет форматировать.", type: "toggle" },
+      { key: "files.trimTrailingWhitespace", label: "Убирать пробелы в конце строк при сохранении", type: "toggle" },
+      { key: "files.insertFinalNewline", label: "Пустая строка в конце файла при сохранении", type: "toggle" },
       {
         key: "editor.cursorBlinking",
         label: "Курсор",
@@ -256,6 +310,14 @@ const sections: Section[] = [
         placeholder: "cmd.exe, pwsh.exe, wsl.exe…",
       },
       { key: "terminal.integrated.fontSize", label: "Размер шрифта", type: "number", min: 8, max: 40 },
+      { key: "terminal.integrated.fontFamily", label: "Шрифт терминала", hint: "Пусто — тот же, что в редакторе.", type: "text", placeholder: "Cascadia Mono, Consolas" },
+      {
+        key: "terminal.integrated.cursorStyle",
+        label: "Курсор терминала",
+        type: "select",
+        options: [["block", "Блок"], ["bar", "Полоска"], ["underline", "Подчёркивание"]],
+      },
+      { key: "terminal.integrated.scrollback", label: "Строк в истории терминала", type: "number", min: 500, max: 100000 },
     ],
   },
   {
@@ -391,7 +453,45 @@ const sections: Section[] = [
     fields: [],
     extra: () => <LocalAi />,
     after: true,
-  },
+  },,
+  {
+    title: "Файлы настроек и прочее",
+    fields: [],
+    extra: () => (
+      <>
+        <div class="settings-row">
+          <div class="settings-label">
+            <span>Настройки файлами</span>
+            <small>Всё то же самое можно править в файлах — формат как в VS Code.</small>
+          </div>
+          <div class="settings-control settings-buttons wrap">
+            {fileButton("settings.json", "workbench.action.openSettingsJson")}
+            {fileButton("Клавиши", "workbench.action.openGlobalKeybindings")}
+            {fileButton("Раскладка", "tulpar.openLayoutSettings")}
+            {fileButton("Языки", "tulpar.openLanguageSettings")}
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">
+            <span>Мастер настройки</span>
+            <small>Пройти первые шаги заново: дизайн, тема, ИИ.</small>
+          </div>
+          <div class="settings-control settings-buttons">{fileButton("Открыть мастер", "tulpar.onboarding")}</div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">
+            <span>Сбросить все настройки</span>
+            <small>Вернуть всё как после установки.</small>
+          </div>
+          <div class="settings-control settings-buttons">
+            <button class="button-quiet danger" onClick={() => void resetSettings()}>
+              Сбросить
+            </button>
+          </div>
+        </div>
+      </>
+    ),
+  }
 ];
 
 function Control(props: { def: FieldDef }) {
@@ -475,7 +575,19 @@ function Control(props: { def: FieldDef }) {
   }
 }
 
+/** Подходит ли поле под строку поиска. */
+function matches(def: FieldDef, q: string): boolean {
+  return [def.label, resolve(def.hint) ?? "", def.key].some((t) => t.toLowerCase().includes(q));
+}
+
 function Panel() {
+  const [query, setQuery] = createSignal("");
+  const q = () => query().trim().toLowerCase();
+  const visibleFields = (section: Section) =>
+    !q() || section.title.toLowerCase().includes(q()) ? section.fields : section.fields.filter((f) => matches(f, q()));
+  const sectionVisible = (section: Section) =>
+    !q() || section.title.toLowerCase().includes(q()) || visibleFields(section).length > 0;
+  let body: HTMLDivElement | undefined;
   const close = () => {
     setSettingsVisible(false);
     focusEditor();
@@ -493,6 +605,13 @@ function Panel() {
       <div class="dialog settings" onMouseDown={(e) => e.stopPropagation()}>
         <div class="dialog-header">
           <span>Настройки</span>
+          <input
+            class="settings-input settings-search"
+            placeholder="Поиск настроек: шрифт, тема, ИИ…"
+            value={query()}
+            onInput={(e) => setQuery(e.currentTarget.value)}
+            ref={(el) => setTimeout(() => el.focus(), 50)}
+          />
           <div class="dialog-actions">
             <button
               class="button-quiet"
@@ -509,16 +628,34 @@ function Panel() {
             </button>
           </div>
         </div>
-        <div class="settings-body">
+        <Show when={!q()}>
+          <nav class="settings-nav">
+            <For each={sections}>
+              {(section, i) => (
+                <button
+                  class="settings-nav-item"
+                  onClick={() => body?.querySelector(`[data-section="${i()}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                >
+                  {section.title}
+                </button>
+              )}
+            </For>
+          </nav>
+        </Show>
+        <div class="settings-body" ref={body}>
+          <Show when={q() && !sections.some(sectionVisible)}>
+            <p class="settings-intro">Ничего не найдено.</p>
+          </Show>
           <For each={sections}>
-            {(section) => (
-              <section class="settings-section">
+            {(section, i) => (
+              <Show when={sectionVisible(section)}>
+              <section class="settings-section" data-section={i()}>
                 <h2>{section.title}</h2>
                 <Show when={section.intro}>
                   <p class="settings-intro">{resolve(section.intro)}</p>
                 </Show>
-                <Show when={!section.after}>{section.extra?.()}</Show>
-                <For each={section.fields}>
+                <Show when={!section.after && (!q() || section.title.toLowerCase().includes(q()))}>{section.extra?.()}</Show>
+                <For each={visibleFields(section)}>
                   {(def) => (
                     <div class="settings-row">
                       <div class="settings-label">
@@ -533,8 +670,9 @@ function Panel() {
                     </div>
                   )}
                 </For>
-                <Show when={section.after}>{section.extra?.()}</Show>
+                <Show when={section.after && (!q() || section.title.toLowerCase().includes(q()))}>{section.extra?.()}</Show>
               </section>
+              </Show>
             )}
           </For>
         </div>

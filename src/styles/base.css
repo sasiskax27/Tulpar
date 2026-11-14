@@ -1411,3 +1411,9 @@ body.resizing .side-island { transition: none; }
 .ob-keys kbd { display: inline-block; min-width: 110px; color: var(--tp-fg-strong); font-family: inherit; }
 .ob-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
 .ob-nav { display: flex; gap: 8px; }
+.settings-search { flex: 1; max-width: 360px; margin: 0 14px; }
+.settings-nav { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 20px 8px; border-bottom: 1px solid var(--tp-border); }
+.settings-nav-item { font-size: 12px; padding: 3px 10px; border-radius: 999px; color: var(--tp-fg-muted); background: var(--tp-bg-hover); }
+.settings-nav-item:hover { color: var(--tp-fg-strong); }
+.settings-buttons.wrap { flex-wrap: wrap; justify-content: flex-end; }
+.button-quiet.danger { color: var(--tp-error); }

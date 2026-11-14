@@ -116,20 +116,49 @@ export interface ServerConfig {
 
 /** Ключ — id языка в Monaco. TypeScript и JavaScript по умолчанию обслуживает
  *  встроенный в Monaco движок, поэтому сервер для них не нужен. */
+/** Команда установки под текущую ОС. */
+function byOs(cmds: { win?: string; mac?: string; linux?: string; all?: string }): string | undefined {
+  const ua = navigator.userAgent;
+  if (ua.includes("Windows")) return cmds.win ?? cmds.all;
+  if (ua.includes("Mac")) return cmds.mac ?? cmds.all;
+  return cmds.linux ?? cmds.all;
+}
+
+const clangd: ServerConfig = {
+  command: "clangd",
+  install: byOs({ win: "winget install LLVM.LLVM", mac: "brew install llvm", linux: "sudo apt install clangd" }),
+};
+
 export const defaultLanguages: Record<string, ServerConfig | null> = {
   rust: { command: "rust-analyzer", install: "rustup component add rust-analyzer" },
   python: { command: "basedpyright-langserver", args: ["--stdio"], install: "pip install basedpyright" },
   go: { command: "gopls", install: "go install golang.org/x/tools/gopls@latest" },
-  c: { command: "clangd", install: clangdInstall() },
-  cpp: { command: "clangd", install: clangdInstall() },
+  c: clangd,
+  cpp: clangd,
+  "objective-c": clangd,
+  java: {
+    command: "jdtls",
+    install: byOs({ win: "scoop install jdtls", mac: "brew install jdtls", linux: "brew install jdtls" }),
+  },
+  csharp: { command: "csharp-ls", install: "dotnet tool install --global csharp-ls" },
+  php: { command: "intelephense", args: ["--stdio"], install: "npm install -g intelephense" },
+  lua: {
+    command: "lua-language-server",
+    install: byOs({ win: "winget install LuaLS.lua-language-server", mac: "brew install lua-language-server", linux: "brew install lua-language-server" }),
+  },
+  kotlin: {
+    command: "kotlin-language-server",
+    install: byOs({ win: "scoop install kotlin-language-server", mac: "brew install kotlin-language-server", linux: "brew install kotlin-language-server" }),
+  },
+  ruby: { command: "ruby-lsp", install: "gem install ruby-lsp" },
+  scala: { command: "metals", install: "cs install metals" },
+  dart: { command: "dart", args: ["language-server", "--protocol=lsp"] },
+  swift: { command: "sourcekit-lsp" },
+  r: { command: "R", args: ["--slave", "-e", "languageserver::run()"], install: `Rscript -e "install.packages('languageserver', repos='https://cloud.r-project.org')"` },
+  shell: { command: "bash-language-server", args: ["start"], install: "npm install -g bash-language-server" },
+  yaml: { command: "yaml-language-server", args: ["--stdio"], install: "npm install -g yaml-language-server" },
+  dockerfile: { command: "docker-langserver", args: ["--stdio"], install: "npm install -g dockerfile-language-server-nodejs" },
 };
-
-function clangdInstall(): string {
-  const ua = navigator.userAgent;
-  if (ua.includes("Windows")) return "winget install LLVM.LLVM";
-  if (ua.includes("Mac")) return "brew install llvm";
-  return "sudo apt install clangd";
-}
 
 // ---------- состояние ----------
 

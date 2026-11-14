@@ -563,7 +563,7 @@ body.dragging-file, body.dragging-file * { cursor: grabbing !important; }
   flex-shrink: 0;
   scrollbar-width: thin;
 }
-.tab-strip:empty { display: none; }
+.tab-strip.empty { display: none; }
 .tab {
   display: flex;
   align-items: center;
@@ -595,6 +595,10 @@ body.dragging-file, body.dragging-file * { cursor: grabbing !important; }
 .tab.dirty .tab-close:hover .dot { display: none; }
 .tab.dirty .tab-close:hover .x { display: inline; visibility: visible; }
 
+.tab-strip-spacer { flex: 1; }
+.tab-strip-actions { display: flex; align-items: center; gap: 2px; padding: 0 8px; flex-shrink: 0; }
+.run-button { color: #73c991; }
+.run-button:hover { color: #9be3b2; }
 .editor-host { flex: 1; position: relative; min-height: 0; }
 .monaco-container { position: absolute; inset: 0; }
 .monaco-container.hidden { visibility: hidden; }

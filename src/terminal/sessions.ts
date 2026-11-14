@@ -72,14 +72,15 @@ export function refit(session = activeSession()) {
   }
 }
 
-export async function createSession(): Promise<void> {
+/** title — своё имя вкладки (например, «Задача»); иначе — имя оболочки. */
+export async function createSession(fixedTitle?: string): Promise<void> {
   const id = crypto.randomUUID();
   const term = new Terminal({ ...appearance(), cursorBlink: true, scrollback: 5000 });
   const fit = new FitAddon();
   term.loadAddon(fit);
   const el = document.createElement("div");
   el.className = "terminal-instance";
-  const [title, setTitle] = createSignal("терминал");
+  const [title, setTitle] = createSignal(fixedTitle ?? "терминал");
   const session: Session = { id, title, term, fit, el, opened: false };
 
   term.onData((data) => void core.terminalWrite(id, data).catch(() => undefined));
@@ -108,7 +109,7 @@ export async function createSession(): Promise<void> {
 
   try {
     const shell = await core.terminalStart(id, settings()["terminal.integrated.shell"], root(), term.cols, term.rows);
-    setTitle(baseName(shell).replace(/\.exe$/i, ""));
+    if (!fixedTitle) setTitle(baseName(shell).replace(/\.exe$/i, ""));
     // Панель могла изменить размер, пока оболочка запускалась
     await core.terminalResize(id, term.cols, term.rows);
   } catch (e) {
@@ -158,8 +159,18 @@ export function toggleTerminal() {
 }
 
 /** Открыть новый терминал и выполнить в нём команду (например, установку). */
-export async function runInTerminal(command: string) {
-  await newTerminal();
+/** Выполнить команду в терминале. С title — в терминале с этим именем
+ *  (повторные запуски идут туда же, а не плодят вкладки). */
+export async function runInTerminal(command: string, title?: string) {
+  const existing = title ? sessions().find((s) => s.title() === title) : undefined;
+  if (existing) {
+    setActiveId(existing.id);
+    setBottomVisible(true);
+  } else {
+    const started = createSession(title);
+    setBottomVisible(true);
+    await started;
+  }
   const id = activeId();
   if (id) await core.terminalWrite(id, command + "\r").catch(() => undefined);
 }

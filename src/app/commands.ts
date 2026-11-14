@@ -8,6 +8,7 @@ import { focusSearch } from "../search/SearchPanel";
 import { switchBranch, commit, sync, refresh as gitRefresh } from "../git/git";
 import { focusChat } from "../ai/ChatPanel";
 import { setUseFile, newChat } from "../ai/chat";
+import { runTask, runCurrentFile } from "../tasks/tasks";
 import { editorInstance } from "../editor/instance";
 import { activeLayout, defaultSettings, layoutConfig, setActiveLayout, settings, updateSetting } from "../config/store";
 import { core, type ConfigName } from "../ipc";
@@ -77,6 +78,10 @@ export function registerBuiltinCommands() {
       focusChat();
     },
   });
+  reg({ id: "workbench.action.tasks.runTask", category: "Задачи", title: "Запустить задачу проекта…", run: () => runTask() });
+  reg({ id: "workbench.action.tasks.build", category: "Задачи", title: "Собрать проект…", run: () => runTask("build") });
+  reg({ id: "workbench.action.tasks.test", category: "Задачи", title: "Запустить тесты…", run: () => runTask("test") });
+  reg({ id: "tulpar.run.file", category: "Задачи", title: "Запустить текущий файл", run: () => runCurrentFile() });
   reg({ id: "git.checkout", category: "Git", title: "Переключить ветку…", run: () => switchBranch() });
   reg({ id: "git.commit", category: "Git", title: "Закоммитить", run: () => commit() });
   reg({ id: "git.push", category: "Git", title: "Отправить (push)", run: () => sync("push") });

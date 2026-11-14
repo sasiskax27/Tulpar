@@ -93,7 +93,7 @@ export default function EditorGroup() {
 
   return (
     <div class="editor-group">
-      <div class="tab-strip" role="tablist">
+      <div class="tab-strip" classList={{ empty: tabs.length === 0 }} role="tablist">
         <For each={tabs}>
           {(tab) => (
             <div
@@ -119,6 +119,27 @@ export default function EditorGroup() {
             </div>
           )}
         </For>
+        <div class="tab-strip-spacer" />
+        <Show when={activePath() && !activePath()!.startsWith("diff:")}>
+          <div class="tab-strip-actions">
+            <button
+              class="icon-button run-button"
+              aria-label="Запустить файл"
+              title={`Запустить файл (${keybindingFor("tulpar.run.file") ?? "Ctrl+F5"})`}
+              onClick={() => void executeCommand("tulpar.run.file")}
+            >
+              <svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M4.5 2.8v10.4L13 8z" /></svg>
+            </button>
+            <button
+              class="icon-button"
+              aria-label="Задачи проекта"
+              title={`Задачи проекта: сборка, тесты, запуск (${keybindingFor("workbench.action.tasks.runTask") ?? "Ctrl+Shift+B"})`}
+              onClick={() => void executeCommand("workbench.action.tasks.runTask")}
+            >
+              <svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2.5 4h11M2.5 8h11M2.5 12h7" /></svg>
+            </button>
+          </div>
+        </Show>
       </div>
       <div class="editor-host">
         <div ref={container} class="monaco-container" classList={{ hidden: !activePath() || diffMode() }} />

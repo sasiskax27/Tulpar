@@ -10,6 +10,7 @@
 - Открытие папки, дерево файлов, автообновление при изменениях на диске
 - **Проводник:** создать файл или папку (можно сразу с путём: `src/utils/x.ts`), переименовать (`F2`), удалить в корзину (`Delete`), контекстное меню, управление стрелками, подсветка открытого файла
 - **Git** (`Ctrl+Shift+G`): изменённые файлы, разница «коммит ↔ сейчас» бок о бок, подготовка и откат, коммит (`Ctrl+Enter`), сообщение коммита от ИИ, ветки, push / pull, цветные метки изменённых строк на полях
+- **Сборка и запуск:** Tulpar сам находит в проекте Maven, Gradle, npm / pnpm / yarn / bun, Cargo, Go, Python (pip, Poetry, uv), Make, CMake, .NET, Docker, Bundler, Composer, Dart / Flutter, Mix и предлагает их задачи — собрать, тесты, запустить (`Ctrl+Shift+B`). Кнопка ▶ (`Ctrl+F5`) запускает текущий файл: Python, JavaScript, TypeScript, Go, Rust, C, C++, Java, Kotlin, C#, PHP, Ruby, Lua, Perl, R, Julia, Dart, Swift, Scala, Bash, PowerShell и другие. Всё выполняется во встроенном терминале
 - **Перетаскивание:** файлы и папки тянутся мышью на другую папку, файлы из проводника системы бросаются прямо в дерево (в том числе с другого диска) — в конце меню «Переместить / Копировать»
 - **Поиск по проекту** (`Ctrl+Shift+F`): учёт регистра, слово целиком, регулярные выражения, фильтр файлов, замена во всех файлах (открытые меняются в редакторе с отменой через `Ctrl+Z`)
 - Вкладки, сохранение, метка «не сохранено», восстановление сессии
@@ -28,14 +29,33 @@
 
 ## Языки
 
-Из коробки настроены Rust, Python, Go, C и C++. TypeScript и JavaScript обслуживает встроенный движок Monaco. Сервер запускается, только когда открыт файл его языка.
+**Подсветка** — около 80 языков сразу (движок Monaco).
+
+**Умные функции** (автодополнение, ошибки, определение, переименование):
+- встроены: JavaScript, TypeScript, JSON, HTML, CSS, SCSS, Less;
+- настроены — нужен языковой сервер, Tulpar предложит установить его кнопкой:
 
 | Язык | Сервер | Установка |
 |---|---|---|
 | Rust | rust-analyzer | `rustup component add rust-analyzer` |
 | Python | basedpyright | `pip install basedpyright` |
 | Go | gopls | `go install golang.org/x/tools/gopls@latest` |
-| C / C++ | clangd | из пакета LLVM |
+| C / C++ / Objective-C | clangd | `winget install LLVM.LLVM` / `brew install llvm` / `apt install clangd` |
+| Java | jdtls | `scoop install jdtls` / `brew install jdtls` |
+| C# | csharp-ls | `dotnet tool install --global csharp-ls` |
+| PHP | intelephense | `npm install -g intelephense` |
+| Lua | lua-language-server | `winget install LuaLS.lua-language-server` / `brew install lua-language-server` |
+| Kotlin | kotlin-language-server | `scoop install kotlin-language-server` / `brew install kotlin-language-server` |
+| Ruby | ruby-lsp | `gem install ruby-lsp` |
+| Scala | metals | `cs install metals` |
+| Dart | входит в Dart SDK | — |
+| Swift | sourcekit-lsp, входит в Swift | — |
+| R | languageserver | `Rscript -e "install.packages('languageserver')"` |
+| Bash | bash-language-server | `npm install -g bash-language-server` |
+| YAML | yaml-language-server | `npm install -g yaml-language-server` |
+| Dockerfile | docker-langserver | `npm install -g dockerfile-language-server-nodejs` |
+
+Сервер запускается, только когда открыт файл его языка.
 
 Любой другой язык — одна строка в `languages.json` (палитра → «Настройки: Открыть languages.json»):
 
@@ -85,6 +105,8 @@ npm run tauri dev
 | `Ctrl+K Z` | Режим фокуса |
 | `Ctrl+,` | Настройки |
 | `Ctrl+Alt+I` | Чат с ИИ |
+| `Ctrl+Shift+B` | Задачи проекта: сборка, тесты, запуск |
+| `Ctrl+F5` | Запустить текущий файл |
 | `Ctrl+I` | Свой запрос к ИИ по выделенному коду |
 | `Ctrl+=` / `Ctrl+-` / `Ctrl+0` | Размер шрифта: больше / меньше / сбросить |
 

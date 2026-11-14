@@ -5,6 +5,7 @@ import {
   switchBranch, showDiff, suggestMessage, stagedFiles, changedFiles,
 } from "./git";
 import { root } from "../app/workspace";
+import { identity, github, checkAccount, setupIdentity, signInGithub, cloneRepo, publishToGithub } from "./account";
 import { openFile } from "../editor/tabs";
 import { executeCommand } from "../commands/registry";
 import { showContextMenu } from "../app/ContextMenu";
@@ -109,8 +110,42 @@ function Section(props: { title: string; files: GitFile[]; staged: boolean }) {
   );
 }
 
+function AccountBar() {
+  return (
+    <div class="git-account">
+      <Show when={identity() && (!identity()!.name || !identity()!.email)}>
+        <div class="git-warn">
+          <span>Git не знает, кто вы — коммиты не получатся.</span>
+          <button class="button" onClick={() => void setupIdentity()}>Указать имя и почту</button>
+        </div>
+      </Show>
+      <div class="git-account-row">
+        <Show
+          when={github()?.user}
+          fallback={
+            <button class="button-quiet" onClick={() => void signInGithub()} title="Чтобы push и pull работали без пароля">
+              Войти в GitHub
+            </button>
+          }
+        >
+          <span class="git-user" title="Вы вошли в GitHub">● {github()!.user}</span>
+        </Show>
+        <Show when={identity()?.name}>
+          <button class="button-quiet git-identity" onClick={() => void setupIdentity()} title="Имя и почта в коммитах">
+            {identity()!.name}
+          </button>
+        </Show>
+        <Show when={status()?.isRepo && !status()?.upstream}>
+          <button class="button-quiet" onClick={() => void publishToGithub()}>Опубликовать на GitHub</button>
+        </Show>
+      </div>
+    </div>
+  );
+}
+
 export default function GitPanel() {
   onMount(() => {
+    void checkAccount();
     void refresh();
     // Пока панель открыта — подхватываем коммиты из терминала
     const t = window.setInterval(() => void refresh(), 5000);
@@ -152,10 +187,15 @@ export default function GitPanel() {
                 <button class="button" onClick={() => void init()}>
                   Создать репозиторий
                 </button>
+                <button class="button-quiet" onClick={() => void cloneRepo()}>
+                  Клонировать с GitHub…
+                </button>
               </Show>
+              <AccountBar />
             </div>
           }
         >
+          <AccountBar />
           <div class="git-branch-row">
             <button class="git-branch" onClick={() => void switchBranch()} title="Переключить ветку">
               <svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="4.5" cy="3.5" r="1.5" /><circle cx="4.5" cy="12.5" r="1.5" /><circle cx="11.5" cy="5.5" r="1.5" /><path d="M4.5 5v6M11.5 7c0 3-4 2.5-7 4.5" /></svg>

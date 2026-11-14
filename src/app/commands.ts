@@ -148,6 +148,10 @@ export function registerBuiltinCommands() {
   reg({ id: "workbench.action.tasks.build", category: "Задачи", title: "Собрать проект…", run: () => runTask("build") });
   reg({ id: "workbench.action.tasks.test", category: "Задачи", title: "Запустить тесты…", run: () => runTask("test") });
   reg({ id: "tulpar.run.file", category: "Задачи", title: "Запустить текущий файл", run: () => runCurrentFile() });
+  reg({ id: "git.clone", category: "Git", title: "Клонировать репозиторий…", run: () => import("../git/account").then((m) => m.cloneRepo()) });
+  reg({ id: "tulpar.github.signIn", category: "Git", title: "Войти в GitHub", run: () => import("../git/account").then((m) => m.signInGithub()) });
+  reg({ id: "tulpar.github.publish", category: "Git", title: "Опубликовать проект на GitHub", run: () => import("../git/account").then((m) => m.publishToGithub()) });
+  reg({ id: "tulpar.git.identity", category: "Git", title: "Имя и почта для коммитов", run: () => import("../git/account").then((m) => m.setupIdentity()) });
   reg({ id: "git.checkout", category: "Git", title: "Переключить ветку…", run: () => switchBranch() });
   reg({ id: "git.commit", category: "Git", title: "Закоммитить", run: () => commit() });
   reg({ id: "git.push", category: "Git", title: "Отправить (push)", run: () => sync("push") });

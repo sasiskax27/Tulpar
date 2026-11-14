@@ -371,7 +371,9 @@ fn shell_command(command: &str) -> Command {
 /// Выполнить команду в папке проекта и вернуть её вывод (для агента).
 #[tauri::command]
 pub async fn agent_run(state: State<'_, WorkspaceState>, command: String, timeout_secs: Option<u64>) -> Result<RunResult, String> {
-    let root = current_root(&state)?;
+    // Без открытой папки (например, клонирование) — домашняя папка
+    let root = current_root(&state)
+        .or_else(|_| dirs::home_dir().ok_or_else(|| "не удалось определить домашнюю папку".to_string()))?;
     let timeout = Duration::from_secs(timeout_secs.unwrap_or(120).clamp(5, 900));
     tauri::async_runtime::spawn_blocking(move || {
         let mut child = shell_command(&command)

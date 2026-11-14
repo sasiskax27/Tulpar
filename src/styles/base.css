@@ -1449,3 +1449,10 @@ body.resizing .side-island { transition: none; }
 :root[data-glass="on"] .xterm .xterm-viewport,
 :root[data-glass="on"] .xterm-screen canvas { background-color: transparent !important; }
 :root[data-glass="on"] .monaco-editor .sticky-widget { background: color-mix(in srgb, var(--tp-code-bg) 92%, transparent) !important; }
+.input-title { padding: 8px 12px 0; font-size: 12px; color: var(--tp-fg-muted); }
+.git-account { padding: 0 12px 8px; display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.git-account-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; }
+.git-account-row .button-quiet { font-size: 12px; padding: 2px 8px; }
+.git-user { color: var(--tp-ok); }
+.git-identity { color: var(--tp-fg-muted); }
+.git-warn { display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 8px; border: 1px solid color-mix(in srgb, var(--tp-gold) 50%, transparent); background: color-mix(in srgb, var(--tp-gold) 8%, transparent); font-size: 12px; }

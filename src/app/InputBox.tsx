@@ -4,17 +4,22 @@ import { createSignal, Show } from "solid-js";
 
 interface Request {
   placeholder: string;
+  /** Подпись над полем (что спрашиваем) */
+  title?: string;
+  value?: string;
   resolve: (value: string | null) => void;
 }
 
 const [request, setRequest] = createSignal<Request | null>(null);
 let restoreFocus: HTMLElement | null = null;
 
-/** Спросить строку. null — пользователь нажал Escape или ничего не ввёл. */
-export function askInput(placeholder: string): Promise<string | null> {
+/** Спросить строку. null — пользователь нажал Escape или ничего не ввёл.
+ *  Можно передать строку-подсказку или { title, placeholder, value }. */
+export function askInput(opts: string | { title?: string; placeholder?: string; value?: string }): Promise<string | null> {
   request()?.resolve(null);
   restoreFocus = document.activeElement as HTMLElement | null;
-  return new Promise((resolve) => setRequest({ placeholder, resolve }));
+  const o = typeof opts === "string" ? { placeholder: opts } : opts;
+  return new Promise((resolve) => setRequest({ placeholder: o.placeholder ?? "", title: o.title, value: o.value, resolve }));
 }
 
 function finish(value: string | null) {
@@ -30,8 +35,15 @@ export default function InputBox() {
       {(r) => (
         <div class="palette-backdrop" onMouseDown={() => finish(null)}>
           <div class="palette" onMouseDown={(e) => e.stopPropagation()}>
+            <Show when={r().title}>
+              <div class="input-title">{r().title}</div>
+            </Show>
             <input
-              ref={(el) => queueMicrotask(() => el.focus())}
+              ref={(el) => queueMicrotask(() => {
+                el.focus();
+                el.select();
+              })}
+              value={r().value ?? ""}
               class="palette-input"
               placeholder={r().placeholder}
               spellcheck={false}

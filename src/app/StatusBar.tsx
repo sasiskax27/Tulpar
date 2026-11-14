@@ -1,5 +1,6 @@
 // Строка статуса: папка, ветка git, раскладка, несохранённые файлы, позиция курсора, язык.
 import { RecordingBadge } from "../video/VideoStudio";
+import { phoneInfo, setPhoneDialog } from "../phone/phone";
 import { Show } from "solid-js";
 import { root } from "./workspace";
 import { tabs, activePath, cursor } from "../editor/tabs";
@@ -50,6 +51,11 @@ export default function StatusBar() {
       </div>
       <div class="status-right">
         <RecordingBadge />
+        <Show when={phoneInfo()}>
+          <button class="status-item" title="Телефон подключён как второй экран" onClick={() => setPhoneDialog(true)}>
+            📱
+          </button>
+        </Show>
         <Show when={activeTab()}>
           {(tab) => (
             <>

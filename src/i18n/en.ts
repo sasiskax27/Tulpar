@@ -1,6 +1,19 @@
 // Generated: Russian UI text -> English. Keys are exact Russian strings;
 // pattern keys use {0}, {1}… for inserted values.
 export const EXACT: Record<string, string> = {
+ "Телефон как второй экран": "Phone as a second screen",
+ "📱 Телефон — второй экран": "📱 Phone — second screen",
+ "Телефон и компьютер — в одной сети Wi-Fi": "The phone and the computer are on the same Wi-Fi",
+ "Наведите камеру телефона на QR-код": "Point the phone camera at the QR code",
+ "На телефоне: ошибки, тесты, терминал, сайт и задачи для ИИ-агента": "On the phone: errors, tests, terminal, the site and tasks for the AI agent",
+ "Windows может спросить разрешение для сети — нажмите «Разрешить» для частных сетей. Без ключа из QR-кода страница не откроется.": "Windows may ask for network permission — press “Allow” for private networks. The page won't open without the key from the QR code.",
+ "Скопировать адрес": "Copy address",
+ "Выключить": "Turn off",
+ "Телефон как второй экран (QR-код)": "Phone as a second screen (QR code)",
+ "Телефон — второй экран": "Phone — second screen",
+ "Телефон подключён как второй экран": "The phone is connected as a second screen",
+ "Второй экран выключен": "Second screen turned off",
+ "Не удалось включить второй экран": "Could not turn on the second screen",
  "Три варианта": "Three variants",
  "ИИ: Три варианта…": "AI: Three variants…",
  "Простой": "Simple",
@@ -1346,6 +1359,7 @@ export const EXACT: Record<string, string> = {
 };
 
 export const PATTERNS: Record<string, string> = {
+ "📱 Задача с телефона: {0}": "📱 Task from the phone: {0}",
  "Читаю файлы… {0} из {1}": "Reading files… {0} of {1}",
  "Показаны первые {0} файлов": "Showing the first {0} files",
  "{0} файлов · {1} связей": "{0} files · {1} links",

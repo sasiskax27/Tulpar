@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tulpar · телефон</title>
+<style>
+  :root { color-scheme: dark; --bg:#0f1220; --card:#181c2e; --line:#2a3050; --fg:#e8eaf2; --mut:#8b92b0; --acc:#f0b840; --ok:#7ee787; --err:#ff7b72; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--fg); padding: 14px 14px 90px; }
+  header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .mark { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; font-weight: 800; background: var(--acc); color: #1a1406; }
+  h1 { font-size: 18px; margin: 0; }
+  .sub { color: var(--mut); font-size: 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; margin-bottom: 12px; }
+  .card h2 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--mut); }
+  .row { display: flex; gap: 14px; }
+  .big { font-size: 24px; font-weight: 800; }
+  .ok { color: var(--ok); } .err { color: var(--err); }
+  pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 12px/1.5 ui-monospace, Consolas, monospace; max-height: 260px; overflow: auto; }
+  ul { margin: 0; padding-left: 18px; } li { margin: 3px 0; font-size: 13px; }
+  a.btn, button { display: inline-block; border: 0; border-radius: 12px; padding: 10px 14px; font: inherit; font-weight: 700; background: var(--acc); color: #1a1406; text-decoration: none; }
+  .ask { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); background: var(--card); border-top: 1px solid var(--line); display: flex; gap: 8px; }
+  .ask input { flex: 1; min-width: 0; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); padding: 10px 12px; font: inherit; }
+  .muted { color: var(--mut); }
+  iframe { width: 100%; height: 70vh; border: 0; border-radius: 12px; background: #fff; }
+</style>
+</head>
+<body>
+<header>
+  <div class="mark">T</div>
+  <div><h1 id="project">Tulpar</h1><div class="sub" id="file">—</div></div>
+</header>
+<div class="card" id="previewCard" hidden>
+  <h2>Сайт</h2>
+  <p><a class="btn" href="/preview/" target="_blank">Открыть сайт на телефоне</a></p>
+  <iframe id="preview" title="Предпросмотр" hidden></iframe>
+</div>
+<div class="card">
+  <h2>Проблемы</h2>
+  <div class="row"><div><div class="big err" id="errors">0</div><div class="muted">ошибок</div></div><div><div class="big" id="warnings">0</div><div class="muted">предупреждений</div></div></div>
+  <ul id="problemList"></ul>
+</div>
+<div class="card" id="testsCard" hidden>
+  <h2>Тесты</h2>
+  <div class="row"><div class="big ok" id="passed">0</div><div class="big err" id="failed">0</div></div>
+  <ul id="failedList"></ul>
+</div>
+<div class="card">
+  <h2>Терминал</h2>
+  <pre id="terminal" class="muted">—</pre>
+</div>
+<div class="card" id="agentCard" hidden>
+  <h2>ИИ-агент</h2>
+  <pre id="agent"></pre>
+</div>
+<form class="ask" id="askForm">
+  <input id="ask" placeholder="Задача для ИИ-агента…" autocomplete="off">
+  <button>➤</button>
+</form>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  async function tick() {
+    try {
+      const s = await (await fetch("/api/state", { cache: "no-store" })).json();
+      $("project").textContent = s.project || "Tulpar";
+      $("file").textContent = s.file || "файл не открыт";
+      $("errors").textContent = s.errors ?? 0;
+      $("warnings").textContent = s.warnings ?? 0;
+      $("problemList").innerHTML = (s.problems || []).map((p) => `<li>${esc(p)}</li>`).join("");
+      $("testsCard").hidden = !s.tests;
+      if (s.tests) {
+        $("passed").textContent = "✓ " + s.tests.passed;
+        $("failed").textContent = "✗ " + s.tests.failed;
+        $("failedList").innerHTML = (s.tests.failedNames || []).map((n) => `<li>${esc(n)}</li>`).join("");
+      }
+      $("terminal").textContent = s.terminal || "—";
+      $("previewCard").hidden = !s.preview;
+      $("agentCard").hidden = !s.agent;
+      $("agent").textContent = s.agent || "";
+    } catch (e) {
+      $("file").textContent = "нет связи с компьютером";
+    }
+  }
+  tick();
+  setInterval(tick, 2000);
+  $("askForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const text = $("ask").value.trim();
+    if (!text) return;
+    $("ask").value = "";
+    await fetch("/api/agent", { method: "POST", body: text });
+    $("agentCard").hidden = false;
+    $("agent").textContent = "Задача отправлена: " + text;
+  });
+</script>
+</body>
+</html>

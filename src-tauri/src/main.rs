@@ -15,6 +15,7 @@ mod pkg;
 mod testing;
 mod sqlite;
 mod db;
+mod phone;
 mod search;
 mod terminal;
 mod transfer;
@@ -25,6 +26,7 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(workspace::WorkspaceState::default())
+        .manage(phone::PhoneState::default())
         .manage(config::ConfigState::default())
         .manage(lsp::LspState::default())
         .manage(terminal::TerminalState::default())
@@ -44,6 +46,9 @@ fn main() {
             pkg::pkg_search,
             testing::tests_run,
             sqlite::sqlite_tables,
+            phone::phone_start,
+            phone::phone_stop,
+            phone::phone_set_state,
             db::db_query,
             db::db_tables,
             db::mongo_collections,

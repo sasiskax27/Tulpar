@@ -194,6 +194,7 @@ export default function Welcome() {
             {action("Учиться программировать", "tulpar.learn", "🎓")}
             {action("Код в видео", "tulpar.video.studio", "🎬")}
             {action("Карта проекта", "tulpar.projectMap", "🗺")}
+            {action("Телефон — второй экран", "tulpar.phone", "📱")}
             {action("Чат с ИИ", "workbench.action.chat.open", "✦")}
             {action("Библиотеки", "workbench.view.packages", "📦")}
             {action("Галерея тем", "tulpar.themes.gallery", "🎨")}

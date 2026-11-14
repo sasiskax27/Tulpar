@@ -2191,3 +2191,12 @@ body.resizing .side-island { transition: none; }
 .var-wait { padding: 16px; color: var(--tp-fg-muted); font-size: 13px; animation: rec-pulse 1.6s infinite; }
 .var-preview { height: 45%; min-height: 160px; border: 0; border-bottom: 1px solid var(--tp-border); background: #fff; }
 .var-code { flex: 1; min-height: 120px; }
+
+/* ---------- Телефон ---------- */
+.phone-dialog { width: min(720px, 94vw); }
+.phone-body { display: grid; grid-template-columns: 260px 1fr; gap: 20px; padding: 18px; }
+.phone-qr { background: #fff; border-radius: 14px; padding: 10px; }
+.phone-qr svg { width: 100%; height: auto; display: block; }
+.phone-text ol { margin: 0 0 10px; padding-left: 20px; line-height: 1.7; }
+.phone-url { display: block; padding: 6px 8px; border-radius: 6px; background: var(--tp-bg-hover); font-size: 11px; word-break: break-all; margin: 8px 0; }
+@media (max-width: 640px) { .phone-body { grid-template-columns: 1fr; } }

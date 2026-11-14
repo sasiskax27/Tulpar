@@ -174,6 +174,9 @@ export const core = {
   mongoCollections: (url: string) => invoke<DbObject[]>("mongo_collections", { url }),
   mongoFind: (url: string, db: string, collection: string, filter: string, limit?: number) =>
     invoke<SqliteResult>("mongo_find", { url, db, collection, filter, limit: limit ?? null }),
+  phoneStart: (token: string) => invoke<{ url: string; ip: string; port: number }>("phone_start", { token }),
+  phoneStop: () => invoke<void>("phone_stop"),
+  phoneSetState: (snapshot: string, previewPort: number | null) => invoke<void>("phone_set_state", { snapshot, previewPort }),
   pkgSearch: (registry: string, query: string) => invoke<PkgItem[]>("pkg_search", { registry, query }),
   extSearch: (query: string, category?: string) => invoke<ExtSearchItem[]>("ext_search", { query, category: category ?? null }),
   extInstall: (namespace: string, name: string) => invoke<InstalledExt>("ext_install", { namespace, name }),

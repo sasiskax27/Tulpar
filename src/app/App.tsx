@@ -10,6 +10,7 @@ import QuickPick from "./QuickPick";
 import Onboarding, { maybeShowOnboarding } from "./Onboarding";
 import ThemeGallery from "./ThemeGallery";
 import VideoStudio from "../video/VideoStudio";
+import PhoneDialog from "../phone/PhoneDialog";
 import { notices, dismiss } from "./notify";
 import { settings } from "../config/store";
 import { cssVars, isLightTheme } from "./themes";
@@ -63,6 +64,7 @@ export default function App() {
       <Onboarding />
       <ThemeGallery />
       <VideoStudio />
+      <PhoneDialog />
       <div class="notices">
         <For each={notices()}>
           {(n) => (

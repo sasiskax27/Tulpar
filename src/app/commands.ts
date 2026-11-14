@@ -195,6 +195,16 @@ export function registerBuiltinCommands() {
   reg({ id: "tulpar.learn", category: "Справка", title: "Учебный режим: учить программирование", run: () => void import("../editor/side").then((m) => m.showLearn()) });
   reg({ id: "tulpar.projectMap", category: "Вид", title: "Карта проекта", run: () => void import("../editor/side").then((m) => m.showProjectMap()) });
   reg({ id: "tulpar.variants", category: "ИИ", title: "ИИ: Три варианта…", run: () => void import("../variants/variants").then((m) => m.makeVariants()) });
+  reg({
+    id: "tulpar.phone",
+    category: "Вид",
+    title: "Телефон как второй экран (QR-код)",
+    run: async () => {
+      const m = await import("../phone/phone");
+      if (m.phoneInfo()) m.setPhoneDialog(true);
+      else await m.startPhone();
+    },
+  });
   reg({ id: "workbench.view.testing", category: "Вид", title: "Тесты", run: (args) => showView("tests", args) });
   reg({ id: "testing.runAll", category: "Тесты", title: "Запустить все тесты", run: () => void import("../testing/tests").then((m) => m.runTests()) });
   reg({ id: "workbench.view.packages", category: "Вид", title: "Библиотеки: найти и подключить", run: (args) => showView("packages", args) });

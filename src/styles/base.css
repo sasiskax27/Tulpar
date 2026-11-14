@@ -2012,3 +2012,38 @@ body.resizing .side-island { transition: none; }
 .web-bar { display: flex; gap: 6px; align-items: center; padding: 4px 6px; border-bottom: 1px solid var(--tp-border); }
 .web-address { flex: 1; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--tp-border); background: var(--tp-bg-input); color: var(--tp-fg); font-size: 12px; }
 .web-frame { flex: 1; width: 100%; border: 0; background: #fff; }
+
+/* Широкие правые панели: блокнот, база, сайт. Без открытых файлов — во всю ширину */
+.side-pane.wide { flex: 1.6; }
+.editor-host.collapsed { display: none; }
+.editor-host.collapsed + .side-pane { border-left: 0; }
+
+/* ---------- Блокнот Jupyter ---------- */
+.nb { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.nb-toolbar { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--tp-border); flex-wrap: wrap; }
+.nb-state { margin-left: auto; font-size: 12px; color: var(--tp-ok); }
+.nb-state.busy { color: var(--tp-gold); }
+.nb-cells { flex: 1; overflow-y: auto; padding: 10px 14px 120px 4px; }
+.nb-cell { position: relative; display: grid; grid-template-columns: 56px 1fr auto; gap: 4px; padding: 4px 0 14px; }
+.nb-gutter { display: flex; flex-direction: column; align-items: center; padding-top: 6px; gap: 2px; }
+.nb-run { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--tp-border); background: none; color: var(--tp-accent); cursor: pointer; }
+.nb-run:hover { background: var(--tp-accent); color: var(--tp-on-accent); }
+.nb-count { font-family: var(--tp-font-mono, monospace); font-size: 11px; color: var(--tp-fg-muted); }
+.nb-body { min-width: 0; }
+.nb-editor { border: 1px solid var(--tp-border); border-radius: 8px; overflow: hidden; min-height: 38px; }
+.nb-cell.running .nb-editor { border-color: var(--tp-gold); }
+.nb-cell:focus-within .nb-editor { border-color: var(--tp-accent); }
+.nb-outputs { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+.nb-stream, .nb-error { margin: 0; padding: 6px 10px; font-family: var(--tp-font-mono, monospace); font-size: 12px; white-space: pre-wrap; word-break: break-word; max-height: 420px; overflow: auto; }
+.nb-stream.err, .nb-error { color: var(--tp-error); background: color-mix(in srgb, var(--tp-error) 8%, transparent); border-radius: 6px; }
+.nb-image { max-width: 100%; border-radius: 6px; background: #fff; align-self: flex-start; }
+.nb-html { width: 100%; border: 0; height: 200px; }
+.nb-md { padding: 4px 10px; line-height: 1.6; cursor: text; }
+.nb-md h1, .nb-md h2, .nb-md h3 { color: var(--tp-fg-strong); margin: 6px 0; }
+.nb-placeholder { color: var(--tp-fg-muted); font-style: italic; }
+.nb-cell-actions { display: flex; flex-direction: column; gap: 2px; opacity: 0; transition: opacity 0.12s; }
+.nb-cell:hover .nb-cell-actions, .nb-cell:focus-within .nb-cell-actions { opacity: 1; }
+.nb-add { position: absolute; left: 56px; right: 0; bottom: -2px; display: flex; justify-content: center; gap: 6px; opacity: 0; transition: opacity 0.12s; }
+.nb-cell:hover .nb-add { opacity: 1; }
+.nb-add button { font-size: 11px; padding: 1px 10px; border-radius: 999px; border: 1px solid var(--tp-border); background: var(--tp-bg-sidebar); color: var(--tp-fg-muted); cursor: pointer; }
+.nb-add button:hover { color: var(--tp-fg); border-color: var(--tp-accent); }

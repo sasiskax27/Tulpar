@@ -158,6 +158,24 @@ export function registerBuiltinCommands() {
       showWeb(u);
     },
   });
+  reg({
+    id: "jupyter.newNotebook",
+    category: "Файл",
+    title: "Новый блокнот Jupyter",
+    run: async () => {
+      const r = (await import("./workspace")).root();
+      if (!r) return notify("Сначала откройте папку проекта");
+      const { askInput } = await import("./InputBox");
+      const name = await askInput({ title: "Имя блокнота", value: "notebook.ipynb" });
+      if (!name) return;
+      const file = name.endsWith(".ipynb") ? name : `${name}.ipynb`;
+      const { serializeNotebook, emptyNotebook } = await import("../notebook/notebook");
+      const sep = r.includes("\\") ? "\\" : "/";
+      const path = r + sep + file;
+      await core.writeFile(path, serializeNotebook(emptyNotebook()));
+      await openFile(path);
+    },
+  });
   reg({ id: "workbench.view.testing", category: "Вид", title: "Тесты", run: (args) => showView("tests", args) });
   reg({ id: "testing.runAll", category: "Тесты", title: "Запустить все тесты", run: () => void import("../testing/tests").then((m) => m.runTests()) });
   reg({ id: "workbench.view.packages", category: "Вид", title: "Библиотеки: найти и подключить", run: (args) => showView("packages", args) });

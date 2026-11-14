@@ -7,6 +7,7 @@ import { core, baseName, parentDir, joinPath } from "../ipc";
 import { closeSide, setSide, side, type SideView } from "./side";
 import { markdownToHtml } from "./markdown";
 import SqliteView from "./SqliteView";
+import NotebookView from "../notebook/NotebookView";
 import WebPreview from "./WebPreview";
 
 const MIME: Record<string, string> = {
@@ -170,6 +171,7 @@ const TITLES: Record<SideView["kind"], string> = {
   media: "",
   text: "",
   sqlite: "База · ",
+  notebook: "Блокнот · ",
   web: "Сайт · ",
 };
 
@@ -177,7 +179,7 @@ export default function SidePane() {
   const view = () => side()!;
   const others = () => tabs.filter((t) => !t.diffOf && t.path !== view().path);
   return (
-    <div class="side-pane">
+    <div class="side-pane" classList={{ wide: ["notebook", "sqlite", "web"].includes(view().kind) }}>
       <div class="side-pane-header">
         <span class="side-pane-title" title={view().path}>
           {TITLES[view().kind]}
@@ -211,6 +213,9 @@ export default function SidePane() {
           </Match>
           <Match when={view().kind === "html"}>
             <HtmlPreview path={view().path} />
+          </Match>
+          <Match when={view().kind === "notebook"}>
+            <NotebookView path={view().path} />
           </Match>
           <Match when={view().kind === "sqlite"}>
             <SqliteView path={view().path} />

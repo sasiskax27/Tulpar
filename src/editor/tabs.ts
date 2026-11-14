@@ -129,6 +129,12 @@ export async function openFile(requested: string, reveal?: monaco.IRange) {
     showMedia(requested);
     return;
   }
+  // Блокнот Jupyter — ячейками
+  if (/\.ipynb$/i.test(requested)) {
+    const { showNotebook } = await import("./side");
+    showNotebook(requested);
+    return;
+  }
   // База SQLite — таблицами, а не текстом
   if (/\.(db|sqlite|sqlite3|db3)$/i.test(requested)) {
     const { showSqlite } = await import("./side");

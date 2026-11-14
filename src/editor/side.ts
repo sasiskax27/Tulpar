@@ -10,6 +10,7 @@ export type SideView =
   | { kind: "html"; path: string }
   | { kind: "media"; path: string }
   | { kind: "sqlite"; path: string }
+  | { kind: "notebook"; path: string }
   | { kind: "web"; path: string; url: string }
   | { kind: "text"; path: string; title: string; text: string; language: string };
 
@@ -56,6 +57,10 @@ export function previewHtml(path = current()) {
 }
 
 export const isSqlite = (path: string) => /\.(db|sqlite|sqlite3|db3)$/i.test(path);
+
+export function showNotebook(path: string) {
+  setSide({ kind: "notebook", path });
+}
 
 export function showSqlite(path: string) {
   setSide({ kind: "sqlite", path });

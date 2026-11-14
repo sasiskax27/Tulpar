@@ -2,7 +2,7 @@
 import { createEffect, createSignal, For, on } from "solid-js";
 import { notify } from "../app/notify";
 import { copy } from "./ai";
-import { TOOLS } from "./toolbox";
+import { TOOLS } from "./converters";
 
 export default function Toolbox() {
   const [id, setId] = createSignal(TOOLS[0].id);

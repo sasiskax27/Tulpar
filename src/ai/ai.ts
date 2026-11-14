@@ -103,10 +103,18 @@ export function cancelAi() {
 
 let clearPending: (() => void) | undefined;
 
-/** Убрать из ответа обёртку ```…```, которую модели добавляют вопреки просьбе. */
+/** Убрать из ответа обёртки, которые модели добавляют вопреки просьбе:
+ *  ```…``` и наши же метки <fragment>…</fragment>, а также пояснения вокруг кода. */
 function cleanResult(text: string, original: string): string {
-  const fenced = text.trim().match(/^```[^\n]*\n([\s\S]*?)\n?```$/);
-  let result = fenced ? fenced[1] : text.replace(/^\n+/, "").replace(/\s+$/, "");
+  let result = text.trim();
+  // Маленькие модели часто повторяют метки из запроса — вырезаем всё вне них
+  const tagged = result.match(/<fragment>\n?([\s\S]*?)\n?<\/fragment>/);
+  if (tagged) result = tagged[1];
+  else result = result.replace(/^<fragment>\n?/, "").replace(/\n?<\/fragment>$/, "");
+  // Блок кода посреди пояснений: «Вот исправленный код: ```…``` Готово!»
+  const fenced = result.match(/```[^\n]*\n([\s\S]*?)\n?```/);
+  if (fenced) result = fenced[1];
+  result = result.replace(/^\n+/, "").replace(/\s+$/, "");
   // Перевод строки в конце — как в исходном фрагменте
   if (original.endsWith("\n") && !result.endsWith("\n")) result += "\n";
   return result;

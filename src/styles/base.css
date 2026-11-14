@@ -796,6 +796,15 @@ kbd { font-family: inherit; font-size: 12px; opacity: 0.8; }
   .settings-control { width: 100%; justify-content: flex-start; }
 }
 
+/* ---------- свои действия ИИ ---------- */
+
+.custom-actions { display: flex; flex-direction: column; gap: 10px; padding: 8px 0; }
+.custom-action { display: flex; flex-direction: column; gap: 6px; padding: 10px; border: 1px solid var(--tp-border); border-radius: 8px; }
+.custom-action-row { display: flex; gap: 6px; align-items: center; }
+.custom-action-mode { width: 170px; flex-shrink: 0; }
+.custom-action-prompt { resize: vertical; min-height: 44px; font: inherit; }
+.custom-action-buttons { display: flex; gap: 8px; align-items: center; }
+
 /* ---------- локальный ИИ ---------- */
 
 .local-ai-setup { padding: 4px 0 10px; line-height: 1.5; }
@@ -951,3 +960,5 @@ kbd { font-family: inherit; font-size: 12px; opacity: 0.8; }
   user-select: text;
 }
 .notice-error { border-left-color: var(--tp-error); }
+.notice-actions { display: flex; gap: 4px; justify-content: flex-end; margin-top: 8px; }
+.notice-actions .button-quiet:first-child { color: var(--tp-accent); }

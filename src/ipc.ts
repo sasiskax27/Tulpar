@@ -116,6 +116,9 @@ export const core = {
   aiChat: (request: { id: string; provider: string; baseUrl: string; model: string; apiKey: string; system: string; messages: { role: string; content: string }[] }) =>
     invoke<string>("ai_chat", { request }),
   aiChatCancel: (id: string) => invoke<void>("ai_chat_cancel", { id }),
+  backupPut: (name: string, data: string) => invoke<void>("backup_put", { name, data }),
+  backupDelete: (name: string) => invoke<void>("backup_delete", { name }),
+  backupList: () => invoke<[string, string][]>("backup_list"),
   configEnsure: (name: ConfigName) => invoke<string>("config_ensure", { name }),
 };
 

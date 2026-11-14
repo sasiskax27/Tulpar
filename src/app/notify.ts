@@ -1,10 +1,17 @@
-// Простые всплывающие уведомления. Позже их заменит полноценный центр уведомлений.
+// Всплывающие уведомления. У уведомления могут быть кнопки действий —
+// тогда оно висит дольше и закрывается по нажатию.
 import { createSignal } from "solid-js";
+
+export interface NoticeAction {
+  label: string;
+  run: () => void;
+}
 
 export interface Notice {
   id: number;
   text: string;
   level: "info" | "error";
+  actions?: NoticeAction[];
 }
 
 const [notices, setNotices] = createSignal<Notice[]>([]);
@@ -12,10 +19,16 @@ let nextId = 1;
 
 export { notices };
 
-export function notify(text: string, level: Notice["level"] = "info") {
+export function dismiss(id: number) {
+  setNotices((list) => list.filter((n) => n.id !== id));
+}
+
+export function notify(text: string, level: Notice["level"] = "info", actions?: NoticeAction[]) {
   const id = nextId++;
-  setNotices((list) => [...list, { id, text, level }]);
-  setTimeout(() => setNotices((list) => list.filter((n) => n.id !== id)), level === "error" ? 8000 : 4000);
+  setNotices((list) => [...list, { id, text, level, actions }]);
+  const ttl = actions?.length ? 20000 : level === "error" ? 8000 : 4000;
+  setTimeout(() => dismiss(id), ttl);
+  return id;
 }
 
 export function notifyError(prefix: string, err: unknown) {

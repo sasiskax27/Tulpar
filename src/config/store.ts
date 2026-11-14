@@ -38,7 +38,16 @@ export interface Settings {
   "tulpar.ai.inline": boolean;
   /** Отдельная быстрая модель для подсказок; пусто — та же, что для действий */
   "tulpar.ai.inlineModel": string;
+  /** Свои действия ИИ в меню по правому клику */
+  "tulpar.ai.customActions": CustomAiAction[];
   [key: string]: unknown;
+}
+
+export interface CustomAiAction {
+  name: string;
+  prompt: string;
+  /** replace — заменить код ответом; show — показать ответ в окне */
+  mode: "replace" | "show";
 }
 
 export const defaultSettings: Settings = {
@@ -67,6 +76,7 @@ export const defaultSettings: Settings = {
   "tulpar.ai.language": "русский",
   "tulpar.ai.inline": false,
   "tulpar.ai.inlineModel": "",
+  "tulpar.ai.customActions": [],
 };
 
 // ---------- keybindings.json (формат VS Code) ----------
@@ -110,9 +120,16 @@ export const defaultLanguages: Record<string, ServerConfig | null> = {
   rust: { command: "rust-analyzer", install: "rustup component add rust-analyzer" },
   python: { command: "basedpyright-langserver", args: ["--stdio"], install: "pip install basedpyright" },
   go: { command: "gopls", install: "go install golang.org/x/tools/gopls@latest" },
-  c: { command: "clangd", install: "установите clangd (LLVM)" },
-  cpp: { command: "clangd", install: "установите clangd (LLVM)" },
+  c: { command: "clangd", install: clangdInstall() },
+  cpp: { command: "clangd", install: clangdInstall() },
 };
+
+function clangdInstall(): string {
+  const ua = navigator.userAgent;
+  if (ua.includes("Windows")) return "winget install LLVM.LLVM";
+  if (ua.includes("Mac")) return "brew install llvm";
+  return "sudo apt install clangd";
+}
 
 // ---------- состояние ----------
 

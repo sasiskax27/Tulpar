@@ -49,6 +49,8 @@ export async function openFolder(path?: string) {
     if (root() && root() !== canonical) await closeAll();
     setRoot(canonical);
     setSessionRoot(canonical);
+    // Резервные копии этой папки — если остались с прошлого раза
+    void import("../editor/backup").then((m) => m.offerRestore());
     return true;
   } catch (e) {
     notifyError("Не удалось открыть папку", e);

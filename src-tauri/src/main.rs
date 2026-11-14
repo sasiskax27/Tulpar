@@ -4,6 +4,7 @@
 use tauri::Manager;
 
 mod ai;
+mod backup;
 mod config;
 mod git;
 mod lsp;
@@ -70,6 +71,9 @@ fn main() {
             ai::ai_fill,
             ai::chat::ai_chat,
             ai::chat::ai_chat_cancel,
+            backup::backup_put,
+            backup::backup_delete,
+            backup::backup_list,
             ollama::system_memory,
             ollama::ollama_status,
             ollama::ollama_pull,

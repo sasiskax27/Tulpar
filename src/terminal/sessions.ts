@@ -157,6 +157,13 @@ export function toggleTerminal() {
   }
 }
 
+/** Открыть новый терминал и выполнить в нём команду (например, установку). */
+export async function runInTerminal(command: string) {
+  await newTerminal();
+  const id = activeId();
+  if (id) await core.terminalWrite(id, command + "\r").catch(() => undefined);
+}
+
 export function newTerminal() {
   const started = createSession(); // сеанс уже в списке к моменту появления панели
   setBottomVisible(true);

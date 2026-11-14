@@ -13,6 +13,7 @@ import { onDidSave } from "../editor/tabs";
 import { LspClient } from "./client";
 import { toRange, toSeverity } from "./convert";
 import { ensureProviders } from "./bridge";
+import { runInTerminal } from "../terminal/sessions";
 
 const MARKER_OWNER = "lsp";
 const CHANGE_DELAY = 150;
@@ -76,7 +77,22 @@ async function startServer(cfg: ServerConfig): Promise<LspClient | null> {
     if (msg.startsWith("not-found:")) {
       if (!warnedMissing.has(key)) {
         warnedMissing.add(key);
-        notify(`Языковой сервер ${cfg.command} не найден.${cfg.install ? ` Установите: ${cfg.install}` : ""}`);
+        const install = cfg.install;
+        notify(
+          `Языковой сервер ${cfg.command} не найден — подсказки и ошибки для этого языка не работают.`,
+          "info",
+          install
+            ? [{
+                label: "Установить",
+                run: () => {
+                  void runInTerminal(install);
+                  notify("Когда установка в терминале закончится, перезапустите языковые серверы.", "info", [
+                    { label: "Перезапустить серверы", run: () => { warnedMissing.delete(key); void restart(); } },
+                  ]);
+                },
+              }]
+            : undefined,
+        );
       }
     } else {
       notify(msg, "error");

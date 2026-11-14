@@ -9,6 +9,7 @@ import { providers } from "../ai/ai";
 import { focusEditor } from "../editor/instance";
 import { baseName } from "../ipc";
 import LocalAi from "./LocalAi";
+import CustomActions from "./CustomActions";
 
 type Text = string | (() => string);
 
@@ -210,6 +211,13 @@ const sections: Section[] = [
         placeholder: "русский",
       },
     ],
+  },
+  {
+    title: "Свои действия ИИ",
+    intro: "Каждое действие появится в меню по правому клику и в палитре команд как «ИИ: название». Ответ заменит выделенный код или откроется в окне.",
+    fields: [],
+    extra: () => <CustomActions />,
+    after: true,
   },
   {
     title: "Локальный ИИ",

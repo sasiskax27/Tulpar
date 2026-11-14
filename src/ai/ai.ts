@@ -1,7 +1,7 @@
 // ИИ-действия над кодом: выделите фрагмент → правый клик → «ИИ: …».
 // Результат заменяет выделение одной правкой, которую можно отменить через Ctrl+Z.
 // Если ничего не выделено, действие применяется ко всему файлу.
-import { createSignal } from "solid-js";
+import { createEffect, createRoot, createSignal } from "solid-js";
 import { monaco, languageName } from "../editor/monaco";
 import { editorInstance } from "../editor/instance";
 import { core, baseName } from "../ipc";
@@ -9,7 +9,7 @@ import { settings } from "../config/store";
 import { notify, notifyError } from "../app/notify";
 import { askInput } from "../app/InputBox";
 import { setSettingsVisible } from "../app/ui";
-import { executeCommand } from "../commands/registry";
+import { executeCommand, registerCommand } from "../commands/registry";
 
 const MAX_CHARS = 60_000;
 
@@ -31,6 +31,20 @@ interface Task {
   /** replace — заменить код ответом ИИ; show — показать ответ в окне */
   mode: "replace" | "show";
   instruction: (language: string) => string | Promise<string | null>;
+}
+
+/** Свои действия из настроек — такие же пункты меню, как встроенные. */
+export function customTasks(): Task[] {
+  const list = settings()["tulpar.ai.customActions"];
+  if (!Array.isArray(list)) return [];
+  return list
+    .filter((a) => a && typeof a.name === "string" && a.name.trim() && typeof a.prompt === "string" && a.prompt.trim())
+    .map((a, i) => ({
+      id: `tulpar.ai.user.${i}`,
+      label: `ИИ: ${a.name.trim()}`,
+      mode: a.mode === "show" ? "show" : "replace",
+      instruction: (lang: string) => `${a.prompt.trim()}\n\nIf you write comments or explanations, use this language: ${lang}.`,
+    }));
 }
 
 export const tasks: Task[] = [
@@ -157,7 +171,7 @@ export function stripWrapping(text: string): string {
 }
 
 export async function runAiTask(taskId: string) {
-  const task = tasks.find((t) => t.id === taskId);
+  const task = tasks.find((t) => t.id === taskId) ?? customTasks().find((t) => t.id === taskId);
   const editor = editorInstance();
   const model = editor?.getModel();
   if (!task || !editor || !model) return;
@@ -263,6 +277,25 @@ export function registerAiActions(editor: monaco.editor.IStandaloneCodeEditor) {
       contextMenuOrder: i,
       keybindings: task.id === "tulpar.ai.custom" ? [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI] : undefined,
       run: () => runAiTask(task.id),
+    });
+  });
+  // Свои действия: пересобираем пункты меню и команды при каждом изменении настроек
+  createRoot(() => {
+    let disposers: (() => void)[] = [];
+    createEffect(() => {
+      for (const d of disposers) d();
+      disposers = [];
+      customTasks().forEach((task, i) => {
+        const action = editor.addAction({
+          id: task.id,
+          label: task.label,
+          contextMenuGroupId: "0_tulpar_ai",
+          contextMenuOrder: tasks.length + i,
+          run: () => runAiTask(task.id),
+        });
+        const command = registerCommand({ id: task.id, title: task.label, run: () => runAiTask(task.id) });
+        disposers.push(() => action.dispose(), command);
+      });
     });
   });
 }

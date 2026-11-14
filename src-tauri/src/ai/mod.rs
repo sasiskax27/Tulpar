@@ -47,6 +47,61 @@ pub(crate) fn server_error(body: &str) -> String {
         .unwrap_or_else(|| snippet(body))
 }
 
+/// Переменная окружения с ключом для сервиса (если ключ не указан в настройках).
+pub(crate) fn env_for(provider: &str) -> &'static str {
+    match provider {
+        "anthropic" => "ANTHROPIC_API_KEY",
+        "opencode" => "OPENCODE_API_KEY",
+        _ => "OPENAI_API_KEY",
+    }
+}
+
+#[derive(serde::Serialize)]
+pub struct ModelInfo {
+    id: String,
+    free: bool,
+}
+
+/// Список моделей OpenAI-совместимого сервера (OpenCode Zen, OpenRouter, OpenAI…).
+#[tauri::command]
+pub async fn ai_models(provider: String, base_url: String, api_key: String) -> Result<Vec<ModelInfo>, String> {
+    let base = base_url.trim().trim_end_matches('/').to_owned();
+    if base.is_empty() {
+        return Err("не указан адрес сервера".into());
+    }
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(20))
+        .build()
+        .map_err(|e| e.to_string())?;
+    let mut b = client.get(format!("{base}/models"));
+    let key = chat::key_or_env(&api_key, env_for(&provider));
+    if !key.is_empty() {
+        b = b.bearer_auth(key);
+    }
+    let response = b.send().await.map_err(|e| {
+        if e.is_connect() { format!("не удалось подключиться к {base}") } else { e.to_string() }
+    })?;
+    let status = response.status();
+    let body = response.text().await.map_err(|e| e.to_string())?;
+    if !status.is_success() {
+        return Err(format!("сервер ответил ошибкой {}: {}", status.as_u16(), server_error(&body)));
+    }
+    let v: Value = serde_json::from_str(&body).map_err(|_| "непонятный ответ сервера".to_string())?;
+    let mut list: Vec<ModelInfo> = v["data"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|m| m["id"].as_str())
+        .map(|id| ModelInfo {
+            // OpenCode Zen помечает бесплатные модели суффиксом -free, OpenRouter — :free
+            free: id.ends_with("-free") || id.ends_with(":free") || id == "big-pickle",
+            id: id.to_owned(),
+        })
+        .collect();
+    list.sort_by(|a, b| b.free.cmp(&a.free).then(a.id.cmp(&b.id)));
+    Ok(list)
+}
+
 fn api_key(request: &AiRequest, env_name: &str) -> String {
     let key = request.api_key.trim();
     if key.is_empty() {
@@ -87,7 +142,7 @@ pub async fn ai_complete(request: AiRequest) -> Result<String, String> {
                 "messages": [{ "role": "user", "content": request.prompt }],
             }))
     } else {
-        let key = api_key(&request, "OPENAI_API_KEY");
+        let key = api_key(&request, env_for(&request.provider));
         let mut b = client.post(format!("{base}/chat/completions")).json(&json!({
             "model": request.model.trim(),
             "stream": false,

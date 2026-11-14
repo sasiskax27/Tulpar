@@ -70,6 +70,7 @@ fn main() {
             media::image_read,
             ai::ai_complete,
             ai::ai_fill,
+            ai::ai_models,
             ai::chat::ai_chat,
             ai::chat::ai_chat_cancel,
             ai::agent::ai_agent_step,

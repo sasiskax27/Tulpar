@@ -22,6 +22,8 @@ interface Provider {
 export const providers: Record<string, Provider> = {
   ollama: { baseUrl: "http://localhost:11434/v1", model: "" },
   openai: { baseUrl: "https://api.openai.com/v1", model: "" },
+  /** OpenCode Zen: облачные модели, часть — бесплатные; компьютер не нагружается */
+  opencode: { baseUrl: "https://opencode.ai/zen/v1", model: "" },
   anthropic: { baseUrl: "https://api.anthropic.com", model: "claude-sonnet-5-5" },
 };
 

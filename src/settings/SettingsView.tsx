@@ -7,7 +7,9 @@ import { executeCommand } from "../commands/registry";
 import { chooseBackground, clearBackground, usePhotoTheme } from "../app/background";
 import { providers } from "../ai/ai";
 import { focusEditor } from "../editor/instance";
-import { baseName } from "../ipc";
+import { baseName, core } from "../ipc";
+import { pick } from "../app/QuickPick";
+import { notify, notifyError } from "../app/notify";
 import LocalAi from "./LocalAi";
 import { THEME_NAMES } from "../app/themes";
 import CustomActions from "./CustomActions";
@@ -30,6 +32,29 @@ interface Section {
   extra?: () => JSX.Element;
   /** Показать extra после полей, а не перед ними */
   after?: boolean;
+}
+
+/** Загрузить список моделей сервиса и выбрать одну (бесплатные — сверху). */
+async function chooseModel() {
+  const cfg = settings();
+  const name = String(cfg["tulpar.ai.provider"]);
+  const base = String(cfg["tulpar.ai.baseUrl"] ?? "").trim() || providers[name]?.baseUrl || "";
+  let list: { id: string; free: boolean }[];
+  try {
+    list = await core.aiModels(name, base, String(cfg["tulpar.ai.apiKey"] ?? ""));
+  } catch (e) {
+    notifyError("Не удалось загрузить список моделей", e);
+    return;
+  }
+  if (!list.length) {
+    notify("Сервис не вернул ни одной модели");
+    return;
+  }
+  const chosen = await pick(
+    list.map((m) => ({ label: m.id, detail: m.free ? "бесплатно" : "платно", value: m.id })),
+    "Модель ИИ — начните печатать для поиска",
+  );
+  if (chosen) updateSetting("tulpar.ai.model", chosen);
 }
 
 const resolve = (t: Text | undefined) => (typeof t === "function" ? t() : t);
@@ -189,6 +214,23 @@ const sections: Section[] = [
     title: "ИИ",
     intro:
       "Выделите код, нажмите правую кнопку мыши и выберите действие «ИИ: …». Код отправляется только на сервер, указанный здесь, и только по вашей команде.",
+    extra: () => (
+      <Show when={["opencode", "openai"].includes(String(settings()["tulpar.ai.provider"]))}>
+        <div class="settings-row">
+          <div class="settings-label">
+            <span>Модель из списка</span>
+            <small>
+              {settings()["tulpar.ai.model"] ? `Сейчас: ${settings()["tulpar.ai.model"]}` : "Загрузить модели сервиса и выбрать — бесплатные сверху."}
+            </small>
+          </div>
+          <div class="settings-control settings-buttons">
+            <button class="button" onClick={() => void chooseModel()}>
+              Выбрать модель…
+            </button>
+          </div>
+        </div>
+      </Show>
+    ),
     fields: [
       {
         key: "tulpar.chat.location",
@@ -220,10 +262,18 @@ const sections: Section[] = [
             none: "ИИ выключен.",
             ollama: "Бесплатно и без интернета: модель работает на вашем компьютере. Нужна установленная Ollama.",
             openai: "Любой сервис с OpenAI-совместимым API: OpenAI, OpenRouter, LM Studio и другие.",
+            opencode:
+              "Облачные модели OpenCode Zen — работают на их серверах, поэтому подходят для слабых компьютеров. Есть бесплатные модели (с пометкой «бесплатно» в списке). Ключ API — на opencode.ai, раздел Zen.",
             anthropic: "Claude через API. Нужен ключ API из консоли Anthropic.",
           })[String(settings()["tulpar.ai.provider"])] ?? "",
         type: "select",
-        options: [["none", "Выключен"], ["ollama", "Ollama (локально)"], ["openai", "OpenAI-совместимый"], ["anthropic", "Claude (Anthropic)"]],
+        options: [
+          ["none", "Выключен"],
+          ["opencode", "OpenCode Zen (облако, есть бесплатные)"],
+          ["ollama", "Ollama (локально)"],
+          ["openai", "OpenAI-совместимый"],
+          ["anthropic", "Claude (Anthropic)"],
+        ],
       },
       {
         key: "tulpar.ai.model",

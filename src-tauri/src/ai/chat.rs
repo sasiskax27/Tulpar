@@ -120,7 +120,7 @@ pub async fn ai_chat(app: AppHandle, state: State<'_, ChatState>, request: ChatR
             "messages": messages,
             "stream": true,
         }));
-        let key = key_or_env(&request.api_key, "OPENAI_API_KEY");
+        let key = key_or_env(&request.api_key, super::env_for(&request.provider));
         if !key.is_empty() {
             b = b.bearer_auth(key);
         }

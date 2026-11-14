@@ -270,7 +270,7 @@ pub async fn ai_agent_step(request: AgentRequest) -> Result<AgentReply, String> 
             "tools": tools,
             "stream": false,
         }));
-        let key = key_or_env(&request.api_key, "OPENAI_API_KEY");
+        let key = key_or_env(&request.api_key, super::env_for(&request.provider));
         if !key.is_empty() {
             b = b.bearer_auth(key);
         }

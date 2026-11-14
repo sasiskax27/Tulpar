@@ -151,6 +151,8 @@ export const core = {
   gitDiffForMessage: () => invoke<string>("git_diff_for_message"),
   aiFill: (request: { host: string; model: string; prefix: string; suffix: string; maxTokens: number }) =>
     invoke<string>("ai_fill", { request }),
+  aiModels: (provider: string, baseUrl: string, apiKey: string) =>
+    invoke<{ id: string; free: boolean }[]>("ai_models", { provider, baseUrl, apiKey }),
   updateCheck: () => invoke<UpdateInfo | null>("update_check"),
   updateInstall: (url: string, name: string) => invoke<void>("update_install", { url, name }),
   updateOpenPage: (url: string) => invoke<void>("update_open_page", { url }),

@@ -47,7 +47,7 @@ export interface Settings {
   "tulpar.background.opacity": number;
   "tulpar.background.blur": number;
   "tulpar.background.fit": "cover" | "contain" | "center" | "tile";
-  "tulpar.ai.provider": "none" | "ollama" | "openai" | "anthropic";
+  "tulpar.ai.provider": "none" | "ollama" | "openai" | "opencode" | "anthropic";
   "tulpar.ai.baseUrl": string;
   "tulpar.ai.model": string;
   "tulpar.ai.apiKey": string;

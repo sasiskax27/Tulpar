@@ -9,9 +9,10 @@ import { identity, github, checkAccount, setupIdentity, signInGithub, cloneRepo,
 import { openFile } from "../editor/tabs";
 import { executeCommand } from "../commands/registry";
 import { showContextMenu } from "../app/ContextMenu";
-import { baseName, core, type GitFile } from "../ipc";
+import { baseName, core, joinPath, type GitFile } from "../ipc";
 import { showText } from "../editor/side";
 import { ago } from "./blame";
+import { findings, reviewing, aiSummary, reviewChanges, clearReview } from "./review";
 
 const LETTER: Record<string, { text: string; title: string; cls: string }> = {
   M: { text: "M", title: "Изменён", cls: "mod" },
@@ -280,9 +281,59 @@ export default function GitPanel() {
                 <svg aria-hidden="true" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" /></svg>
                 ИИ
               </button>
+              <button
+                class="button-quiet git-ai-btn"
+                disabled={!!busy() || reviewing()}
+                onClick={() => void reviewChanges()}
+                title="Проверить изменения перед коммитом: ключи и пароли в коде, забытая отладка, баги (с ИИ, если он подключён)"
+              >
+                {reviewing() ? "…" : "🔍"} Проверить
+              </button>
             </div>
             <Show when={busy()}>
               <div class="git-busy">{busy()}…</div>
+            </Show>
+            <Show when={findings()}>
+              {(list) => (
+                <div class="git-review">
+                  <div class="git-review-head">
+                    <span>
+                      {reviewing()
+                        ? "Проверяю…"
+                        : list().length
+                          ? `Найдено: ${list().length}`
+                          : "Проблем не найдено ✓"}
+                    </span>
+                    <button class="icon-button" title="Скрыть" aria-label="Скрыть" onClick={clearReview}>
+                      ✕
+                    </button>
+                  </div>
+                  <For each={list()}>
+                    {(f) => (
+                      <button
+                        class={`git-finding ${f.severity}`}
+                        title={f.source === "ai" ? "Нашёл ИИ" : "Быстрая проверка"}
+                        onClick={() => {
+                          const r = root();
+                          if (r) void openFile(joinPath(r, f.file), { startLineNumber: f.line, startColumn: 1, endLineNumber: f.line, endColumn: 1 });
+                        }}
+                      >
+                        <span class="git-finding-icon">{f.severity === "error" ? "⛔" : f.severity === "warning" ? "⚠" : "ℹ"}</span>
+                        <span class="git-finding-text">
+                          <span class="git-finding-msg">{f.message}</span>
+                          <span class="git-finding-loc" data-no-translate>
+                            {f.file}:{f.line}
+                            {f.source === "ai" ? " · ✦" : ""}
+                          </span>
+                        </span>
+                      </button>
+                    )}
+                  </For>
+                  <Show when={aiSummary()}>
+                    <div class="git-review-summary">✦ {aiSummary()}</div>
+                  </Show>
+                </div>
+              )}
             </Show>
           </div>
 

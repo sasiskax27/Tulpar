@@ -1937,3 +1937,14 @@ body.resizing .side-island { transition: none; }
 .mention-item.special .mention-label { color: var(--tp-accent); font-weight: 600; }
 .mention-label { white-space: nowrap; }
 .mention-hint { font-size: 11px; color: var(--tp-fg-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Проверка изменений перед коммитом */
+.git-review { margin-top: 8px; border: 1px solid var(--tp-border); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+.git-review-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--tp-fg-muted); padding: 0 2px 4px; }
+.git-finding { display: flex; gap: 8px; align-items: flex-start; text-align: left; padding: 5px 6px; border-radius: 6px; background: none; border: 0; color: var(--tp-fg); cursor: pointer; }
+.git-finding:hover { background: var(--tp-bg-hover); }
+.git-finding-text { display: flex; flex-direction: column; min-width: 0; }
+.git-finding-msg { font-size: 12px; }
+.git-finding-loc { font-size: 11px; color: var(--tp-fg-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.git-finding.error .git-finding-msg { color: var(--tp-error); }
+.git-review-summary { font-size: 12px; color: var(--tp-fg-muted); padding: 4px 2px 0; }

@@ -6,6 +6,8 @@ import { openFolder } from "./workspace";
 import { setSidebarVisible, setSettingsVisible, setSidebarView, sidebarView, sidebarVisible, type SidebarView } from "./ui";
 import { focusSearch } from "../search/SearchPanel";
 import { switchBranch, commit, sync, refresh as gitRefresh } from "../git/git";
+import { focusChat } from "../ai/ChatPanel";
+import { setUseFile, newChat } from "../ai/chat";
 import { editorInstance } from "../editor/instance";
 import { activeLayout, defaultSettings, layoutConfig, setActiveLayout, settings, updateSetting } from "../config/store";
 import { core, type ConfigName } from "../ipc";
@@ -63,6 +65,18 @@ export function registerBuiltinCommands() {
   });
 
   reg({ id: "workbench.view.scm", category: "Вид", title: "Git", run: (args) => { if (showView("git", args)) void gitRefresh(); } });
+  reg({ id: "workbench.action.chat.open", category: "ИИ", title: "Чат с ИИ", run: (args) => { if (showView("chat", args)) focusChat(); } });
+  reg({ id: "tulpar.chat.new", category: "ИИ", title: "Новый чат", run: () => newChat() });
+  reg({
+    id: "tulpar.chat.askSelection",
+    category: "ИИ",
+    title: "Спросить в чате о выделенном",
+    run: () => {
+      setUseFile(true);
+      showView("chat", undefined);
+      focusChat();
+    },
+  });
   reg({ id: "git.checkout", category: "Git", title: "Переключить ветку…", run: () => switchBranch() });
   reg({ id: "git.commit", category: "Git", title: "Закоммитить", run: () => commit() });
   reg({ id: "git.push", category: "Git", title: "Отправить (push)", run: () => sync("push") });

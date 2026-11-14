@@ -6,7 +6,7 @@ import { sidebarView, sidebarVisible } from "./ui";
 import { keybindingFor } from "../keybindings/keybindings";
 import { status as gitStatus } from "../git/git";
 
-function Item(props: { view: "explorer" | "search" | "git"; title: string; command: string; badge?: number; children?: JSX.Element }) {
+function Item(props: { view: "explorer" | "search" | "git" | "chat"; title: string; command: string; badge?: number; children?: JSX.Element }) {
   const active = () => sidebarVisible() && sidebarView() === props.view;
   const hint = () => {
     const k = keybindingFor(props.command);
@@ -48,6 +48,12 @@ export default function ActivityBar() {
           <circle cx="6" cy="19" r="2.2" />
           <circle cx="18" cy="8" r="2.2" />
           <path d="M6 7.2v9.6M18 10.2c0 4.5-6 3.5-11 6.6" />
+        </svg>
+      </Item>
+      <Item view="chat" title="Чат с ИИ" command="workbench.action.chat.open">
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" />
+          <path d="M19 15.5l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z" />
         </svg>
       </Item>
       <div class="activity-spacer" />

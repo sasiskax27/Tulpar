@@ -9,6 +9,7 @@ import { settings } from "../config/store";
 import { notify, notifyError } from "../app/notify";
 import { askInput } from "../app/InputBox";
 import { setSettingsVisible } from "../app/ui";
+import { executeCommand } from "../commands/registry";
 
 const MAX_CHARS = 60_000;
 
@@ -247,6 +248,13 @@ export async function runAiTask(taskId: string) {
 
 /** Добавить действия ИИ в контекстное меню редактора (правый клик). */
 export function registerAiActions(editor: monaco.editor.IStandaloneCodeEditor) {
+  editor.addAction({
+    id: "tulpar.chat.askSelectionAction",
+    label: "ИИ: Спросить в чате",
+    contextMenuGroupId: "0_tulpar_ai",
+    contextMenuOrder: -1,
+    run: () => void executeCommand("tulpar.chat.askSelection"),
+  });
   tasks.forEach((task, i) => {
     editor.addAction({
       id: task.id,

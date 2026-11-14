@@ -9,12 +9,14 @@
 //! В сеть Tulpar ходит только по явному действию пользователя и только на адрес
 //! из его настроек.
 
+pub mod chat;
+
 use std::time::Duration;
 
 use serde::Deserialize;
 use serde_json::{json, Value};
 
-const ANTHROPIC_VERSION: &str = "2026-10-21";
+pub(crate) const ANTHROPIC_VERSION: &str = "2026-10-21";
 const TIMEOUT: Duration = Duration::from_secs(180);
 
 #[derive(Deserialize)]
@@ -33,7 +35,7 @@ fn snippet(text: &str) -> String {
 }
 
 /// Сообщение об ошибке из ответа сервера: и OpenAI, и Anthropic кладут его в error.message.
-fn server_error(body: &str) -> String {
+pub(crate) fn server_error(body: &str) -> String {
     serde_json::from_str::<Value>(body)
         .ok()
         .and_then(|v| {

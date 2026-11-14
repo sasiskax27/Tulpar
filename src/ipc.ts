@@ -113,6 +113,9 @@ export const core = {
   gitDiffForMessage: () => invoke<string>("git_diff_for_message"),
   aiFill: (request: { host: string; model: string; prefix: string; suffix: string; maxTokens: number }) =>
     invoke<string>("ai_fill", { request }),
+  aiChat: (request: { id: string; provider: string; baseUrl: string; model: string; apiKey: string; system: string; messages: { role: string; content: string }[] }) =>
+    invoke<string>("ai_chat", { request }),
+  aiChatCancel: (id: string) => invoke<void>("ai_chat_cancel", { id }),
   configEnsure: (name: ConfigName) => invoke<string>("config_ensure", { name }),
 };
 
@@ -129,6 +132,8 @@ export const events = {
     listen<{ id: string }>("terminal:exit", (e) => cb(e.payload.id)),
   onOllamaProgress: (cb: (p: { model: string; status: string; completed: number; total: number }) => void): Promise<UnlistenFn> =>
     listen<{ model: string; status: string; completed: number; total: number }>("ollama:progress", (e) => cb(e.payload)),
+  onAiChunk: (cb: (id: string, text: string) => void): Promise<UnlistenFn> =>
+    listen<{ id: string; text: string }>("ai:chunk", (e) => cb(e.payload.id, e.payload.text)),
   onConfigChanged: (cb: (name: ConfigName) => void): Promise<UnlistenFn> =>
     listen<{ name: ConfigName }>("config:changed", (e) => cb(e.payload.name)),
 };

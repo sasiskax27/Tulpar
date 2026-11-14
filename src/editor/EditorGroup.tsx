@@ -38,6 +38,10 @@ export default function EditorGroup() {
     editor.onDidChangeCursorPosition((e) =>
       setCursor({ line: e.position.lineNumber, column: e.position.column }),
     );
+    // Выделение тоже меняет «что приложится к вопросу» в чате
+    editor.onDidChangeCursorSelection((e) =>
+      setCursor({ line: e.selection.positionLineNumber, column: e.selection.positionColumn }),
+    );
     setEditorInstance(editor);
     registerAiActions(editor);
     onCleanup(() => {

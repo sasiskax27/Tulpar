@@ -22,6 +22,7 @@ fn main() {
         .manage(lsp::LspState::default())
         .manage(terminal::TerminalState::default())
         .manage(transfer::DroppedPaths::default())
+        .manage(ai::chat::ChatState::default())
         .setup(|app| {
             // Следим за папкой настроек, чтобы применять изменения без перезапуска
             config::start_watching(app.handle().clone());
@@ -67,6 +68,8 @@ fn main() {
             media::image_read,
             ai::ai_complete,
             ai::ai_fill,
+            ai::chat::ai_chat,
+            ai::chat::ai_chat_cancel,
             ollama::system_memory,
             ollama::ollama_status,
             ollama::ollama_pull,

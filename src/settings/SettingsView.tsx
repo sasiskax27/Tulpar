@@ -542,7 +542,7 @@ const sections: Section[] = [
     fields: [],
     extra: () => <LocalAi />,
     after: true,
-  },,
+  },
   {
     title: "Файлы настроек и прочее",
     fields: [],

@@ -36,7 +36,7 @@ async function openOpenCode() {
       {
         label: "Установить",
         run: () => {
-          void runInTerminal("npm install -g opencode-ai", "Установка OpenCode");
+          void runInTerminal("npm install -g @opencode/cli", "Установка OpenCode");
           notify("Когда установка закончится, снова нажмите «OpenCode».");
         },
       },

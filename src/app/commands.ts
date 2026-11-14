@@ -145,6 +145,19 @@ export function registerBuiltinCommands() {
     },
   });
   reg({ id: "outline.focus", category: "Вид", title: "Структура файла", run: (args) => showView("outline", args) });
+  reg({
+    id: "tulpar.web.preview",
+    category: "Вид",
+    title: "Предпросмотр сайта (localhost)…",
+    run: async () => {
+      const { askInput } = await import("./InputBox");
+      const url = await askInput({ title: "Адрес dev-сервера", placeholder: "http://localhost:5173 или просто 5173", value: "http://localhost:5173" });
+      if (!url) return;
+      const u = /^\d+$/.test(url.trim()) ? `http://localhost:${url.trim()}` : /^https?:\/\//.test(url.trim()) ? url.trim() : `http://${url.trim()}`;
+      const { showWeb } = await import("../editor/side");
+      showWeb(u);
+    },
+  });
   reg({ id: "workbench.view.testing", category: "Вид", title: "Тесты", run: (args) => showView("tests", args) });
   reg({ id: "testing.runAll", category: "Тесты", title: "Запустить все тесты", run: () => void import("../testing/tests").then((m) => m.runTests()) });
   reg({ id: "workbench.view.packages", category: "Вид", title: "Библиотеки: найти и подключить", run: (args) => showView("packages", args) });

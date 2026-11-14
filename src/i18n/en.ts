@@ -1,6 +1,22 @@
 // Generated: Russian UI text -> English. Keys are exact Russian strings;
 // pattern keys use {0}, {1}… for inserted values.
 export const EXACT: Record<string, string> = {
+ "База ·": "Database ·",
+ "Сайт ·": "Site ·",
+ "Таблицы": "Tables",
+ "Таблиц нет": "No tables",
+ "SELECT * FROM таблица WHERE … — Ctrl+Enter": "SELECT * FROM table WHERE … — Ctrl+Enter",
+ "▶ Выполнить": "▶ Run",
+ "Без этой галочки база открывается только для чтения: INSERT, UPDATE и DELETE не сработают": "Without this the database is read-only: INSERT, UPDATE and DELETE won't work",
+ "Разрешить изменения": "Allow changes",
+ "← Назад": "← Back",
+ "Дальше →": "Next →",
+ "Адрес": "Address",
+ "Предпросмотр сайта": "Site preview",
+ "Открыть в Tulpar": "Open in Tulpar",
+ "Предпросмотр сайта (localhost)…": "Site preview (localhost)…",
+ "Адрес dev-сервера": "Dev server address",
+ "http://localhost:5173 или просто 5173": "http://localhost:5173 or just 5173",
  "Тесты": "Tests",
  "Запустить все тесты": "Run all tests",
  "Найти тесты заново": "Detect tests again",
@@ -1161,6 +1177,11 @@ export const EXACT: Record<string, string> = {
 };
 
 export const PATTERNS: Record<string, string> = {
+ "изменено строк: {0}": "rows changed: {0}",
+ "строк: {0}": "rows: {0}",
+ "{0} мс": "{0} ms",
+ "Сайт запущен: {0}": "Site is running: {0}",
+ "{0} из {1}": "{0} of {1}",
  "▶ Все тесты · {0}": "▶ All tests · {0}",
  "{0} с": "{0} s",
  "@ошибки: {0}": "@errors: {0}",

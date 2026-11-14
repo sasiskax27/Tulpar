@@ -9,6 +9,8 @@ export type SideView =
   | { kind: "markdown"; path: string }
   | { kind: "html"; path: string }
   | { kind: "media"; path: string }
+  | { kind: "sqlite"; path: string }
+  | { kind: "web"; path: string; url: string }
   | { kind: "text"; path: string; title: string; text: string; language: string };
 
 const [side, setSide] = createSignal<SideView | null>(null);
@@ -51,6 +53,17 @@ export function previewHtml(path = current()) {
     return;
   }
   setSide({ kind: "html", path });
+}
+
+export const isSqlite = (path: string) => /\.(db|sqlite|sqlite3|db3)$/i.test(path);
+
+export function showSqlite(path: string) {
+  setSide({ kind: "sqlite", path });
+}
+
+/** Сайт с локального dev-сервера справа (живой предпросмотр). */
+export function showWeb(url: string) {
+  setSide({ kind: "web", path: url, url });
 }
 
 export function showMedia(path: string) {

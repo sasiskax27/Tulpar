@@ -6,6 +6,8 @@ import { settings } from "../config/store";
 import { core, baseName, parentDir, joinPath } from "../ipc";
 import { closeSide, setSide, side, type SideView } from "./side";
 import { markdownToHtml } from "./markdown";
+import SqliteView from "./SqliteView";
+import WebPreview from "./WebPreview";
 
 const MIME: Record<string, string> = {
   png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", bmp: "image/bmp",
@@ -167,6 +169,8 @@ const TITLES: Record<SideView["kind"], string> = {
   html: "Страница · ",
   media: "",
   text: "",
+  sqlite: "База · ",
+  web: "Сайт · ",
 };
 
 export default function SidePane() {
@@ -177,7 +181,7 @@ export default function SidePane() {
       <div class="side-pane-header">
         <span class="side-pane-title" title={view().path}>
           {TITLES[view().kind]}
-          {view().kind === "text" ? (view() as { title: string }).title : baseName(view().path)}
+          {view().kind === "text" ? (view() as { title: string }).title : view().kind === "web" ? view().path : baseName(view().path)}
         </span>
         <Show when={view().kind === "editor" && others().length}>
           <select
@@ -207,6 +211,12 @@ export default function SidePane() {
           </Match>
           <Match when={view().kind === "html"}>
             <HtmlPreview path={view().path} />
+          </Match>
+          <Match when={view().kind === "sqlite"}>
+            <SqliteView path={view().path} />
+          </Match>
+          <Match when={view().kind === "web" && (view() as Extract<SideView, { kind: "web" }>)}>
+            {(v) => <WebPreview url={v().url} />}
           </Match>
           <Match when={view().kind === "media"}>
             <MediaView path={view().path} />

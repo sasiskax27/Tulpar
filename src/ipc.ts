@@ -163,6 +163,8 @@ export const core = {
   testsRun: (command: string, reportExt?: string) =>
     invoke<{ code: number | null; output: string; report: string | null; timedOut: boolean; millis: number }>("tests_run", { command, reportExt: reportExt ?? null }),
   testsJunitReports: (dirs: string[]) => invoke<string[]>("tests_junit_reports", { dirs }),
+  sqliteTables: (path: string) => invoke<SqliteTable[]>("sqlite_tables", { path }),
+  sqliteQuery: (path: string, sql: string, write = false) => invoke<SqliteResult>("sqlite_query", { path, sql, write }),
   pkgSearch: (registry: string, query: string) => invoke<PkgItem[]>("pkg_search", { registry, query }),
   extSearch: (query: string, category?: string) => invoke<ExtSearchItem[]>("ext_search", { query, category: category ?? null }),
   extInstall: (namespace: string, name: string) => invoke<InstalledExt>("ext_install", { namespace, name }),
@@ -251,4 +253,19 @@ export interface PkgItem {
   downloads?: number | null;
   /** Maven: group:artifact */
   id: string;
+}
+
+export interface SqliteTable {
+  name: string;
+  kind: "table" | "view";
+  rows: number | null;
+  columns: { name: string; type: string; pk: boolean; notNull: boolean }[];
+}
+
+export interface SqliteResult {
+  columns: string[];
+  rows: (string | number | null)[][];
+  truncated: boolean;
+  changes: number | null;
+  millis: number;
 }

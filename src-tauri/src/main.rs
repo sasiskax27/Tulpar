@@ -13,6 +13,7 @@ mod media;
 mod ollama;
 mod pkg;
 mod testing;
+mod sqlite;
 mod search;
 mod terminal;
 mod transfer;
@@ -38,6 +39,8 @@ fn main() {
             workspace::project_create,
             pkg::pkg_search,
             testing::tests_run,
+            sqlite::sqlite_tables,
+            sqlite::sqlite_query,
             testing::tests_junit_reports,
             ext::ext_search,
             ext::ext_install,

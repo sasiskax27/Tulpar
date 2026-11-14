@@ -203,6 +203,7 @@ export async function initTerminals() {
   await events.onTerminalData((id, data) => {
     byId.get(id)?.term.write(data);
     feedTerminal(id, data);
+    detectDevServer(data);
   });
   await events.onTerminalExit(removeSession);
 
@@ -245,4 +246,24 @@ export function terminalText(maxLines = 120, session = activeSession() ?? sessio
   }
   while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
   return lines.slice(-maxLines).join("\n");
+}
+
+// ---------- dev-сервер: «Local: http://localhost:5173» → предложить предпросмотр ----------
+
+const seenServers = new Set<string>();
+let serverTail = "";
+
+function detectDevServer(data: string) {
+  serverTail = (serverTail + data.replace(/\u001b\[[0-9;?]*[A-Za-z]/g, "")).slice(-2000);
+  const m = /(https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]):\d{2,5})(\/[^\s"'`)]*)?/.exec(serverTail);
+  if (!m) return;
+  const url = (m[1] + (m[2] ?? "/")).replace("0.0.0.0", "localhost");
+  serverTail = "";
+  if (seenServers.has(url)) return;
+  seenServers.add(url);
+  void import("../app/notify").then(({ notify }) =>
+    notify(`Сайт запущен: ${url}`, "info", [
+      { label: "Открыть в Tulpar", run: () => void import("../editor/side").then((s) => s.showWeb(url)) },
+    ]),
+  );
 }

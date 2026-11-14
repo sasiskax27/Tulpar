@@ -129,6 +129,12 @@ export async function openFile(requested: string, reveal?: monaco.IRange) {
     showMedia(requested);
     return;
   }
+  // База SQLite — таблицами, а не текстом
+  if (/\.(db|sqlite|sqlite3|db3)$/i.test(requested)) {
+    const { showSqlite } = await import("./side");
+    showSqlite(requested);
+    return;
+  }
   const model = await loadModel(requested);
   if (!model) return;
   const path = pathOfModel.get(model) ?? requested;

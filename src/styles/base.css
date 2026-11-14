@@ -1982,3 +1982,33 @@ body.resizing .side-island { transition: none; }
 .test-fix-row { margin: 0 0 6px 18px; }
 .tests-output { border-top: 1px solid var(--tp-border); padding: 4px 10px 8px; }
 .tests-output pre { max-height: 200px; overflow: auto; font-size: 11px; white-space: pre-wrap; margin: 4px 0 0; }
+
+/* ---------- SQLite ---------- */
+.sqlite-view { display: flex; height: 100%; min-height: 0; }
+.sqlite-tables { width: 180px; flex: none; overflow: auto; border-right: 1px solid var(--tp-border); padding: 0 4px 8px; }
+.sqlite-table { width: 100%; display: flex; justify-content: space-between; gap: 6px; padding: 4px 6px; border-radius: 6px; background: none; border: 0; color: var(--tp-fg); cursor: pointer; text-align: left; font-size: 12px; }
+.sqlite-table:hover { background: var(--tp-bg-hover); }
+.sqlite-table.on { background: var(--tp-bg-hover); box-shadow: inset 2px 0 0 var(--tp-accent); }
+.sqlite-table-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sqlite-table-rows { color: var(--tp-fg-muted); font-size: 11px; }
+.sqlite-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.sqlite-query { padding: 8px; border-bottom: 1px solid var(--tp-border); display: flex; flex-direction: column; gap: 6px; }
+.sqlite-sql { min-height: 54px; resize: vertical; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--tp-border); background: var(--tp-bg-input); color: var(--tp-fg); font-family: var(--tp-font-mono, monospace); font-size: 12px; }
+.sqlite-query-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; }
+.sqlite-write { display: inline-flex; gap: 4px; align-items: center; color: var(--tp-fg-muted); cursor: pointer; }
+.sqlite-stats { color: var(--tp-fg-muted); margin-left: auto; }
+.sqlite-error { color: var(--tp-error); font-size: 12px; padding: 6px 10px; margin: 0; white-space: pre-wrap; }
+.sqlite-grid-wrap { flex: 1; overflow: auto; }
+.sqlite-grid { border-collapse: collapse; font-size: 12px; font-family: var(--tp-font-mono, monospace); }
+.sqlite-grid th { position: sticky; top: 0; background: var(--tp-bg-sidebar); text-align: left; font-weight: 600; }
+.sqlite-grid th, .sqlite-grid td { padding: 3px 8px; border: 1px solid var(--tp-border); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sqlite-grid td.null { color: var(--tp-fg-muted); font-style: italic; }
+.sqlite-grid td.num { text-align: right; }
+.sqlite-grid tbody tr:hover { background: var(--tp-bg-hover); }
+.sqlite-pager { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 6px; font-size: 12px; color: var(--tp-fg-muted); border-top: 1px solid var(--tp-border); }
+
+/* ---------- Предпросмотр сайта ---------- */
+.web-preview { display: flex; flex-direction: column; height: 100%; }
+.web-bar { display: flex; gap: 6px; align-items: center; padding: 4px 6px; border-bottom: 1px solid var(--tp-border); }
+.web-address { flex: 1; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--tp-border); background: var(--tp-bg-input); color: var(--tp-fg); font-size: 12px; }
+.web-frame { flex: 1; width: 100%; border: 0; background: #fff; }

@@ -10,7 +10,7 @@ import { settings } from "../config/store";
 import { terminalTheme } from "../app/themes";
 import { root } from "../app/workspace";
 import { notifyError } from "../app/notify";
-import { bottomVisible, setBottomVisible } from "../app/ui";
+import { bottomTab, bottomVisible, setBottomTab, setBottomVisible } from "../app/ui";
 import { focusEditor } from "../editor/instance";
 
 export interface Session {
@@ -65,6 +65,7 @@ function appearance() {
 /** Подогнать число строк и столбцов под размер панели. */
 export function refit(session = activeSession()) {
   if (!session || !session.opened || !session.el.isConnected) return;
+  if (session.el.clientWidth === 0 || session.el.clientHeight === 0) return; // панель скрыта (например, открыт чат)
   try {
     session.fit.fit();
     session.term.refresh(0, session.term.rows - 1);
@@ -149,8 +150,10 @@ export function focusTerminal() {
 
 /** Ctrl+`: показать терминал, перейти в него или скрыть, если мы уже в нём. */
 export function toggleTerminal() {
-  if (!bottomVisible()) {
+  if (!bottomVisible() || bottomTab() !== "terminal") {
+    setBottomTab("terminal");
     setBottomVisible(true); // панель при появлении сама создаст первый сеанс и возьмёт фокус
+    requestAnimationFrame(() => focusTerminal());
   } else if (isTerminalFocused()) {
     setBottomVisible(false);
     focusEditor();
@@ -163,6 +166,7 @@ export function toggleTerminal() {
 /** Выполнить команду в терминале. С title — в терминале с этим именем
  *  (повторные запуски идут туда же, а не плодят вкладки). */
 export async function runInTerminal(command: string, title?: string) {
+  setBottomTab("terminal");
   const existing = title ? sessions().find((s) => s.title() === title) : undefined;
   if (existing) {
     setActiveId(existing.id);
@@ -177,6 +181,7 @@ export async function runInTerminal(command: string, title?: string) {
 }
 
 export function newTerminal() {
+  setBottomTab("terminal");
   const started = createSession(); // сеанс уже в списке к моменту появления панели
   setBottomVisible(true);
   return started;
@@ -200,4 +205,12 @@ export async function initTerminals() {
       refit();
     });
   });
+}
+
+/** Прервать то, что выполняется в терминале с этим именем (Ctrl+C). */
+export function interruptTerminal(title: string): boolean {
+  const s = sessions().find((x) => x.title() === title);
+  if (!s) return false;
+  void core.terminalWrite(s.id, "\x03").catch(() => undefined);
+  return true;
 }

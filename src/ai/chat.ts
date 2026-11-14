@@ -59,9 +59,16 @@ function terms(question: string): string[] {
 
 /** Файлы проекта в пределах лимита. Помещается всё — берём всё; не помещается —
  *  самые подходящие к вопросу (совпадения в имени и в тексте) и открытый файл. */
-async function collectProject(question: string, activeRel: string | null): Promise<{ text: string; used: number; total: number }> {
-  const budget = Math.max(5_000, Number(settings()["tulpar.ai.projectChars"]) || 60_000);
-  const all = (await core.listFiles().catch(() => [] as string[])).filter(isProjectText);
+async function collectProject(
+  question: string,
+  activeRel: string | null,
+  folder?: string,
+  budgetOverride?: number,
+): Promise<{ text: string; used: number; total: number }> {
+  const budget = budgetOverride ?? Math.max(5_000, Number(settings()["tulpar.ai.projectChars"]) || 60_000);
+  const all = (await core.listFiles().catch(() => [] as string[]))
+    .filter(isProjectText)
+    .filter((rel) => !folder || rel.startsWith(folder + "/"));
   const candidates = all.slice(0, MAX_CANDIDATES);
   const r = root()!;
   const files: { rel: string; text: string; score: number }[] = [];
@@ -122,17 +129,24 @@ export function relPath(path: string): string {
   return path.slice(r.length + 1).split(sepOf(path)).join("/");
 }
 
-export function attach(path: string) {
+const [attachedDirs, setAttachedDirs] = createSignal<string[]>([]);
+export { attachedDirs };
+
+/** Приложить файл или папку (папка — все её текстовые файлы в пределах лимита). */
+export function attach(path: string, isDir = false) {
+  if (isDir) setAttachedDirs((list) => (list.includes(path) ? list : [...list, path]));
   setAttached((list) => (list.includes(path) ? list : [...list, path]));
 }
 export function detach(path: string) {
   setAttached((list) => list.filter((p) => p !== path));
+  setAttachedDirs((list) => list.filter((p) => p !== path));
 }
 
 export function newChat() {
   if (streaming()) void stop();
   setMessages([]);
   setAttached([]);
+  setAttachedDirs([]);
 }
 
 export async function stop() {
@@ -209,7 +223,20 @@ async function buildContext(question: string): Promise<{ text: string; labels: s
     }
     labels.push(currentFileLabel() ?? rel);
   }
+  const dirs = attachedDirs();
+  if (dirs.length && !useProject()) {
+    const share = Math.max(5_000, Math.floor((Number(settings()["tulpar.ai.projectChars"]) || 60_000) / dirs.length));
+    const activeRel = model && model.uri.scheme === "file" ? relPath(model.uri.fsPath) : null;
+    for (const dir of dirs) {
+      const rel = relPath(dir);
+      const folder = await collectProject(question, activeRel, rel, share);
+      if (!folder.used) continue;
+      parts.push(`Папка ${rel} (${folder.used} из ${folder.total} файлов):\n${folder.text}`);
+      labels.push(`папка ${baseName(dir)}: ${folder.used} файлов`);
+    }
+  }
   for (const path of attached()) {
+    if (dirs.includes(path)) continue;
     try {
       const text = await core.readFile(path);
       parts.push(`Файл ${relPath(path)}:\n` + "```\n" + cut(text, ATTACH_CHARS) + "\n```");

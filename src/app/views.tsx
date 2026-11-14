@@ -4,7 +4,8 @@ import { For, type JSX } from "solid-js";
 import { executeCommand } from "../commands/registry";
 import { keybindingFor } from "../keybindings/keybindings";
 import { status as gitStatus } from "../git/git";
-import { sidebarView, sidebarVisible, type SidebarView } from "./ui";
+import { bottomTab, bottomVisible, sidebarView, sidebarVisible, type SidebarView } from "./ui";
+import { settings } from "../config/store";
 
 const svg = (children: JSX.Element, size = 20) => (
   <svg aria-hidden="true" viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
@@ -19,6 +20,7 @@ export const icons = {
   chat: (size?: number) => svg(<><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" /><path d="M19 15.5l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z" /></>, size),
   terminal: (size?: number) => svg(<><rect x="3" y="4" width="18" height="16" rx="2.5" /><path d="M7 9l3 3-3 3M12.5 15H17" /></>, size),
   settings: (size?: number) => svg(<><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></>, size),
+  build: (size?: number) => svg(<><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" /><path d="M4 7.5l8 4.5 8-4.5M12 12v9" /></>, size),
   sidebar: (size?: number) => svg(<><rect x="3" y="4" width="18" height="16" rx="2.5" /><path d="M9 4v16" /></>, size),
 };
 
@@ -30,10 +32,17 @@ export interface ViewDef {
   badge?: () => number | undefined;
 }
 
+/** Раздел сейчас открыт? Чат может жить внизу — тогда смотрим на нижнюю панель. */
+export function isViewActive(view: SidebarView): boolean {
+  if (view === "chat" && settings()["tulpar.chat.location"] !== "sidebar") return bottomVisible() && bottomTab() === "chat";
+  return sidebarVisible() && sidebarView() === view;
+}
+
 export const VIEWS: ViewDef[] = [
   { view: "explorer", title: "Файлы", command: "workbench.view.explorer", icon: icons.explorer },
   { view: "search", title: "Поиск", command: "workbench.view.search", icon: icons.search },
   { view: "git", title: "Git", command: "workbench.view.scm", icon: icons.git, badge: () => gitStatus()?.files.length },
+  { view: "build", title: "Сборка", command: "workbench.view.build", icon: icons.build },
   { view: "chat", title: "Чат с ИИ", command: "workbench.action.chat.open", icon: icons.chat },
 ];
 
@@ -54,7 +63,7 @@ export function ViewSwitcher() {
         {(v) => (
           <button
             class="view-switch"
-            classList={{ active: sidebarVisible() && sidebarView() === v.view }}
+            classList={{ active: isViewActive(v.view) }}
             role="tab"
             aria-selected={sidebarView() === v.view}
             title={hint(v.title, v.command)}

@@ -280,7 +280,12 @@ export async function runTask(groupFilter?: ProjectTask["group"]) {
     "Задача проекта",
   );
   if (!choice) return;
+  await runProjectTask(choice);
+}
+
+/** Выполнить задачу во вкладке терминала «Задача». */
+export async function runProjectTask(task: ProjectTask) {
   // Перед сборкой сохраняем всё — иначе соберётся старая версия
   for (const t of tabs) if (t.dirty && !t.diffOf) await saveFile(t.path);
-  await runInTerminal(choice.command, "Задача");
+  await runInTerminal(task.command, "Задача");
 }

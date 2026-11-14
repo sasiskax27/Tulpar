@@ -3,7 +3,7 @@ import { registerCommand } from "../commands/registry";
 import { showPalette } from "../palette/Palette";
 import { saveFile, saveAll, closeTab, cycleTab, openFile } from "../editor/tabs";
 import { openFolder } from "./workspace";
-import { setSidebarVisible, setSettingsVisible, setSidebarView, sidebarView, sidebarVisible, type SidebarView } from "./ui";
+import { bottomTab, bottomVisible, setBottomTab, setBottomVisible, setSidebarVisible, setSettingsVisible, setSidebarView, sidebarView, sidebarVisible, type SidebarView } from "./ui";
 import { focusSearch } from "../search/SearchPanel";
 import { switchBranch, commit, sync, refresh as gitRefresh } from "../git/git";
 import { focusChat } from "../ai/ChatPanel";
@@ -66,7 +66,45 @@ export function registerBuiltinCommands() {
   });
 
   reg({ id: "workbench.view.scm", category: "Вид", title: "Git", run: (args) => { if (showView("git", args)) void gitRefresh(); } });
-  reg({ id: "workbench.action.chat.open", category: "ИИ", title: "Чат с ИИ", run: (args) => { if (showView("chat", args)) focusChat(); } });
+  // Чат живёт внизу рядом с терминалом или в боковой панели (tulpar.chat.location)
+  const showChat = (args: unknown) => {
+    if (settings()["tulpar.chat.location"] === "sidebar") {
+      if (showView("chat", args)) focusChat();
+      return;
+    }
+    const toggle = (args as { toggle?: boolean } | undefined)?.toggle;
+    if (toggle && bottomVisible() && bottomTab() === "chat") {
+      setBottomVisible(false);
+      focusEditor();
+      return;
+    }
+    setBottomTab("chat");
+    setBottomVisible(true);
+    focusChat();
+  };
+  reg({ id: "workbench.action.chat.open", category: "ИИ", title: "Чат с ИИ", run: (args) => showChat(args) });
+  reg({
+    id: "tulpar.chat.moveLocation",
+    category: "ИИ",
+    title: "Перенести чат вниз / в боковую панель",
+    run: () => {
+      const toSidebar = settings()["tulpar.chat.location"] !== "sidebar";
+      updateSetting("tulpar.chat.location", toSidebar ? "sidebar" : "bottom");
+      if (toSidebar) {
+        if (bottomTab() === "chat") {
+          setBottomTab("terminal");
+          setBottomVisible(false);
+        }
+        showView("chat", undefined);
+      } else {
+        if (sidebarView() === "chat") setSidebarView("explorer");
+        setBottomTab("chat");
+        setBottomVisible(true);
+      }
+      focusChat();
+    },
+  });
+  reg({ id: "workbench.view.build", category: "Вид", title: "Сборка и проекты", run: (args) => showView("build", args) });
   reg({ id: "tulpar.chat.new", category: "ИИ", title: "Новый чат", run: () => newChat() });
   reg({
     id: "tulpar.chat.askSelection",
@@ -74,8 +112,7 @@ export function registerBuiltinCommands() {
     title: "Спросить в чате о выделенном",
     run: () => {
       setUseFile(true);
-      showView("chat", undefined);
-      focusChat();
+      showChat(undefined);
     },
   });
   reg({ id: "workbench.action.tasks.runTask", category: "Задачи", title: "Запустить задачу проекта…", run: () => runTask() });

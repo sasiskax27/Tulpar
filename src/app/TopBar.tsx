@@ -7,8 +7,7 @@ import { baseName } from "../ipc";
 import { status as gitStatus } from "../git/git";
 import { aiBusy, cancelAi } from "../ai/ai";
 import { collecting, streaming, stop as stopChat } from "../ai/chat";
-import { sidebarView, sidebarVisible } from "./ui";
-import { Badge, hint, icons, VIEWS } from "./views";
+import { Badge, hint, icons, isViewActive, VIEWS } from "./views";
 import { keybindingFor } from "../keybindings/keybindings";
 
 export default function TopBar() {
@@ -71,7 +70,7 @@ export default function TopBar() {
           {(v) => (
             <button
               class="top-btn"
-              classList={{ active: sidebarVisible() && sidebarView() === v.view }}
+              classList={{ active: isViewActive(v.view) }}
               title={hint(v.title, v.command)}
               aria-label={v.title}
               onClick={() => void executeCommand(v.command, { toggle: true })}

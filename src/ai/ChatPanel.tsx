@@ -2,7 +2,7 @@
 import { createEffect, For, on, Show, type JSX } from "solid-js";
 import {
   messages, streaming, useFile, setUseFile, attached, attach, detach, newChat, stop, send,
-  useProject, setUseProject, collecting,
+  useProject, setUseProject, collecting, attachedDirs,
   currentFileLabel, insertIntoEditor, relPath,
 } from "./chat";
 import { core, baseName, joinPath } from "../ipc";
@@ -13,6 +13,7 @@ import { pick } from "../app/QuickPick";
 import { notify } from "../app/notify";
 import { settings } from "../config/store";
 import { executeCommand } from "../commands/registry";
+import { chatDrop } from "../explorer/dnd";
 
 let input: HTMLTextAreaElement | undefined;
 
@@ -153,7 +154,35 @@ function Markdown(props: { text: string }) {
 
 const SUGGESTIONS = ["Объясни этот файл", "Найди ошибки в коде", "Как устроен этот проект?", "Напиши тесты для выделенного кода"];
 
-export default function ChatPanel() {
+/** Кнопка «перенести чат вниз / в боковую панель». */
+export function MoveChatButton() {
+  const bottom = () => settings()["tulpar.chat.location"] !== "sidebar";
+  return (
+    <button
+      class="icon-button"
+      aria-label={bottom() ? "Перенести чат в боковую панель" : "Перенести чат вниз, к терминалу"}
+      title={bottom() ? "Перенести чат в боковую панель" : "Перенести чат вниз, к терминалу"}
+      onClick={() => void executeCommand("tulpar.chat.moveLocation")}
+    >
+      <Show
+        when={bottom()}
+        fallback={<svg aria-hidden="true" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2" y="2.5" width="12" height="11" rx="2" /><path d="M2 9.5h12" /></svg>}
+      >
+        <svg aria-hidden="true" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2" y="2.5" width="12" height="11" rx="2" /><path d="M6 2.5v11" /></svg>
+      </Show>
+    </button>
+  );
+}
+
+export function NewChatButton() {
+  return (
+    <button class="icon-button" aria-label="Новый чат" title="Новый чат" onClick={newChat}>
+      <svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M8 3.5v9M3.5 8h9" /></svg>
+    </button>
+  );
+}
+
+export default function ChatPanel(props: { embedded?: boolean }) {
   let list: HTMLDivElement | undefined;
 
   // Прокрутка вниз по мере ответа, если пользователь сам не листает вверх
@@ -187,16 +216,24 @@ export default function ChatPanel() {
   const providerOff = () => settings()["tulpar.ai.provider"] === "none";
 
   return (
-    <div class="chat-panel">
-      <div class="panel-header">
-        <span>Чат с ИИ</span>
-        <div class="panel-actions">
-          <button class="icon-button" aria-label="Новый чат" title="Новый чат" onClick={newChat}>
-            <svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M8 3.5v9M3.5 8h9" /></svg>
-          </button>
+    <div
+      class="chat-panel"
+      classList={{ embedded: props.embedded, "chat-drop": chatDrop() }}
+      data-chat-drop="1"
+    >
+      <Show when={!props.embedded}>
+        <div class="panel-header">
+          <span>Чат с ИИ</span>
+          <div class="panel-actions">
+            <MoveChatButton />
+            <NewChatButton />
+          </div>
         </div>
-      </div>
+      </Show>
 
+      <Show when={chatDrop()}>
+        <div class="chat-drop-overlay">Отпустите — приложить к вопросу</div>
+      </Show>
       <div ref={list} class="chat-list" aria-live="polite">
         <Show
           when={messages.length}
@@ -214,6 +251,7 @@ export default function ChatPanel() {
                 }
               >
                 <p>Спросите что угодно о своём коде. ИИ видит открытый файл и список файлов проекта.</p>
+                <p class="chat-hint">Перетащите сюда файл или папку из проводника — они приложатся к вопросу. Перетащите имя проекта — ИИ прочитает весь проект.</p>
                 <div class="chat-suggestions">
                   <For each={SUGGESTIONS}>
                     {(s) => (
@@ -264,7 +302,7 @@ export default function ChatPanel() {
           <For each={attached()}>
             {(p) => (
               <button class="chat-chip" title={`${relPath(p)} — нажмите, чтобы убрать`} onClick={() => detach(p)}>
-                📎 {baseName(p)} ×
+                {attachedDirs().includes(p) ? "📁" : "📎"} {baseName(p)} ×
               </button>
             )}
           </For>

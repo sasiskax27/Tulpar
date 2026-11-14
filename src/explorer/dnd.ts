@@ -22,7 +22,36 @@ const THRESHOLD = 5;
 
 const [dropTarget, setDropTarget] = createSignal<string | null>(null);
 const [ghost, setGhost] = createSignal<{ x: number; y: number; label: string } | null>(null);
-export { dropTarget, ghost };
+/** Курсор над чатом с ИИ: брошенное приложится к вопросу */
+const [chatDrop, setChatDrop] = createSignal(false);
+export { dropTarget, ghost, chatDrop };
+
+function overChat(x: number, y: number): boolean {
+  return !!document.elementFromPoint(x, y)?.closest("[data-chat-drop]");
+}
+
+/** Положить файл, папку или весь проект в чат. */
+async function dropIntoChat(paths: string[]) {
+  const r = root();
+  const chat = await import("../ai/chat");
+  let added = 0;
+  for (const path of paths) {
+    if (r && path === r) {
+      chat.setUseProject(true);
+      notify("ИИ прочитает весь проект");
+      continue;
+    }
+    if (!r || !(path === r || path.startsWith(r + sepOf(r)))) {
+      notify("В чат можно положить только файлы открытого проекта", "error");
+      continue;
+    }
+    // read_dir удаётся только для папки
+    const isDir = await core.readDir(path).then(() => true, () => false);
+    chat.attach(path, isDir);
+    added++;
+  }
+  if (added) void import("../ai/ChatPanel").then((m) => m.focusChat());
+}
 
 /** Папка под точкой окна: сама папка, папка файла или корень, если над пустым местом дерева. */
 function folderAt(x: number, y: number): string | null {
@@ -86,7 +115,7 @@ function askWhatToDo(x: number, y: number, sources: string[], target: string, in
 }
 
 /** Начало возможного перетаскивания по дереву (нажатие на элемент). */
-export function startTreeDrag(e: PointerEvent, path: string) {
+export function startTreeDrag(e: PointerEvent, path: string, label = baseName(path)) {
   if (e.button !== 0) return;
   const startX = e.clientX;
   const startY = e.clientY;
@@ -98,8 +127,10 @@ export function startTreeDrag(e: PointerEvent, path: string) {
       dragging = true;
       document.body.classList.add("dragging-file");
     }
-    setGhost({ x: ev.clientX, y: ev.clientY, label: baseName(path) });
-    setDropTarget(folderAt(ev.clientX, ev.clientY));
+    const chat = overChat(ev.clientX, ev.clientY);
+    setChatDrop(chat);
+    setGhost({ x: ev.clientX, y: ev.clientY, label: chat ? `${label} → в чат` : label });
+    setDropTarget(chat || path === root() ? null : folderAt(ev.clientX, ev.clientY));
   };
   const finish = (ev: PointerEvent | null) => {
     window.removeEventListener("pointermove", move);
@@ -107,15 +138,18 @@ export function startTreeDrag(e: PointerEvent, path: string) {
     window.removeEventListener("keydown", key, true);
     document.body.classList.remove("dragging-file");
     const target = dropTarget();
+    const toChat = chatDrop();
     setGhost(null);
     setDropTarget(null);
-    if (!dragging || !ev || !target) return;
+    setChatDrop(false);
+    if (!dragging || !ev || (!target && !toChat)) return;
     // Клик сразу после перетаскивания не должен открыть файл. Если браузер клик
     // не пришлёт, через мгновение снимаем перехват, чтобы не съесть следующий.
     const swallow = (c: MouseEvent) => c.stopPropagation();
     window.addEventListener("click", swallow, { capture: true, once: true });
     setTimeout(() => window.removeEventListener("click", swallow, { capture: true }), 0);
-    askWhatToDo(ev.clientX, ev.clientY, [path], target, true);
+    if (toChat) void dropIntoChat([path]);
+    else askWhatToDo(ev.clientX, ev.clientY, [path], target!, true);
   };
   const up = (ev: PointerEvent) => finish(ev);
   const key = (ev: KeyboardEvent) => {
@@ -137,18 +171,26 @@ export async function initFileDrop() {
       const p = event.payload;
       if (p.type === "leave") {
         setDropTarget(null);
+        setChatDrop(false);
         return;
       }
       // Ядро присылает координаты в физических пикселях
       const scale = window.devicePixelRatio || 1;
       const x = p.position.x / scale;
       const y = p.position.y / scale;
-      const target = folderAt(x, y);
+      const chat = overChat(x, y);
+      const target = chat ? null : folderAt(x, y);
       if (p.type === "enter" || p.type === "over") {
         setDropTarget(target);
+        setChatDrop(chat);
         return;
       }
       setDropTarget(null);
+      setChatDrop(false);
+      if (chat) {
+        void dropIntoChat(p.paths);
+        return;
+      }
       if (target) {
         askWhatToDo(x, y, p.paths, target, false);
         return;

@@ -2,8 +2,7 @@
 // (настройка workbench.activityBar). Нажатие на активную иконку прячет боковую панель.
 import { For } from "solid-js";
 import { executeCommand } from "../commands/registry";
-import { sidebarView, sidebarVisible } from "./ui";
-import { Badge, hint, icons, VIEWS } from "./views";
+import { Badge, hint, icons, isViewActive, VIEWS } from "./views";
 
 export default function ActivityBar() {
   return (
@@ -11,7 +10,7 @@ export default function ActivityBar() {
       <div class="activity-mark" title="Tulpar">T</div>
       <For each={VIEWS}>
         {(v) => {
-          const active = () => sidebarVisible() && sidebarView() === v.view;
+          const active = () => isViewActive(v.view);
           return (
             <button
               class="activity-item"

@@ -144,7 +144,13 @@ export default function Explorer() {
               ])
             }
           >
-            <div class="tree-root-name">{baseName(r)}</div>
+            <div
+              class="tree-root-name"
+              title="Можно перетащить в чат с ИИ — он прочитает весь проект"
+              onPointerDown={(e) => startTreeDrag(e, r, `Проект ${baseName(r)}`)}
+            >
+              {baseName(r)}
+            </div>
             <DirChildren path={r} depth={0} />
           </div>
         )}
@@ -247,6 +253,18 @@ function Node(props: { entry: DirEntry; depth: number }) {
     showContextMenu(e, [
       { label: "Новый файл…", run: () => startNew("file", dir, dir === root()) },
       { label: "Новая папка…", run: () => startNew("folder", dir, dir === root()) },
+      "-",
+      {
+        label: props.entry.isDir ? "Приложить папку к чату с ИИ" : "Приложить к чату с ИИ",
+        run: () => {
+          const target = path();
+          const isDir = props.entry.isDir;
+          void import("../ai/chat").then((c) => {
+            c.attach(target, isDir);
+            void executeCommand("workbench.action.chat.open");
+          });
+        },
+      },
       "-",
       { label: "Переименовать…", shortcut: "F2", run: () => startRename(path()) },
       { label: "Копировать путь", run: () => void copyPath(path()) },

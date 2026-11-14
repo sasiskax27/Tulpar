@@ -141,7 +141,7 @@ function TulparLayout() {
     cancelClose();
     closeTimer = window.setTimeout(() => {
       if (aside?.contains(document.activeElement) || aside?.matches(":hover")) return;
-      if (document.body.classList.contains("resizing")) return;
+      if (document.body.classList.contains("resizing") || document.body.classList.contains("dragging-file")) return;
       setSidebarVisible(false);
     }, 450);
   };

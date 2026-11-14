@@ -124,8 +124,8 @@ async function start(): Promise<LspClient | null> {
         workspaceFolders: r ? [{ uri: monaco.Uri.file(r).toString(), name: r.split(/[\\/]/).pop() }] : null,
         capabilities: { workspace: { workspaceFolders: true }, window: { showDocument: { support: true } } },
         initializationOptions: {
-          editorInfo: { name: "Tulpar", version: "0.1.0" },
-          editorPluginInfo: { name: "tulpar-copilot", version: "0.1.0" },
+          editorInfo: { name: "Tulpar", version: "0.2.0" },
+          editorPluginInfo: { name: "tulpar-copilot", version: "0.2.0" },
         },
       });
       const timeout = new Promise<never>((_, reject) =>

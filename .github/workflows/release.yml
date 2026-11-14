@@ -1,0 +1,65 @@
+name: release
+
+# Сборка установщика для релиза. Запускается тегом v* (например v0.2.0)
+# или вручную. Установщик собирается здесь, в GitHub Actions, — это нужно
+# SignPath Foundation: подписываются только сборки из открытого репозитория.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Зависимости
+        run: npm install
+
+      - name: Сборка установщика
+        run: npm run tauri build -- --bundles nsis
+
+      - name: Неподписанный установщик
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: tulpar-windows-unsigned
+          path: src-tauri/target/release/bundle/nsis/*-setup.exe
+          if-no-files-found: error
+
+      # Подпись через SignPath Foundation. Включится сама, когда в настройках
+      # репозитория появятся секрет SIGNPATH_API_TOKEN и переменная SIGNPATH_ORGANIZATION_ID
+      # (Settings → Secrets and variables → Actions) — их выдают после одобрения заявки.
+      - name: Подпись (SignPath)
+        if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: tulpar
+          signing-policy-slug: release-signing
+          github-artifact-id: ${{ steps.upload.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed
+
+      - name: Выложить в релиз
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: |
+            ${{ vars.SIGNPATH_ORGANIZATION_ID != '' && 'signed/*.exe' || 'src-tauri/target/release/bundle/nsis/*-setup.exe' }}

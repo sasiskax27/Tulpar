@@ -2,6 +2,7 @@
 import { Match, Switch } from "solid-js";
 import Explorer from "../explorer/Explorer";
 import SearchPanel from "../search/SearchPanel";
+import GitPanel from "../git/GitPanel";
 import { sidebarView } from "./ui";
 
 export default function SideView() {
@@ -9,6 +10,9 @@ export default function SideView() {
     <Switch>
       <Match when={sidebarView() === "search"}>
         <SearchPanel />
+      </Match>
+      <Match when={sidebarView() === "git"}>
+        <GitPanel />
       </Match>
       <Match when={true}>
         <Explorer />

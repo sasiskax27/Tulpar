@@ -120,6 +120,41 @@ function cleanResult(text: string, original: string): string {
   return result;
 }
 
+export interface AiBase {
+  provider: string;
+  baseUrl: string;
+  model: string;
+  apiKey: string;
+}
+
+/** Куда и к какой модели слать запросы. null — ИИ не настроен (пользователь
+ *  увидит подсказку и окно настроек). */
+export function aiBase(): AiBase | null {
+  const cfg = settings();
+  const provider = cfg["tulpar.ai.provider"];
+  const defaults = providers[provider];
+  if (!defaults) {
+    notify("ИИ не настроен. Выберите, какой ИИ использовать, в разделе «ИИ».");
+    setSettingsVisible(true);
+    return null;
+  }
+  const model = cfg["tulpar.ai.model"].trim() || defaults.model;
+  if (!model) {
+    notify("Укажите модель ИИ в настройках, раздел «ИИ».");
+    setSettingsVisible(true);
+    return null;
+  }
+  return { provider, baseUrl: cfg["tulpar.ai.baseUrl"].trim() || defaults.baseUrl, model, apiKey: cfg["tulpar.ai.apiKey"] };
+}
+
+/** Убрать обёртки ``` и кавычки вокруг короткого ответа. */
+export function stripWrapping(text: string): string {
+  let t = text.trim();
+  const fenced = t.match(/```[^\n]*\n([\s\S]*?)\n?```/);
+  if (fenced) t = fenced[1].trim();
+  return t.replace(/^["'«]+|["'»]+$/g, "").trim();
+}
+
 export async function runAiTask(taskId: string) {
   const task = tasks.find((t) => t.id === taskId);
   const editor = editorInstance();
@@ -130,21 +165,9 @@ export async function runAiTask(taskId: string) {
     return;
   }
 
+  const base = aiBase();
+  if (!base) return;
   const cfg = settings();
-  const provider = cfg["tulpar.ai.provider"];
-  const defaults = providers[provider];
-  if (!defaults) {
-    notify("ИИ не настроен. Выберите, какой ИИ использовать, в разделе «ИИ».");
-    setSettingsVisible(true);
-    return;
-  }
-  const modelName = cfg["tulpar.ai.model"].trim() || defaults.model;
-  if (!modelName) {
-    notify("Укажите модель ИИ в настройках, раздел «ИИ».");
-    setSettingsVisible(true);
-    return;
-  }
-
   const selection = editor.getSelection();
   const range = selection && !selection.isEmpty() ? selection : model.getFullModelRange();
   const text = model.getValueInRange(range);
@@ -184,10 +207,7 @@ export async function runAiTask(taskId: string) {
   setAiBusy(task.label.replace(/^ИИ: /, "").replace(/…$/, ""));
   try {
     const answer = await core.aiComplete({
-      provider,
-      baseUrl: cfg["tulpar.ai.baseUrl"].trim() || defaults.baseUrl,
-      model: modelName,
-      apiKey: cfg["tulpar.ai.apiKey"],
+      ...base,
       system: task.mode === "show" ? EXPLAIN_SYSTEM : EDIT_SYSTEM,
       prompt:
         `Instruction: ${instruction}\n\n` +

@@ -13,6 +13,8 @@ export interface Tab {
   title: string;
   languageId: string;
   dirty: boolean;
+  /** Вкладка разницы: путь файла, который сравнивается с последним коммитом */
+  diffOf?: string;
 }
 
 const [tabs, setTabs] = createStore<Tab[]>([]);
@@ -29,6 +31,41 @@ const autoSaveTimers = new Map<string, number>();
 export function modelFor(path: string) {
   return models.get(path);
 }
+
+// ---------- вкладки разницы (git) ----------
+
+const DIFF_PREFIX = "diff:";
+const diffOriginals = new Map<string, monaco.editor.ITextModel>();
+const diffModified = new Map<string, monaco.editor.ITextModel>();
+
+/** Модели для вкладки разницы: слева — версия из коммита, справа — файл. */
+export function diffModelsFor(key: string) {
+  const original = diffOriginals.get(key);
+  const modified = diffModified.get(key);
+  return original && modified ? { original, modified } : undefined;
+}
+
+/** Открыть разницу «последний коммит ↔ сейчас». Правая сторона — тот же файл,
+ *  что и в обычной вкладке: правки там сразу видны в обеих. */
+export async function openDiff(path: string, original: string, title: string) {
+  const key = DIFF_PREFIX + path;
+  if (!tabs.some((t) => t.path === key)) {
+    let modified = await loadModel(path).catch(() => undefined);
+    const languageId = modified?.getLanguageId() ?? detectLanguage(path);
+    if (!modified) {
+      // Файл удалён — справа пусто
+      modified = monaco.editor.createModel("", languageId, monaco.Uri.from({ scheme: "tulpar-deleted", path: "/" + path }));
+    }
+    const orig = monaco.editor.createModel(original, languageId, monaco.Uri.from({ scheme: "tulpar-git", path: "/" + path }));
+    diffOriginals.set(key, orig);
+    diffModified.set(key, modified);
+    setTabs(produce((list) => list.push({ path: key, title, languageId, dirty: false, diffOf: path })));
+  } else {
+    // Коммит мог измениться — обновляем левую сторону
+    diffOriginals.get(key)?.setValue(original);
+  }
+  setActivePath(key);
+}
 export function saveViewState(path: string, state: monaco.editor.ICodeEditorViewState | null) {
   viewStates.set(path, state);
 }
@@ -37,7 +74,7 @@ export function viewStateFor(path: string) {
 }
 
 function setDirty(path: string, dirty: boolean) {
-  setTabs((t) => t.path === path, "dirty", dirty);
+  setTabs((t) => t.path === path || t.diffOf === path, "dirty", dirty);
 }
 
 /** Загрузить файл в модель Monaco, не открывая вкладку. Нужно языковым серверам:
@@ -113,6 +150,7 @@ export function onDidSave(cb: SaveListener) {
 
 export async function saveFile(path: string | null = activePath()) {
   if (!path) return;
+  if (path.startsWith(DIFF_PREFIX)) path = path.slice(DIFF_PREFIX.length);
   const model = models.get(path);
   if (!model) return;
   const version = model.getAlternativeVersionId();
@@ -131,7 +169,7 @@ export function tabsUnder(path: string): Tab[] {
   const lower = (p: string) => (navigator.userAgent.includes("Linux") ? p : p.toLowerCase());
   const target = lower(path);
   return tabs.filter((t) => {
-    const p = lower(t.path);
+    const p = lower(t.diffOf ?? t.path);
     return p === target || p.startsWith(target + "/") || p.startsWith(target + "\\");
   });
 }
@@ -152,6 +190,13 @@ export async function closeTab(path: string | null = activePath(), force = false
   }
   const index = tabs.findIndex((t) => t.path === path);
   setTabs(produce((list) => list.splice(index, 1)));
+  if (tab.diffOf) {
+    diffOriginals.get(path)?.dispose();
+    diffOriginals.delete(path);
+    const mod = diffModified.get(path);
+    if (mod && mod.uri.scheme === "tulpar-deleted") mod.dispose();
+    diffModified.delete(path);
+  }
   models.get(path)?.dispose();
   models.delete(path);
   savedVersion.delete(path);
@@ -210,7 +255,13 @@ export function setSessionRoot(root: string | null) {
 }
 
 function persistSession() {
-  const session: Session = { root: currentRoot, tabs: tabs.map((t) => t.path), active: activePath() };
+  const files = tabs.filter((t) => !t.diffOf);
+  const active = activePath();
+  const session: Session = {
+    root: currentRoot,
+    tabs: files.map((t) => t.path),
+    active: active && !active.startsWith(DIFF_PREFIX) ? active : null,
+  };
   try {
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   } catch {

@@ -5,6 +5,7 @@ import { saveFile, saveAll, closeTab, cycleTab, openFile } from "../editor/tabs"
 import { openFolder } from "./workspace";
 import { setSidebarVisible, setSettingsVisible, setSidebarView, sidebarView, sidebarVisible, type SidebarView } from "./ui";
 import { focusSearch } from "../search/SearchPanel";
+import { switchBranch, commit, sync, refresh as gitRefresh } from "../git/git";
 import { editorInstance } from "../editor/instance";
 import { activeLayout, defaultSettings, layoutConfig, setActiveLayout, settings, updateSetting } from "../config/store";
 import { core, type ConfigName } from "../ipc";
@@ -59,6 +60,19 @@ export function registerBuiltinCommands() {
       const text = sel && !sel.isEmpty() ? editor!.getModel()?.getValueInRange(sel) : undefined;
       focusSearch(text && !text.includes("\n") ? text : undefined);
     },
+  });
+
+  reg({ id: "workbench.view.scm", category: "Вид", title: "Git", run: (args) => { if (showView("git", args)) void gitRefresh(); } });
+  reg({ id: "git.checkout", category: "Git", title: "Переключить ветку…", run: () => switchBranch() });
+  reg({ id: "git.commit", category: "Git", title: "Закоммитить", run: () => commit() });
+  reg({ id: "git.push", category: "Git", title: "Отправить (push)", run: () => sync("push") });
+  reg({ id: "git.pull", category: "Git", title: "Получить (pull)", run: () => sync("pull") });
+  reg({ id: "git.fetch", category: "Git", title: "Проверить обновления (fetch)", run: () => sync("fetch") });
+  reg({
+    id: "workbench.action.gotoLine",
+    category: "Перейти",
+    title: "К строке…",
+    run: () => editorInstance()?.getAction("editor.action.gotoLine")?.run(),
   });
 
   reg({

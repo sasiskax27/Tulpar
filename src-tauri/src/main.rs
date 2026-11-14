@@ -5,6 +5,7 @@ use tauri::Manager;
 
 mod ai;
 mod config;
+mod git;
 mod lsp;
 mod media;
 mod ollama;
@@ -40,6 +41,17 @@ fn main() {
             search::search_project,
             search::replace_in_file,
             transfer::transfer_paths,
+            git::git_status,
+            git::git_show_head,
+            git::git_stage,
+            git::git_unstage,
+            git::git_discard,
+            git::git_commit,
+            git::git_init,
+            git::git_branches,
+            git::git_checkout,
+            git::git_sync,
+            git::git_diff_for_message,
             config::config_read,
             config::config_dir,
             config::config_ensure,

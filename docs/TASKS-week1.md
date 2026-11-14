@@ -23,9 +23,9 @@
 5. ✅ **Контекстное меню:** новый файл, новая папка, переименовать, удалить. Для этого понадобятся новые команды в ядре (`src-tauri/src/workspace/mod.rs`) — тут я помогу.
 
 ### Строка статуса — `src/app/StatusBar.tsx`
-1. **Счётчик несохранённых файлов** (`tabs.filter(t => t.dirty).length`).
-2. **Клик по раскладке** → команда `tulpar.layout.next`.
-3. **Клик по «Стр, стлб»** → переход к строке (нужна новая команда `workbench.action.gotoLine`, Monaco умеет это сам: `editor.getAction("editor.action.gotoLine")`).
+1. ✅ **Счётчик несохранённых файлов** (`tabs.filter(t => t.dirty).length`).
+2. ✅ **Клик по раскладке** → команда `tulpar.layout.next`.
+3. ✅ **Клик по «Стр, стлб»** → переход к строке (нужна новая команда `workbench.action.gotoLine`, Monaco умеет это сам: `editor.getAction("editor.action.gotoLine")`).
 
 ## Как проверить
 

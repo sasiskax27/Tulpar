@@ -6,6 +6,7 @@ import BackgroundLayer from "./background";
 import SettingsView from "../settings/SettingsView";
 import AiOverlay from "../ai/AiOverlay";
 import ContextMenu from "./ContextMenu";
+import QuickPick from "./QuickPick";
 import { notices } from "./notify";
 import { settings } from "../config/store";
 
@@ -26,6 +27,7 @@ export default function App() {
       <InputBox />
       <AiOverlay />
       <ContextMenu />
+      <QuickPick />
       <div class="notices">
         <For each={notices()}>{(n) => <div class={`notice notice-${n.level}`}>{n.text}</div>}</For>
       </div>

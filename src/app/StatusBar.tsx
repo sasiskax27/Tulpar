@@ -1,18 +1,16 @@
-// Строка статуса. Базовая версия: папка, раскладка, позиция курсора, язык, отступы.
-//
-// ЗАДАЧИ НА НЕДЕЛЮ 1 (ваш модуль — см. docs/TASKS-week1.md):
-//   [ ] Клик по «Строка, столбец» → перейти к строке (команда workbench.action.gotoLine)
-//   [ ] Клик по раскладке → выбор раскладки из layout.json
-//   [ ] Счётчик несохранённых файлов
+// Строка статуса: папка, ветка git, раскладка, несохранённые файлы, позиция курсора, язык.
 import { Show } from "solid-js";
 import { root } from "./workspace";
 import { tabs, activePath, cursor } from "../editor/tabs";
 import { languageName } from "../editor/monaco";
 import { activeLayout, settings } from "../config/store";
 import { baseName } from "../ipc";
+import { executeCommand } from "../commands/registry";
+import { status as gitStatus, busy as gitBusy } from "../git/git";
 
 export default function StatusBar() {
   const activeTab = () => tabs.find((t) => t.path === activePath());
+  const unsaved = () => tabs.filter((t) => t.dirty && !t.diffOf).length;
   const indent = () =>
     settings()["editor.insertSpaces"] ? `Пробелы: ${settings()["editor.tabSize"]}` : `Табы: ${settings()["editor.tabSize"]}`;
 
@@ -20,15 +18,33 @@ export default function StatusBar() {
     <footer class="status-bar" classList={{ "no-folder": !root() }}>
       <div class="status-left">
         <span class="status-item">{root() ? baseName(root()!) : "Нет открытой папки"}</span>
-        <span class="status-item">⊞ {activeLayout()}</span>
+        <Show when={gitStatus()?.isRepo}>
+          <button class="status-item" title="Переключить ветку" onClick={() => void executeCommand("git.checkout")}>
+            ⎇ {gitStatus()?.branch ?? "без ветки"}
+            <Show when={gitStatus()?.ahead || gitStatus()?.behind}>
+              {"  "}↓{gitStatus()?.behind} ↑{gitStatus()?.ahead}
+            </Show>
+          </button>
+        </Show>
+        <Show when={gitBusy()}>
+          <span class="status-item">{gitBusy()}…</span>
+        </Show>
+        <button class="status-item" title="Следующая раскладка" onClick={() => void executeCommand("tulpar.layout.next")}>
+          ⊞ {activeLayout()}
+        </button>
+        <Show when={unsaved()}>
+          <button class="status-item" title="Сохранить всё (Ctrl+Alt+S)" onClick={() => void executeCommand("workbench.action.files.saveAll")}>
+            ● Не сохранено: {unsaved()}
+          </button>
+        </Show>
       </div>
       <div class="status-right">
         <Show when={activeTab()}>
           {(tab) => (
             <>
-              <span class="status-item">
+              <button class="status-item" title="Перейти к строке (Ctrl+G)" onClick={() => void executeCommand("workbench.action.gotoLine")}>
                 Стр {cursor().line}, стлб {cursor().column}
-              </span>
+              </button>
               <span class="status-item">{indent()}</span>
               <span class="status-item">UTF-8</span>
               <span class="status-item">{languageName(tab().languageId)}</span>

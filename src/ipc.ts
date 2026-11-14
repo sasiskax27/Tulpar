@@ -39,6 +39,22 @@ export interface SearchResult {
   truncated: boolean;
 }
 
+export interface GitFile {
+  path: string;
+  abs: string;
+  index: string;
+  work: string;
+}
+
+export interface GitStatus {
+  isRepo: boolean;
+  branch: string | null;
+  upstream: string | null;
+  ahead: number;
+  behind: number;
+  files: GitFile[];
+}
+
 export interface AiRequest {
   provider: string;
   baseUrl: string;
@@ -84,6 +100,17 @@ export const core = {
     invoke<number>("replace_in_file", { path, options, replacement }),
   transferPaths: (sources: string[], targetDir: string, mode: "copy" | "move") =>
     invoke<string[]>("transfer_paths", { sources, targetDir, mode }),
+  gitStatus: () => invoke<GitStatus>("git_status"),
+  gitShowHead: (path: string) => invoke<string>("git_show_head", { path }),
+  gitStage: (paths: string[]) => invoke<void>("git_stage", { paths }),
+  gitUnstage: (paths: string[]) => invoke<void>("git_unstage", { paths }),
+  gitDiscard: (paths: string[]) => invoke<void>("git_discard", { paths }),
+  gitCommit: (message: string, all: boolean) => invoke<void>("git_commit", { message, all }),
+  gitInit: () => invoke<void>("git_init"),
+  gitBranches: () => invoke<string[]>("git_branches"),
+  gitCheckout: (branch: string, create: boolean) => invoke<void>("git_checkout", { branch, create }),
+  gitSync: (action: "push" | "pull" | "fetch") => invoke<string>("git_sync", { action }),
+  gitDiffForMessage: () => invoke<string>("git_diff_for_message"),
   configEnsure: (name: ConfigName) => invoke<string>("config_ensure", { name }),
 };
 

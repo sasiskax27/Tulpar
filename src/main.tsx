@@ -9,6 +9,10 @@ import { loadSession, openFile, setActivePath } from "./editor/tabs";
 import { initLsp } from "./lsp/manager";
 import { initTerminals } from "./terminal/sessions";
 import { initFileDrop } from "./explorer/dnd";
+import { initGit, refresh as refreshGit } from "./git/git";
+import { initGitGutter } from "./git/gutter";
+import { root } from "./app/workspace";
+import { createEffect, createRoot, on } from "solid-js";
 
 async function start() {
   registerBuiltinCommands();
@@ -19,6 +23,10 @@ async function start() {
   await initLsp();
   await initTerminals();
   await initFileDrop();
+  await initGit();
+  initGitGutter();
+  // Другая папка — свой репозиторий
+  createRoot(() => createEffect(on(root, () => void refreshGit())));
 
   // Восстанавливаем прошлую сессию: папку и открытые вкладки
   const session = loadSession();

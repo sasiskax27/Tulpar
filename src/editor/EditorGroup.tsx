@@ -1,10 +1,10 @@
 // Группа редактора: полоса вкладок + один экземпляр Monaco, который переключается
 // между моделями открытых файлов. Один редактор на много вкладок — так быстрее и легче.
-import { createEffect, For, on, onCleanup, onMount, Show } from "solid-js";
+import { createEffect, createSignal, For, on, onCleanup, onMount, Show } from "solid-js";
 import { monaco, editorOptions } from "./monaco";
 import {
   tabs, activePath, setActivePath, closeTab, modelFor,
-  saveViewState, viewStateFor, setCursor, takeReveal,
+  saveViewState, viewStateFor, setCursor, takeReveal, diffModelsFor,
 } from "./tabs";
 import { settings } from "../config/store";
 import { executeCommand } from "../commands/registry";
@@ -14,8 +14,24 @@ import { registerAiActions } from "../ai/ai";
 
 export default function EditorGroup() {
   let container!: HTMLDivElement;
+  let diffContainer!: HTMLDivElement;
   let editor: monaco.editor.IStandaloneCodeEditor | undefined;
+  let diffEditor: monaco.editor.IStandaloneDiffEditor | undefined;
   let shownPath: string | null = null;
+  const [diffMode, setDiffMode] = createSignal(false);
+
+  // Редактор разницы создаём только когда он впервые понадобится
+  const ensureDiffEditor = () => {
+    if (!diffEditor) {
+      diffEditor = monaco.editor.createDiffEditor(diffContainer, {
+        ...editorOptions(settings()),
+        renderSideBySide: true,
+        originalEditable: false,
+        ignoreTrimWhitespace: false,
+      });
+    }
+    return diffEditor;
+  };
 
   onMount(() => {
     editor = monaco.editor.create(container, { ...editorOptions(settings()), model: null });
@@ -26,6 +42,7 @@ export default function EditorGroup() {
     registerAiActions(editor);
     onCleanup(() => {
       setEditorInstance(undefined);
+      diffEditor?.dispose();
       editor?.dispose();
     });
   });
@@ -35,6 +52,7 @@ export default function EditorGroup() {
     const opts = editorOptions(settings());
     monaco.editor.setTheme(opts.theme as string);
     editor?.updateOptions(opts);
+    diffEditor?.updateOptions(opts);
   });
 
   // Переключение вкладки: запоминаем прокрутку и курсор старой, восстанавливаем у новой
@@ -42,6 +60,17 @@ export default function EditorGroup() {
     on(activePath, (path) => {
       if (!editor) return;
       if (shownPath) saveViewState(shownPath, editor.saveViewState());
+      const diff = path ? diffModelsFor(path) : undefined;
+      setDiffMode(!!diff);
+      if (diff) {
+        editor.setModel(null);
+        shownPath = null;
+        const d = ensureDiffEditor();
+        d.setModel(diff);
+        requestAnimationFrame(() => d.getModifiedEditor().focus());
+        return;
+      }
+      diffEditor?.setModel(null);
       const model = path ? modelFor(path) : undefined;
       editor.setModel(model ?? null);
       shownPath = model ? path : null;
@@ -88,7 +117,8 @@ export default function EditorGroup() {
         </For>
       </div>
       <div class="editor-host">
-        <div ref={container} class="monaco-container" classList={{ hidden: !activePath() }} />
+        <div ref={container} class="monaco-container" classList={{ hidden: !activePath() || diffMode() }} />
+        <div ref={diffContainer} class="monaco-container" classList={{ hidden: !diffMode() }} />
         <Show when={!activePath()}>
           <Welcome />
         </Show>

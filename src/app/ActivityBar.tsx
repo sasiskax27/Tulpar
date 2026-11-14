@@ -4,8 +4,9 @@ import type { JSX } from "solid-js";
 import { executeCommand } from "../commands/registry";
 import { sidebarView, sidebarVisible } from "./ui";
 import { keybindingFor } from "../keybindings/keybindings";
+import { status as gitStatus } from "../git/git";
 
-function Item(props: { view: "explorer" | "search"; title: string; command: string; children?: JSX.Element }) {
+function Item(props: { view: "explorer" | "search" | "git"; title: string; command: string; badge?: number; children?: JSX.Element }) {
   const active = () => sidebarVisible() && sidebarView() === props.view;
   const hint = () => {
     const k = keybindingFor(props.command);
@@ -21,6 +22,7 @@ function Item(props: { view: "explorer" | "search"; title: string; command: stri
       onClick={() => void executeCommand(props.command, { toggle: true })}
     >
       {props.children}
+      {props.badge ? <span class="activity-badge">{props.badge > 99 ? "99+" : props.badge}</span> : null}
     </button>
   );
 }
@@ -38,6 +40,14 @@ export default function ActivityBar() {
         <svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="10.5" cy="10.5" r="6.5" />
           <path d="M20 20l-4.8-4.8" />
+        </svg>
+      </Item>
+      <Item view="git" title="Git" command="workbench.view.scm" badge={gitStatus()?.files.length}>
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="6" cy="5" r="2.2" />
+          <circle cx="6" cy="19" r="2.2" />
+          <circle cx="18" cy="8" r="2.2" />
+          <path d="M6 7.2v9.6M18 10.2c0 4.5-6 3.5-11 6.6" />
         </svg>
       </Item>
       <div class="activity-spacer" />

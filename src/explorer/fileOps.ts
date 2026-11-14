@@ -105,7 +105,7 @@ export async function retarget(from: string, to: string, affected = tabsUnder(fr
   const wasActive = activePath();
   for (const tab of affected) {
     await closeTab(tab.path, true);
-    await openFile(to + tab.path.slice(from.length));
+    if (!tab.diffOf) await openFile(to + tab.path.slice(from.length));
   }
   if (wasActive && affected.some((t) => t.path === wasActive)) {
     setActivePath(to + wasActive.slice(from.length));

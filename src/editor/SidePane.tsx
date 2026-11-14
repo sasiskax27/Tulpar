@@ -11,6 +11,7 @@ import NotebookView from "../notebook/NotebookView";
 import DbView from "../databases/DbView";
 import LearnView from "../learn/LearnView";
 import MapView from "../projectmap/MapView";
+import VariantsView from "../variants/VariantsView";
 import WebPreview from "./WebPreview";
 
 const MIME: Record<string, string> = {
@@ -187,6 +188,7 @@ const TITLES: Record<SideView["kind"], string> = {
   db: "",
   learn: "🎓 ",
   map: "🗺 ",
+  variants: "✦ ",
   web: "Сайт · ",
 };
 
@@ -194,11 +196,11 @@ export default function SidePane() {
   const view = () => side()!;
   const others = () => tabs.filter((t) => !t.diffOf && t.path !== view().path);
   return (
-    <div class="side-pane" classList={{ wide: ["notebook", "sqlite", "web", "db", "learn", "map"].includes(view().kind) }}>
+    <div class="side-pane" classList={{ wide: ["notebook", "sqlite", "web", "db", "learn", "map", "variants"].includes(view().kind) }}>
       <div class="side-pane-header">
         <span class="side-pane-title" title={view().path}>
           {TITLES[view().kind]}
-          {view().kind === "text" ? (view() as { title: string }).title : ["web", "db", "learn", "map"].includes(view().kind) ? view().path : baseName(view().path)}
+          {view().kind === "text" ? (view() as { title: string }).title : ["web", "db", "learn", "map", "variants"].includes(view().kind) ? view().path : baseName(view().path)}
         </span>
         <Show when={view().kind === "editor" && others().length}>
           <select
@@ -231,6 +233,9 @@ export default function SidePane() {
           </Match>
           <Match when={view().kind === "db" && (view() as Extract<SideView, { kind: "db" }>)}>
             {(v) => <DbView connId={v().connId} schema={v().schema} table={v().table} />}
+          </Match>
+          <Match when={view().kind === "variants"}>
+            <VariantsView />
           </Match>
           <Match when={view().kind === "map"}>
             <MapView />

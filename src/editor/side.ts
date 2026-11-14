@@ -13,6 +13,7 @@ export type SideView =
   | { kind: "notebook"; path: string }
   | { kind: "learn"; path: string }
   | { kind: "map"; path: string }
+  | { kind: "variants"; path: string }
   | { kind: "db"; path: string; connId: string; schema?: string; table?: string }
   | { kind: "web"; path: string; url: string }
   | { kind: "text"; path: string; title: string; text: string; language: string };
@@ -64,6 +65,10 @@ export const isSqlite = (path: string) => /\.(db|sqlite|sqlite3|db3)$/i.test(pat
 /** Таблица или коллекция серверной базы справа. path — подпись для заголовка. */
 export function showDb(connId: string, title: string, schema?: string, table?: string) {
   setSide({ kind: "db", path: title, connId, schema, table });
+}
+
+export function showVariants() {
+  setSide({ kind: "variants", path: "Три варианта" });
 }
 
 export function showProjectMap() {

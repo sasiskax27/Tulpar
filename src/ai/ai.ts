@@ -274,6 +274,13 @@ export function registerAiActions(editor: monaco.editor.IStandaloneCodeEditor) {
     contextMenuOrder: -1,
     run: () => void executeCommand("tulpar.chat.askSelection"),
   });
+  editor.addAction({
+    id: "tulpar.variantsAction",
+    label: t("ИИ: Три варианта…"),
+    contextMenuGroupId: "0_tulpar_ai",
+    contextMenuOrder: -0.5,
+    run: () => void executeCommand("tulpar.variants"),
+  });
   tasks.forEach((task, i) => {
     editor.addAction({
       id: task.id,

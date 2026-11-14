@@ -1,6 +1,19 @@
 // Generated: Russian UI text -> English. Keys are exact Russian strings;
 // pattern keys use {0}, {1}… for inserted values.
 export const EXACT: Record<string, string> = {
+ "Три варианта": "Three variants",
+ "ИИ: Три варианта…": "AI: Three variants…",
+ "Простой": "Simple",
+ "Аккуратный": "Polished",
+ "Смелый": "Bold",
+ "↻ Ещё три": "↻ Three more",
+ "Выбрать": "Choose",
+ "ИИ пишет вариант…": "AI is writing a variant…",
+ "Откройте файл, для которого нужны варианты": "Open the file you want variants for",
+ "Файл слишком большой для вариантов — выделите нужную часть": "The file is too big for variants — select the part you need",
+ "Что сделать? Например: «сделай красивую кнопку», «ускорь функцию»": "What to do? E.g. “make a nice button”, “speed up the function”",
+ "Вариант применён. Отменить — Ctrl+Z": "Variant applied. Undo — Ctrl+Z",
+ "Выделите код или откройте файл и запустите «Три варианта» (Ctrl+Shift+P).": "Select code or open a file and run “Three variants” (Ctrl+Shift+P).",
  "Карта проекта": "Project map",
  "Строю карту…": "Building the map…",
  "Читаю файлы…": "Reading files…",

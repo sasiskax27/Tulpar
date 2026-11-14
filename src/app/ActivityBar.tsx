@@ -2,13 +2,13 @@
 // (настройка workbench.activityBar). Нажатие на активную иконку прячет боковую панель.
 import { For } from "solid-js";
 import { executeCommand } from "../commands/registry";
-import { Badge, hint, icons, isViewActive, VIEWS } from "./views";
+import { Badge, hiddenActive, hint, icons, isViewActive, showMoreMenu, showViewMenu, viewDnd, visibleViews } from "./views";
 
 export default function ActivityBar() {
   return (
     <nav class="activity-bar" aria-label="Панели">
       <div class="activity-mark" title="Tulpar">T</div>
-      <For each={VIEWS}>
+      <For each={visibleViews()}>
         {(v) => {
           const active = () => isViewActive(v.view);
           return (
@@ -19,6 +19,8 @@ export default function ActivityBar() {
               aria-label={v.title}
               aria-pressed={active()}
               onClick={() => void executeCommand(v.command, { toggle: true })}
+              onContextMenu={(e) => showViewMenu(e, v)}
+              {...viewDnd(v)}
             >
               {v.icon(20)}
               <Badge count={v.badge?.()} />
@@ -26,6 +28,9 @@ export default function ActivityBar() {
           );
         }}
       </For>
+      <button class="activity-item activity-more" classList={{ active: hiddenActive() }} title="Ещё разделы и настройка панели" aria-label="Ещё разделы" onClick={showMoreMenu}>
+        ⋯
+      </button>
       <div class="activity-spacer" />
       <button
         class="activity-item"

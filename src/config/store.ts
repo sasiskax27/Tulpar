@@ -55,6 +55,9 @@ export interface Settings {
   /** Дизайн 1 (classic) или Дизайн 2 (tulpar: верхняя панель и выезжающий остров) */
   "workbench.style": "classic" | "tulpar";
   "workbench.language": "auto" | "ru" | "en";
+  /** Порядок разделов (перетаскиванием) и какие убраны в меню «⋯» */
+  "workbench.views.order": string[];
+  "workbench.views.hidden": string[];
   /** Панели — отдельные скруглённые острова с промежутками */
   "workbench.islands": boolean;
   /** Где полоса иконок в Дизайне 1 */
@@ -163,6 +166,8 @@ export const defaultSettings: Settings = {
   "workbench.colorTheme": "steppe",
   "workbench.style": "classic",
   "workbench.language": "auto",
+  "workbench.views.order": [],
+  "workbench.views.hidden": ["packages", "databases", "extensions"],
   "workbench.islands": true,
   "workbench.activityBar": "left",
   "workbench.tabs.style": "pills",

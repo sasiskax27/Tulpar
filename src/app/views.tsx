@@ -5,7 +5,8 @@ import { executeCommand } from "../commands/registry";
 import { keybindingFor } from "../keybindings/keybindings";
 import { status as gitStatus } from "../git/git";
 import { bottomTab, bottomVisible, sidebarView, sidebarVisible, type SidebarView } from "./ui";
-import { settings } from "../config/store";
+import { settings, updateSetting } from "../config/store";
+import { showContextMenu } from "./ContextMenu";
 
 const svg = (children: JSX.Element, size = 20) => (
   <svg aria-hidden="true" viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
@@ -56,6 +57,110 @@ export const VIEWS: ViewDef[] = [
   { view: "chat", title: "Чат с ИИ", command: "workbench.action.chat.open", icon: icons.chat },
 ];
 
+// ---------- какие разделы видны и в каком порядке ----------
+
+const DEFAULT_HIDDEN = ["packages", "databases", "extensions"];
+
+function orderedViews(): ViewDef[] {
+  const order = (settings()["workbench.views.order"] ?? []) as string[];
+  const rank = (v: ViewDef) => {
+    const i = order.indexOf(v.view);
+    return i < 0 ? order.length + VIEWS.indexOf(v) : i;
+  };
+  return [...VIEWS].sort((a, b) => rank(a) - rank(b));
+}
+
+const hiddenSet = () => new Set((settings()["workbench.views.hidden"] ?? DEFAULT_HIDDEN) as string[]);
+
+/** Разделы на панели (по порядку пользователя). */
+export function visibleViews(): ViewDef[] {
+  const hidden = hiddenSet();
+  return orderedViews().filter((v) => !hidden.has(v.view));
+}
+
+/** Разделы, убранные в меню «⋯». */
+export function hiddenViews(): ViewDef[] {
+  const hidden = hiddenSet();
+  return orderedViews().filter((v) => hidden.has(v.view));
+}
+
+export function setViewHidden(view: string, hide: boolean) {
+  const set = hiddenSet();
+  if (hide) set.add(view);
+  else set.delete(view);
+  // Хотя бы один раздел остаётся на панели
+  if (VIEWS.every((v) => set.has(v.view))) return;
+  updateSetting("workbench.views.hidden", [...set]);
+}
+
+/** Перетащили раздел from на место раздела to. */
+export function moveView(from: string, to: string) {
+  if (from === to) return;
+  const list = orderedViews().map((v) => v.view as string);
+  const i = list.indexOf(from);
+  if (i < 0) return;
+  list.splice(i, 1);
+  const j = list.indexOf(to);
+  list.splice(j < 0 ? list.length : j, 0, from);
+  updateSetting("workbench.views.order", list);
+}
+
+/** Меню «⋯»: спрятанные разделы и настройка панели. */
+export function showMoreMenu(e: MouseEvent) {
+  const hidden = hiddenViews();
+  const items: Parameters<typeof showContextMenu>[1] = hidden.map((v) => ({ label: v.title, run: () => void executeCommand(v.command) }));
+  if (hidden.length) items.push("-");
+  for (const v of orderedViews()) {
+    const isHidden = hiddenSet().has(v.view);
+    items.push({ label: `${isHidden ? "☐" : "☑"} ${v.title} на панели`, run: () => setViewHidden(v.view, !isHidden) });
+  }
+  items.push("-", {
+    label: "Вернуть разделы как было",
+    run: () => {
+      updateSetting("workbench.views.order", []);
+      updateSetting("workbench.views.hidden", DEFAULT_HIDDEN);
+    },
+  });
+  showContextMenu(e, items);
+}
+
+/** Правый клик по разделу. */
+export function showViewMenu(e: MouseEvent, v: ViewDef) {
+  showContextMenu(e, [
+    { label: `Убрать «${v.title}» в меню ⋯`, run: () => setViewHidden(v.view, true) },
+    { label: "Настроить разделы…", run: () => showMoreMenu(e) },
+  ]);
+}
+
+/** Перетаскивание разделов мышкой: обработчики для кнопки раздела. */
+export function viewDnd(v: ViewDef) {
+  return {
+    draggable: true,
+    onDragStart: (e: DragEvent) => {
+      e.dataTransfer?.setData("application/x-tulpar-view", v.view);
+      if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+    },
+    onDragOver: (e: DragEvent) => {
+      if (e.dataTransfer?.types.includes("application/x-tulpar-view")) {
+        e.preventDefault();
+        (e.currentTarget as HTMLElement).classList.add("drop-target");
+      }
+    },
+    onDragLeave: (e: DragEvent) => (e.currentTarget as HTMLElement).classList.remove("drop-target"),
+    onDrop: (e: DragEvent) => {
+      (e.currentTarget as HTMLElement).classList.remove("drop-target");
+      const from = e.dataTransfer?.getData("application/x-tulpar-view");
+      if (from) {
+        e.preventDefault();
+        moveView(from, v.view);
+      }
+    },
+  };
+}
+
+/** Активен ли один из спрятанных разделов — подсветить «⋯». */
+export const hiddenActive = () => hiddenViews().some((v) => isViewActive(v.view));
+
 export function hint(title: string, command: string) {
   const k = keybindingFor(command);
   return k ? `${title} (${k})` : title;
@@ -69,7 +174,7 @@ export function Badge(props: { count?: number }) {
 export function ViewSwitcher() {
   return (
     <div class="view-switcher" role="tablist" aria-label="Разделы">
-      <For each={VIEWS}>
+      <For each={visibleViews()}>
         {(v) => (
           <button
             class="view-switch"
@@ -78,6 +183,8 @@ export function ViewSwitcher() {
             aria-selected={sidebarView() === v.view}
             title={hint(v.title, v.command)}
             onClick={() => void executeCommand(v.command)}
+            onContextMenu={(e) => showViewMenu(e, v)}
+            {...viewDnd(v)}
           >
             {v.icon(16)}
             <span>{v.title}</span>
@@ -85,6 +192,9 @@ export function ViewSwitcher() {
           </button>
         )}
       </For>
+      <button class="view-switch view-more" classList={{ active: hiddenActive() }} title="Ещё разделы и настройка панели" aria-label="Ещё разделы" onClick={showMoreMenu}>
+        <span class="view-more-dots">⋯</span>
+      </button>
     </div>
   );
 }

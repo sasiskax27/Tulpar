@@ -1,6 +1,10 @@
 // Generated: Russian UI text -> English. Keys are exact Russian strings;
 // pattern keys use {0}, {1}… for inserted values.
 export const EXACT: Record<string, string> = {
+ "Ещё разделы и настройка панели": "More sections and panel setup",
+ "Ещё разделы": "More sections",
+ "Вернуть разделы как было": "Reset sections",
+ "Настроить разделы…": "Customize sections…",
  ". Строка подключения хранится только на этом компьютере и не попадает в профиль настроек.": ". The connection string stays on this computer and is not included in the settings profile.",
  "Базы данных": "Databases",
  "Подключение удалено": "Connection removed",
@@ -1274,6 +1278,9 @@ export const EXACT: Record<string, string> = {
 };
 
 export const PATTERNS: Record<string, string> = {
+ "☐ {0} на панели": "☐ {0} on the bar",
+ "☑ {0} на панели": "☑ {0} on the bar",
+ "Убрать «{0}» в меню ⋯": "Move “{0}” to the ⋯ menu",
  "Подключаюсь к {0}…": "Connecting to {0}…",
  "Подключено ✓ · объектов: {0}": "Connected ✓ · objects: {0}",
  "{0} · запрос": "{0} · query",

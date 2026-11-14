@@ -14,9 +14,26 @@ export type SideView =
   | { kind: "learn"; path: string }
   | { kind: "map"; path: string }
   | { kind: "variants"; path: string }
+  | { kind: "tool"; path: string; tool: ToolId }
   | { kind: "db"; path: string; connId: string; schema?: string; table?: string }
   | { kind: "web"; path: string; url: string }
   | { kind: "text"; path: string; title: string; text: string; language: string };
+
+export type ToolId = "http" | "regex" | "todo" | "history" | "stats" | "toolbox";
+
+const TOOL_TITLES: Record<ToolId, string> = {
+  http: "🌐 Запросы",
+  regex: "🔣 Регулярки",
+  todo: "📋 Доска TODO",
+  history: "⏳ Машина времени",
+  stats: "📊 Моя статистика",
+  toolbox: "🧰 Инструменты",
+};
+
+/** Встроенный инструмент справа: HTTP-клиент, регулярки, TODO и т. д. */
+export function showTool(tool: ToolId) {
+  setSide({ kind: "tool", path: TOOL_TITLES[tool], tool });
+}
 
 const [side, setSide] = createSignal<SideView | null>(null);
 export { side, setSide };

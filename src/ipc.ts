@@ -196,6 +196,8 @@ export const core = {
   backupPut: (name: string, data: string) => invoke<void>("backup_put", { name, data }),
   backupDelete: (name: string) => invoke<void>("backup_delete", { name }),
   backupList: () => invoke<[string, string][]>("backup_list"),
+  httpRequest: (request: { method: string; url: string; headers: [string, string][]; body: string | null; timeoutSecs?: number }) =>
+    invoke<HttpResponse>("http_request", { request }),
   configEnsure: (name: ConfigName) => invoke<string>("config_ensure", { name }),
 };
 
@@ -286,4 +288,14 @@ export interface DbObject {
   schema: string;
   name: string;
   kind: "table" | "view" | "collection";
+}
+
+export interface HttpResponse {
+  status: number;
+  statusText: string;
+  headers: [string, string][];
+  body: string;
+  millis: number;
+  size: number;
+  truncated: boolean;
 }

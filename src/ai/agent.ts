@@ -142,6 +142,9 @@ async function readText(path: string): Promise<string | null> {
 
 async function writeText(path: string, text: string) {
   const model = modelFor(path);
+  // Копия «до правки ИИ» — в Машину времени
+  const old = model ? model.getValue() : await core.readFile(path).catch(() => null);
+  if (old) void import("../tools/history").then((h) => h.addSnapshot(path, old, "ai"));
   if (model && tabs.some((t) => t.path === path)) {
     // Через модель — правку можно отменить Ctrl+Z, вкладка не теряет состояние
     model.pushEditOperations([], [{ range: model.getFullModelRange(), text }], () => null);

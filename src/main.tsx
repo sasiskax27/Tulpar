@@ -33,6 +33,7 @@ async function start() {
   render(() => <App />, document.getElementById("root")!);
 
   await Promise.all([initConfig(), initWorkspaceEvents(), initExtensions()]);
+  void import("./tools/init").then((m) => m.initTools());
   // Язык из настроек; при смене — перезагрузить окно, чтобы перевести всё сразу
   createRoot(() =>
     createEffect(

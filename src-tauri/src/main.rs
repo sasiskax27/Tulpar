@@ -8,6 +8,7 @@ mod backup;
 mod config;
 mod ext;
 mod git;
+mod http;
 mod lsp;
 mod media;
 mod ollama;
@@ -39,6 +40,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             workspace::workspace_open,
+            http::http_request,
             workspace::project_create,
             workspace::user_file_write,
             workspace::user_file_read,

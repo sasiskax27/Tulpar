@@ -194,6 +194,14 @@ export function registerBuiltinCommands() {
   });
   reg({ id: "tulpar.learn", category: "Справка", title: "Учебный режим: учить программирование", run: () => void import("../editor/side").then((m) => m.showLearn()) });
   reg({ id: "tulpar.projectMap", category: "Вид", title: "Карта проекта", run: () => void import("../editor/side").then((m) => m.showProjectMap()) });
+  const tool = (id: string, toolId: string, title: string, category = "Инструменты") =>
+    reg({ id, category, title, run: () => void import("../editor/side").then((m) => m.showTool(toolId as never)) });
+  tool("tulpar.http", "http", "HTTP-клиент: отправить запрос к API");
+  tool("tulpar.regex", "regex", "Лаборатория регулярных выражений");
+  tool("tulpar.todo", "todo", "Доска TODO проекта");
+  tool("tulpar.history", "history", "Машина времени: прошлые версии файла");
+  tool("tulpar.stats", "stats", "Моя статистика и фокус-таймер");
+  tool("tulpar.toolbox", "toolbox", "Инструменты: JSON → TypeScript, Base64, JWT, хэши, цвета…");
   reg({ id: "tulpar.variants", category: "ИИ", title: "ИИ: Три варианта…", run: () => void import("../variants/variants").then((m) => m.makeVariants()) });
   reg({
     id: "tulpar.phone",

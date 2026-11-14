@@ -198,6 +198,9 @@ export default function Welcome() {
             {action("Чат с ИИ", "workbench.action.chat.open", "✦")}
             {action("Библиотеки", "workbench.view.packages", "📦")}
             {action("Галерея тем", "tulpar.themes.gallery", "🎨")}
+            {action("HTTP-клиент", "tulpar.http", "🌐")}
+            {action("Доска TODO", "tulpar.todo", "📋")}
+            {action("Моя статистика", "tulpar.stats", "📊")}
             {action("Настройки", "workbench.action.openSettings", "⚙")}
           </section>
         </div>

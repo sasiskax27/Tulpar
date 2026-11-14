@@ -11,6 +11,7 @@ import { executeCommand } from "../commands/registry";
 import { keybindingFor } from "../keybindings/keybindings";
 import { setEditorInstance } from "./instance";
 import { registerAiActions } from "../ai/ai";
+import { registerFixActions } from "../problems/problems";
 import { compareReview, keepAll, keepReview, reviewFor, reviews, undoReview } from "../ai/review";
 
 export default function EditorGroup() {
@@ -45,6 +46,7 @@ export default function EditorGroup() {
     );
     setEditorInstance(editor);
     registerAiActions(editor);
+    registerFixActions(editor);
     onCleanup(() => {
       setEditorInstance(undefined);
       diffEditor?.dispose();

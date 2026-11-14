@@ -7,6 +7,7 @@ import { activeLayout, settings } from "../config/store";
 import { baseName } from "../ipc";
 import { executeCommand } from "../commands/registry";
 import { status as gitStatus, busy as gitBusy } from "../git/git";
+import { counts, showProblems } from "../problems/problems";
 
 export default function StatusBar() {
   const activeTab = () => tabs.find((t) => t.path === activePath());
@@ -26,6 +27,14 @@ export default function StatusBar() {
             </Show>
           </button>
         </Show>
+        <button
+          class="status-item"
+          classList={{ "has-errors": counts().errors > 0 }}
+          title="Проблемы (Ctrl+Shift+M)"
+          onClick={showProblems}
+        >
+          ⊗ {counts().errors}  ⚠ {counts().warnings}
+        </button>
         <Show when={gitBusy()}>
           <span class="status-item">{gitBusy()}…</span>
         </Show>

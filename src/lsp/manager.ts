@@ -14,6 +14,7 @@ import { LspClient } from "./client";
 import { toRange, toSeverity } from "./convert";
 import { ensureProviders } from "./bridge";
 import { runInTerminal } from "../terminal/sessions";
+import { clearLspDiagnostics, setLspDiagnostics } from "../problems/problems";
 
 const MARKER_OWNER = "lsp";
 const CHANGE_DELAY = 150;
@@ -134,6 +135,7 @@ async function startServer(cfg: ServerConfig): Promise<LspClient | null> {
   byServerId.set(id, client);
 
   client.onNotification("textDocument/publishDiagnostics", (p) => {
+    setLspDiagnostics(p.uri, p.diagnostics ?? []);
     const model = monaco.editor.getModel(monaco.Uri.parse(p.uri));
     if (!model) return;
     monaco.editor.setModelMarkers(
@@ -272,6 +274,7 @@ async function stopAll() {
   }
   docs.clear();
   for (const model of monaco.editor.getModels()) monaco.editor.setModelMarkers(model, MARKER_OWNER, []);
+  clearLspDiagnostics();
   await Promise.all(
     all.map(async ([id, client]) => {
       try {

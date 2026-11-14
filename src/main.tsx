@@ -11,6 +11,7 @@ import { initTerminals } from "./terminal/sessions";
 import { initFileDrop } from "./explorer/dnd";
 import { initGit, refresh as refreshGit } from "./git/git";
 import { initGitGutter } from "./git/gutter";
+import { initProblems } from "./problems/problems";
 import { registerInlineCompletions } from "./ai/inline";
 import { initBackups } from "./editor/backup";
 import { root } from "./app/workspace";
@@ -27,6 +28,7 @@ async function start() {
   await initFileDrop();
   await initGit();
   initGitGutter();
+  initProblems();
   registerInlineCompletions();
   initBackups();
   // Другая папка — свой репозиторий

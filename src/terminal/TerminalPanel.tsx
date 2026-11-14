@@ -8,12 +8,14 @@ import { bottomTab, setBottomTab, setBottomVisible } from "../app/ui";
 import { settings } from "../config/store";
 import ChatPanel, { focusChat, MoveChatButton, NewChatButton } from "../ai/ChatPanel";
 import { streaming } from "../ai/chat";
+import ProblemsPanel from "../problems/ProblemsPanel";
+import { counts } from "../problems/problems";
 import { focusEditor } from "../editor/instance";
 
 export default function TerminalPanel() {
   let host!: HTMLDivElement;
   const chatHere = () => settings()["tulpar.chat.location"] !== "sidebar";
-  const tab = () => (chatHere() ? bottomTab() : "terminal");
+  const tab = () => (bottomTab() === "chat" && !chatHere() ? "terminal" : bottomTab());
 
   onMount(() => {
     if (sessions().length === 0) void createSession();
@@ -59,11 +61,17 @@ export default function TerminalPanel() {
     <div class="terminal-panel">
       <div class="terminal-header">
         <div class="bottom-left">
-          <Show when={chatHere()}>
-            <div class="bottom-switch" role="tablist">
-              <button class="bottom-switch-btn" classList={{ active: tab() === "terminal" }} role="tab" onClick={() => setBottomTab("terminal")}>
-                Терминал
-              </button>
+          <div class="bottom-switch" role="tablist">
+            <button class="bottom-switch-btn" classList={{ active: tab() === "terminal" }} role="tab" onClick={() => setBottomTab("terminal")}>
+              Терминал
+            </button>
+            <button class="bottom-switch-btn" classList={{ active: tab() === "problems" }} role="tab" onClick={() => setBottomTab("problems")}>
+              Проблемы
+              <Show when={counts().errors + counts().warnings}>
+                <span class="bottom-badge" classList={{ error: counts().errors > 0 }}>{counts().errors + counts().warnings}</span>
+              </Show>
+            </button>
+            <Show when={chatHere()}>
               <button
                 class="bottom-switch-btn"
                 classList={{ active: tab() === "chat", live: !!streaming() }}
@@ -75,8 +83,8 @@ export default function TerminalPanel() {
               >
                 ✦ Чат с ИИ
               </button>
-            </div>
-          </Show>
+            </Show>
+          </div>
           <Show when={tab() === "terminal"}>
             <div class="terminal-tabs" role="tablist">
               <For each={sessions()}>
@@ -95,15 +103,11 @@ export default function TerminalPanel() {
           </Show>
         </div>
         <div class="terminal-actions">
-          <Show
-            when={tab() === "terminal"}
-            fallback={
-              <>
-                <MoveChatButton />
-                <NewChatButton />
-              </>
-            }
-          >
+          <Show when={tab() === "chat"}>
+            <MoveChatButton />
+            <NewChatButton />
+          </Show>
+          <Show when={tab() === "terminal"}>
             <button title="Новый терминал (Ctrl+Shift+`)" onClick={() => void createSession()}>
               +
             </button>
@@ -121,6 +125,9 @@ export default function TerminalPanel() {
       <div ref={host} class="terminal-host" classList={{ hidden: tab() !== "terminal" }} />
       <Show when={tab() === "chat"}>
         <ChatPanel embedded />
+      </Show>
+      <Show when={tab() === "problems"}>
+        <ProblemsPanel />
       </Show>
     </div>
   );

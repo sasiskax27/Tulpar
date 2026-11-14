@@ -17,6 +17,7 @@ import { restartLanguageServers } from "../lsp/manager";
 import { toggleTerminal, newTerminal, killSession } from "../terminal/sessions";
 import { focusEditor } from "../editor/instance";
 import { chooseBackground, clearBackground, usePhotoTheme } from "./background";
+import { fixWithAi, problems, showProblems } from "../problems/problems";
 import { cancelAi, runAiTask, tasks } from "../ai/ai";
 
 async function openConfig(name: ConfigName) {
@@ -182,6 +183,16 @@ export function registerBuiltinCommands() {
   reg({ id: "editor.action.fontZoomReset", category: "Вид", title: "Сбросить размер шрифта", run: () => updateSetting("editor.fontSize", defaultSettings["editor.fontSize"]) });
 
   reg({ id: "tulpar.background.choose", category: "Вид", title: "Выбрать фоновую картинку…", run: () => chooseBackground() });
+  reg({
+    id: "workbench.actions.view.problems",
+    category: "Вид",
+    title: "Проблемы",
+    run: () => {
+      if (bottomVisible() && bottomTab() === "problems") setBottomVisible(false);
+      else showProblems();
+    },
+  });
+  reg({ id: "tulpar.problems.fixAll", category: "ИИ", title: "Исправить все проблемы с ИИ", run: () => fixWithAi(problems()) });
   reg({ id: "tulpar.theme.fromPhoto", category: "Вид", title: "Тема из фоновой картинки", run: () => usePhotoTheme() });
   reg({ id: "tulpar.background.clear", category: "Вид", title: "Убрать фоновую картинку", run: () => clearBackground() });
 

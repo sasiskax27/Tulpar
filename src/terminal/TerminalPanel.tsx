@@ -9,6 +9,8 @@ import { settings } from "../config/store";
 import ChatPanel, { focusChat, HistoryButton, MoveChatButton, NewChatButton, OpenCodeButton } from "../ai/ChatPanel";
 import { streaming } from "../ai/chat";
 import ProblemsPanel from "../problems/ProblemsPanel";
+import DebugPanel from "../debug/DebugPanel";
+import { status as debugStatus } from "../debug/debug";
 import { counts } from "../problems/problems";
 import { focusEditor } from "../editor/instance";
 
@@ -71,6 +73,9 @@ export default function TerminalPanel() {
                 <span class="bottom-badge" classList={{ error: counts().errors > 0 }}>{counts().errors + counts().warnings}</span>
               </Show>
             </button>
+            <button class="bottom-switch-btn" classList={{ active: tab() === "debug", live: debugStatus() === "stopped" }} role="tab" onClick={() => setBottomTab("debug")}>
+              Отладка
+            </button>
             <Show when={chatHere()}>
               <button
                 class="bottom-switch-btn"
@@ -130,6 +135,9 @@ export default function TerminalPanel() {
       </Show>
       <Show when={tab() === "problems"}>
         <ProblemsPanel />
+      </Show>
+      <Show when={tab() === "debug"}>
+        <DebugPanel />
       </Show>
     </div>
   );

@@ -11,6 +11,7 @@ import { executeCommand } from "../commands/registry";
 import { keybindingFor } from "../keybindings/keybindings";
 import { setEditorInstance } from "./instance";
 import { registerAiActions } from "../ai/ai";
+import { breakpointsVersion, breakpointDecorationOptions, breakpointLines, registerDebugActions } from "../debug/debug";
 import SidePane from "./SidePane";
 import Welcome from "./Welcome";
 import { currentPath, revealSymbol } from "./outline";
@@ -60,11 +61,23 @@ export default function EditorGroup() {
     setEditorInstance(editor);
     registerAiActions(editor);
     registerFixActions(editor);
+    registerDebugActions(editor);
     onCleanup(() => {
       setEditorInstance(undefined);
       diffEditor?.dispose();
       editor?.dispose();
     });
+  });
+
+  let bpDecos: monaco.editor.IEditorDecorationsCollection | undefined;
+
+  // Точки останова в желобе: перерисовка при смене файла и правках списка
+  createEffect(() => {
+    const path = activePath();
+    breakpointsVersion();
+    if (!editor) return;
+    bpDecos ??= editor.createDecorationsCollection();
+    bpDecos.set(breakpointDecorationOptions(path ? breakpointLines(path) : []));
   });
 
   // Настройки из settings.json применяются на лету

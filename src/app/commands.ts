@@ -1,7 +1,7 @@
 // Встроенные команды. id совпадают с VS Code, чтобы keybindings.json переносился один в один.
 import { registerCommand } from "../commands/registry";
 import { showPalette } from "../palette/Palette";
-import { saveFile, saveAll, closeTab, cycleTab, openFile } from "../editor/tabs";
+import { saveFile, saveAll, closeTab, cycleTab, openFile, activePath } from "../editor/tabs";
 import { openFolder, root } from "./workspace";
 import { bottomTab, bottomVisible, setBottomTab, setBottomVisible, setSidebarVisible, setSettingsVisible, setSidebarView, sidebarView, sidebarVisible, type SidebarView } from "./ui";
 import { focusSearch } from "../search/SearchPanel";
@@ -19,6 +19,19 @@ import { focusEditor } from "../editor/instance";
 import { chooseBackground, clearBackground, usePhotoTheme } from "./background";
 import { fixWithAi, problems, showProblems } from "../problems/problems";
 import { cancelAi, runAiTask, tasks } from "../ai/ai";
+import { cursor } from "../editor/tabs";
+import { toggleBreakpoint, startDebugging, stopDebugging, continueDebugging, stepOver, stepInto, stepOut } from "../debug/debug";
+
+/** Точка останова на строке, где сейчас курсор. */
+function toggleBreakpointOnActiveLine() {
+  const file = activePath();
+  const pos = cursor();
+  if (!file || !pos.line) {
+    notify("Откройте файл и поставьте курсор на нужную строку");
+    return;
+  }
+  toggleBreakpoint(file, pos.line);
+}
 
 /**
  * OpenCode — агент для кода в терминале. Его бесплатные облачные модели работают
@@ -252,6 +265,15 @@ export function registerBuiltinCommands() {
   reg({ id: "tulpar.update.check", category: "Справка", title: "Проверить обновления", run: () => import("./update").then((m) => m.checkForUpdates(true)) });
   reg({ id: "tulpar.theme.fromPhoto", category: "Вид", title: "Тема из фоновой картинки", run: () => usePhotoTheme() });
   reg({ id: "tulpar.background.clear", category: "Вид", title: "Убрать фоновую картинку", run: () => clearBackground() });
+
+  // Отладка: запуск, шаги и останов
+  reg({ id: "workbench.action.debug.start", category: "Отладка", title: "Запустить отладку", run: () => void startDebugging() });
+  reg({ id: "workbench.action.debug.stop", category: "Отладка", title: "Остановить отладку", run: () => void stopDebugging() });
+  reg({ id: "workbench.action.debug.continue", category: "Отладка", title: "Продолжить выполнение", run: () => void continueDebugging() });
+  reg({ id: "workbench.action.debug.stepOver", category: "Отладка", title: "Шаг через строку", run: () => void stepOver() });
+  reg({ id: "workbench.action.debug.stepInto", category: "Отладка", title: "Шаг в функцию", run: () => void stepInto() });
+  reg({ id: "workbench.action.debug.stepOut", category: "Отладка", title: "Шаг из функции", run: () => void stepOut() });
+  reg({ id: "editor.debug.action.toggleBreakpoint", category: "Отладка", title: "Точка останова на этой строке", run: toggleBreakpointOnActiveLine });
 
   // Действия ИИ: те же, что в меню по правому клику
   for (const task of tasks) {

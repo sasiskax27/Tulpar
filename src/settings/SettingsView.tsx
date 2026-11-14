@@ -1,10 +1,17 @@
 // Окно настроек (Ctrl+,). Каждое изменение применяется сразу и записывается
 // в settings.json — тот же файл можно править и руками.
-import { createSignal, For, onCleanup, onMount, Show, type JSX } from "solid-js";
+import { createEffect, createSignal, For, onCleanup, onMount, Show, type JSX } from "solid-js";
 import { ask } from "../i18n/dialog";
-import { settings, updateSetting, type Settings } from "../config/store";
+import {
+  defaultSettings,
+  settings,
+  updateUserKeybindings,
+  updateSetting,
+  userKeybindings,
+  type Settings,
+} from "../config/store";
 import { settingsVisible, setSettingsVisible } from "../app/ui";
-import { executeCommand } from "../commands/registry";
+import { allCommands, executeCommand, label } from "../commands/registry";
 import { chooseBackground, clearBackground, usePhotoTheme } from "../app/background";
 import { providers } from "../ai/ai";
 import { focusEditor } from "../editor/instance";
@@ -18,6 +25,8 @@ import { claudeModels, cloudCatalog, openaiModels, opencodeModels } from "../ai/
 import { installed, isInstalled } from "../ai/ollama";
 import { allThemes } from "../app/themes";
 import CustomActions from "./CustomActions";
+import { exportProfile, importProfile } from "./profile";
+import { formatStrokes, keybindingList, normalizeStroke, strokeFromEvent } from "../keybindings/keybindings";
 
 type Text = string | (() => string);
 
@@ -30,13 +39,20 @@ type FieldDef = { key: keyof Settings & string; label: string; hint?: Text } & (
   | { type: "toggle" }
 );
 
+/** Группы разделов: так настройки разложены по смыслу — от ИИ до системы. */
+type GroupId = "ai" | "code" | "look" | "tools" | "system";
+
 interface Section {
+  id: string;
+  group: GroupId;
   title: string;
   intro?: Text;
   fields: FieldDef[];
-  extra?: () => JSX.Element;
+  extra?: (query?: string) => JSX.Element;
   /** Показать extra после полей, а не перед ними */
   after?: boolean;
+  /** Раздел ищется и внутри extra (например, список сочетаний клавиш) */
+  searchInExtra?: boolean;
 }
 
 /** Строка «GitHub Copilot»: статус и вход. */
@@ -180,8 +196,181 @@ const fileButton = (label: string, command: string) => (
   </button>
 );
 
-const sections: Section[] = [
+/** Иконка раздела: один стиль на всё окно настроек. */
+const glyph = (children: JSX.Element, size = 16) => (
+  <svg
+    aria-hidden="true"
+    viewBox="0 0 24 24"
+    width={size}
+    height={size}
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    {children}
+  </svg>
+);
+
+const groups: { id: GroupId; title: string; icon: (size?: number) => JSX.Element }[] = [
   {
+    id: "ai",
+    title: "ИИ",
+    icon: (s) => glyph(<><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" /><path d="M19 15.5l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z" /></>, s),
+  },
+  {
+    id: "code",
+    title: "Код",
+    icon: (s) => glyph(<><path d="M9 7l-5 5 5 5M15 7l5 5-5 5" /></>, s),
+  },
+  {
+    id: "look",
+    title: "Оформление",
+    icon: (s) => glyph(<><path d="M12 21a9 9 0 1 1 9-9c0 1.7-1.3 3-3 3h-1.6a2.4 2.4 0 0 0-1.7 4.1A2 2 0 0 1 12 21z" /><circle cx="8.2" cy="10.2" r="1.1" /><circle cx="12" cy="7.6" r="1.1" /><circle cx="15.8" cy="10.2" r="1.1" /></>, s),
+  },
+  {
+    id: "tools",
+    title: "Инструменты",
+    icon: (s) => glyph(<><path d="M14.7 6.3a3.7 3.7 0 0 0 4.9 4.9l-8.5 8.5a2 2 0 0 1-2.9 0l-2-2a2 2 0 0 1 0-2.9z" /><path d="M14.7 6.3l3-3 3 3-3 3" /></>, s),
+  },
+  {
+    id: "system",
+    title: "Система",
+    icon: (s) => glyph(<><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></>, s),
+  },
+];
+
+/** Порядок разделов внутри окна: ИИ → код → оформление → инструменты → система. */
+const SECTION_ORDER = ["ai", "ai-local", "ai-actions", "editor", "terminal", "appearance", "tools", "keys", "system"];
+
+/** Значения считаем одинаковыми, если совпадают как примитивы или как JSON. */
+function sameValue(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch {
+    return false;
+  }
+}
+
+/** Список горячих клавиш: команда и её сочетание. Клик по сочетанию — задать новое. */
+function Keybindings(props: { query: string }) {
+  const [listening, setListening] = createSignal<string | null>(null);
+  const titles = () => new Map(allCommands().map((c) => [c.id, label(c)]));
+  /** Нормализованные сочетания, назначенные пользователем, — они помечаются как «своя». */
+  const custom = () =>
+    new Set(
+      userKeybindings()
+        .filter((b) => !b.command.startsWith("-"))
+        .map((b) => b.key.split(" ").filter(Boolean).map(normalizeStroke).join(" ")),
+    );
+
+  const rows = () => {
+    const q = props.query.trim().toLowerCase();
+    return keybindingList()
+      .map((b) => ({ command: b.command, keys: formatStrokes(b.strokes), custom: custom().has(b.strokes.join(" ")) }))
+      .map((r) => ({ ...r, title: titles().get(r.command) ?? r.command }))
+      .filter((r) => !q || r.title.toLowerCase().includes(q) || r.keys.toLowerCase().includes(q) || r.command.toLowerCase().includes(q))
+      .sort((a, b) => a.title.localeCompare(b.title, "ru"));
+  };
+
+  /** Назначить команде новое сочетание (или null — вернуть стандартное). */
+  const assign = async (command: string, strokes: string[] | null) => {
+    const name = titles().get(command) ?? command;
+    const old = keybindingList().filter((b) => b.command === command);
+    // Пользовательские записи для команды пересобираем целиком.
+    let next = userKeybindings().filter((b) => b.command !== command && b.command !== "-" + command);
+    if (strokes && strokes.length) {
+      const key = strokes.join(" ");
+      const taken = keybindingList().find((b) => b.command !== command && b.strokes.join(" ") === key);
+      if (taken) {
+        notify(`Сочетание ${formatStrokes(strokes)} было у «${titles().get(taken.command) ?? taken.command}» — теперь оно у «${name}»`);
+      }
+      next = next.filter((b) => b.key.split(" ").filter(Boolean).map(normalizeStroke).join(" ") !== key);
+      next.push({ key, command });
+      // Стандартное сочетание на старых клавишах гасим отрицательной записью.
+      for (const o of old) {
+        const oldKey = o.strokes.join(" ");
+        if (oldKey && oldKey !== key) next.push({ key: oldKey, command: "-" + command });
+      }
+      await updateUserKeybindings(next);
+      notify(`«${name}»: ${formatStrokes(strokes)}`);
+    } else {
+      await updateUserKeybindings(next);
+      notify(`«${name}»: сочетание возвращено к стандартному`);
+    }
+  };
+
+  // Пока команда ждёт новое сочетание, перехватываем клавиатуру окна.
+  createEffect(() => {
+    const command = listening();
+    if (!command) return;
+    const onKey = (e: KeyboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === "Escape") {
+        setListening(null);
+        return;
+      }
+      const stroke = strokeFromEvent(e);
+      if (!stroke) return;
+      setListening(null);
+      void assign(command, [stroke]);
+    };
+    window.addEventListener("keydown", onKey, true);
+    onCleanup(() => window.removeEventListener("keydown", onKey, true));
+  });
+
+  return (
+    <div class="settings-keys">
+      <For each={rows()}>
+        {(r) => (
+          <div class="settings-key-row" classList={{ listening: listening() === r.command }}>
+            <span class="settings-key-title" title={r.command}>
+              {r.title}
+              <Show when={r.custom}>
+                <em class="settings-key-tag">своя</em>
+              </Show>
+            </span>
+            <span class="settings-key-side">
+              <Show
+                when={listening() === r.command}
+                fallback={
+                  <button
+                    class="settings-kbd-btn"
+                    title="Нажмите, чтобы задать новое сочетание"
+                    onClick={() => setListening(r.command)}
+                  >
+                    <kbd>{r.keys || "не задано"}</kbd>
+                  </button>
+                }
+              >
+                <span class="settings-kbd-wait">
+                  Нажмите сочетание…
+                  <em>Esc — отмена</em>
+                </span>
+              </Show>
+              <Show when={r.custom}>
+                <button class="settings-kbd-reset" title="Вернуть стандартное сочетание" onClick={() => void assign(r.command, null)}>
+                  ×
+                </button>
+              </Show>
+            </span>
+          </div>
+        )}
+      </For>
+      <p class="settings-keys-hint">
+        Свои сочетания хранятся в keybindings.json. Аккорды из двух нажатий подряд и отключение стандартных («-команда») удобнее править в файле.
+      </p>
+    </div>
+  );
+}
+
+const sectionList: Section[] = [
+  {
+    id: "editor",
+    group: "code",
     title: "Редактор",
     fields: [
       { key: "editor.fontSize", label: "Размер шрифта", type: "number", min: 8, max: 40 },
@@ -234,6 +423,28 @@ const sections: Section[] = [
         type: "select",
         options: [["none", "Нет"], ["selection", "В выделении"], ["boundary", "По краям слов"], ["all", "Все"]],
       },
+      {
+        key: "editor.renderLineHighlight",
+        label: "Подсветка строки с курсором",
+        type: "select",
+        options: [["line", "Вся строка"], ["gutter", "Только номера строк"], ["all", "Строка и номера"], ["none", "Не подсвечивать"]],
+      },
+      {
+        key: "editor.occurrencesHighlight",
+        label: "Подсвечивать другие вхождения",
+        hint: "Все копии слова под курсором в открытом файле.",
+        type: "toggle",
+      },
+      {
+        key: "editor.cursorSurroundingLines",
+        label: "Строк видно над и под курсором",
+        hint: "0 — обычная прокрутка. 3–5 удобно, чтобы курсор не прилипал к краю окна.",
+        type: "range",
+        min: 0,
+        max: 10,
+        step: 1,
+        show: (v) => (v ? `${v}` : "нет"),
+      },
       { key: "editor.rulers", label: "Линии-ограничители", hint: "Номера столбцов через запятую, например 80, 120. Пусто — без линий.", type: "text", placeholder: "80, 120" },
       {
         key: "editor.autoClosingBrackets",
@@ -267,6 +478,8 @@ const sections: Section[] = [
     ],
   },
   {
+    id: "appearance",
+    group: "look",
     title: "Внешний вид",
     fields: [
       {
@@ -382,6 +595,8 @@ const sections: Section[] = [
     },
   },
   {
+    id: "terminal",
+    group: "code",
     title: "Терминал",
     fields: [
       {
@@ -403,12 +618,16 @@ const sections: Section[] = [
     ],
   },
   {
+    id: "tools",
+    group: "tools",
     title: "SDK и инструменты",
     intro: "Языки и сборщики для запуска проектов: если чего-то нет — установка одной кнопкой (во вкладке терминала).",
     fields: [],
     extra: () => <Toolchains />,
   },
   {
+    id: "ai",
+    group: "ai",
     title: "ИИ",
     intro:
       "Выделите код, нажмите правую кнопку мыши и выберите действие «ИИ: …». Код отправляется только на сервер, указанный здесь, и только по вашей команде.",
@@ -538,6 +757,8 @@ const sections: Section[] = [
     ],
   },
   {
+    id: "ai-actions",
+    group: "ai",
     title: "Свои действия ИИ",
     intro: "Каждое действие появится в меню по правому клику и в палитре команд как «ИИ: название». Ответ заменит выделенный код или откроется в окне.",
     fields: [],
@@ -545,6 +766,8 @@ const sections: Section[] = [
     after: true,
   },
   {
+    id: "ai-local",
+    group: "ai",
     title: "Локальный ИИ",
     intro:
       "Модель работает на вашем компьютере: бесплатно, без интернета, код никуда не отправляется. Чем больше модель, тем она умнее и тем больше ей нужно памяти.",
@@ -553,10 +776,39 @@ const sections: Section[] = [
     after: true,
   },
   {
-    title: "Файлы настроек и прочее",
+    id: "keys",
+    group: "system",
+    title: "Горячие клавиши",
+    intro: "Все действующие сочетания. Свои можно добавить в keybindings.json — кнопка «Клавиши» в разделе «Файлы и система».",
+    fields: [],
+    extra: (query) => <Keybindings query={query ?? ""} />,
+    after: true,
+    searchInExtra: true,
+  },
+  {
+    id: "system",
+    group: "system",
+    title: "Файлы и система",
     fields: [],
     extra: () => (
       <>
+        <div class="settings-row">
+          <div class="settings-label">
+            <span>Профиль настроек</span>
+            <small>
+              Один файл со всем своим: настройки, сочетания клавиш, сниппеты, раскладки и свои действия ИИ. Ключи API и путь к фону в файл не
+              попадают.
+            </small>
+          </div>
+          <div class="settings-control settings-buttons">
+            <button class="button" onClick={() => void exportProfile()}>
+              Экспорт…
+            </button>
+            <button class="button-quiet" onClick={() => void importProfile()}>
+              Импорт…
+            </button>
+          </div>
+        </div>
         <div class="settings-row">
           <div class="settings-label">
             <span>Настройки файлами</span>
@@ -592,6 +844,9 @@ const sections: Section[] = [
     ),
   }
 ];
+
+/** Разделы в порядке групп: ИИ, код, оформление, инструменты, система. */
+const sections = [...sectionList].sort((a, b) => SECTION_ORDER.indexOf(a.id) - SECTION_ORDER.indexOf(b.id));
 
 function Control(props: { def: FieldDef }) {
   const def = props.def;
@@ -681,16 +936,47 @@ function matches(def: FieldDef, q: string): boolean {
 
 function Panel() {
   const [query, setQuery] = createSignal("");
+  const [onlyChanged, setOnlyChanged] = createSignal(false);
+  const [active, setActive] = createSignal("ai");
+
   const q = () => query().trim().toLowerCase();
+  const filtering = () => Boolean(q()) || onlyChanged();
+
+  const isChanged = (def: FieldDef) => !sameValue(settings()[def.key], defaultSettings[def.key]);
+  const matchTitle = (section: Section) => Boolean(q()) && section.title.toLowerCase().includes(q());
   const visibleFields = (section: Section) =>
-    !q() || section.title.toLowerCase().includes(q()) ? section.fields : section.fields.filter((f) => matches(f, q()));
+    matchTitle(section)
+      ? section.fields.filter((f) => !onlyChanged() || isChanged(f))
+      : section.fields.filter((f) => (!onlyChanged() || isChanged(f)) && (!q() || matches(f, q())));
   const sectionVisible = (section: Section) =>
-    !q() || section.title.toLowerCase().includes(q()) || visibleFields(section).length > 0;
-  let body: HTMLDivElement | undefined;
+    filtering()
+      ? matchTitle(section) || visibleFields(section).length > 0 || Boolean(q() && section.searchInExtra)
+      : section.id === active();
+  /** В списке слева при обычном просмотре видны все разделы, при поиске — только найденные. */
+  const navVisible = (section: Section) => (!filtering() ? true : sectionVisible(section));
+  const changedIn = (section: Section) => section.fields.filter(isChanged).length;
+  const changedTotal = () => sections.reduce((n, section) => n + changedIn(section), 0);
+  const found = () => sections.reduce((n, section) => n + visibleFields(section).length, 0);
+  const current = () => sections.find((section) => section.id === active()) ?? sections[0];
+
+  let pane: HTMLDivElement | undefined;
   const close = () => {
     setSettingsVisible(false);
     focusEditor();
   };
+  const open = (id: string) => {
+    setActive(id);
+    setQuery("");
+    setOnlyChanged(false);
+    pane?.scrollTo({ top: 0 });
+  };
+  const resetSection = (section: Section) => {
+    const dirty = section.fields.filter(isChanged);
+    if (!dirty.length) return;
+    for (const def of dirty) updateSetting(def.key, defaultSettings[def.key] as Settings[typeof def.key]);
+    notify(`«${section.title}»: возвращены стандартные значения (${dirty.length})`);
+  };
+
   onMount(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
@@ -699,18 +985,80 @@ function Panel() {
     onCleanup(() => window.removeEventListener("keydown", onKey));
   });
 
+  const row = (def: FieldDef) => (
+    <div class="settings-row" classList={{ changed: isChanged(def) }}>
+      <div class="settings-label">
+        <span class="settings-name">
+          {def.label}
+          <Show when={isChanged(def)}>
+            <span class="settings-dot" title="Отличается от стандартного значения" />
+          </Show>
+        </span>
+        <Show when={def.hint}>
+          <small>{resolve(def.hint)}</small>
+        </Show>
+      </div>
+      <div class="settings-control">
+        <Control def={def} />
+      </div>
+    </div>
+  );
+
+  const renderSection = (section: Section) => (
+    <section class="settings-section" classList={{ framed: filtering() }}>
+      <header class="settings-section-head">
+        <div>
+          <h2>{section.title}</h2>
+          <Show when={section.intro}>
+            <p class="settings-intro">{resolve(section.intro)}</p>
+          </Show>
+        </div>
+        <Show when={changedIn(section) > 0}>
+          <button
+            class="settings-reset"
+            title="Вернуть значение этого раздела к стандартному"
+            onClick={() => resetSection(section)}
+          >
+            Сбросить
+            <span class="settings-reset-count">{changedIn(section)}</span>
+          </button>
+        </Show>
+      </header>
+      <Show when={section.extra && !section.after && (!filtering() || matchTitle(section) || section.searchInExtra)}>
+        {section.extra?.(q())}
+      </Show>
+      <For each={visibleFields(section)}>{(def) => row(def)}</For>
+      <Show when={section.extra && section.after && (!filtering() || matchTitle(section) || section.searchInExtra)}>
+        {section.extra?.(q())}
+      </Show>
+    </section>
+  );
+
   return (
     <div class="dialog-backdrop" onMouseDown={close}>
       <div class="dialog settings" onMouseDown={(e) => e.stopPropagation()}>
-        <div class="dialog-header">
-          <span>Настройки</span>
-          <input
-            class="settings-input settings-search"
-            placeholder="Поиск настроек: шрифт, тема, ИИ…"
-            value={query()}
-            onInput={(e) => setQuery(e.currentTarget.value)}
-            ref={(el) => setTimeout(() => el.focus(), 50)}
-          />
+        <header class="dialog-header settings-head">
+          <span class="settings-title">Настройки</span>
+          <div class="settings-toolbar">
+            <input
+              class="settings-input settings-search"
+              placeholder="Поиск: шрифт, тема, ИИ…"
+              value={query()}
+              onInput={(e) => setQuery(e.currentTarget.value)}
+              ref={(el) => setTimeout(() => el.focus(), 50)}
+            />
+            <button
+              class="settings-chip"
+              classList={{ on: onlyChanged() }}
+              title="Показать только настройки, которые отличаются от стандартных"
+              onClick={() => setOnlyChanged((v) => !v)}
+            >
+              Изменённые
+              <Show when={changedTotal() > 0}>
+                <span class="settings-chip-count">{changedTotal()}</span>
+              </Show>
+            </button>
+          </div>
           <div class="dialog-actions">
             <button
               class="button-quiet"
@@ -720,60 +1068,55 @@ function Panel() {
                 void executeCommand("workbench.action.openSettingsJson");
               }}
             >
-              Открыть settings.json
+              settings.json
             </button>
             <button class="button-quiet" onClick={close}>
               Закрыть
             </button>
           </div>
-        </div>
-        <Show when={!q()}>
-          <nav class="settings-nav">
-            <For each={sections}>
-              {(section, i) => (
-                <button
-                  class="settings-nav-item"
-                  onClick={() => body?.querySelector(`[data-section="${i()}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                >
-                  {section.title}
-                </button>
+        </header>
+
+        <div class="settings-main">
+          <nav class="settings-rail" aria-label="Разделы настроек">
+            <For each={groups}>
+              {(group) => (
+                <Show when={sections.some((section) => section.group === group.id && navVisible(section))}>
+                  <div class="settings-group">
+                    <div class="settings-group-title">
+                      {group.icon(14)}
+                      <span>{group.title}</span>
+                    </div>
+                    <For each={sections.filter((section) => section.group === group.id)}>
+                      {(section) => (
+                        <Show when={navVisible(section)}>
+                          <button
+                            class="settings-tab"
+                            classList={{ active: !filtering() && section.id === active() }}
+                            onClick={() => open(section.id)}
+                          >
+                            <span class="settings-tab-title">{section.title}</span>
+                            <Show when={changedIn(section) > 0}>
+                              <span class="settings-dot" title={`Изменено настроек: ${changedIn(section)}`} />
+                            </Show>
+                          </button>
+                        </Show>
+                      )}
+                    </For>
+                  </div>
+                </Show>
               )}
             </For>
           </nav>
-        </Show>
-        <div class="settings-body" ref={body}>
-          <Show when={q() && !sections.some(sectionVisible)}>
-            <p class="settings-intro">Ничего не найдено.</p>
-          </Show>
-          <For each={sections}>
-            {(section, i) => (
-              <Show when={sectionVisible(section)}>
-              <section class="settings-section" data-section={i()}>
-                <h2>{section.title}</h2>
-                <Show when={section.intro}>
-                  <p class="settings-intro">{resolve(section.intro)}</p>
-                </Show>
-                <Show when={!section.after && (!q() || section.title.toLowerCase().includes(q()))}>{section.extra?.()}</Show>
-                <For each={visibleFields(section)}>
-                  {(def) => (
-                    <div class="settings-row">
-                      <div class="settings-label">
-                        <span>{def.label}</span>
-                        <Show when={def.hint}>
-                          <small>{resolve(def.hint)}</small>
-                        </Show>
-                      </div>
-                      <div class="settings-control">
-                        <Control def={def} />
-                      </div>
-                    </div>
-                  )}
-                </For>
-                <Show when={section.after && (!q() || section.title.toLowerCase().includes(q()))}>{section.extra?.()}</Show>
-              </section>
-              </Show>
-            )}
-          </For>
+
+          <div class="settings-pane" ref={(el) => (pane = el)}>
+            <Show when={filtering()}>
+              <p class="settings-found">{found() ? `Найдено настроек: ${found()}` : "Ничего не найдено. Попробуйте другое слово."}</p>
+            </Show>
+            <Show when={!filtering()}>{renderSection(current())}</Show>
+            <Show when={filtering()}>
+              <For each={sections.filter((section) => sectionVisible(section))}>{(section) => renderSection(section)}</For>
+            </Show>
+          </div>
         </div>
       </div>
     </div>

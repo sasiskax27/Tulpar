@@ -25,6 +25,10 @@ const defaults: Keybinding[] = [
   { key: "mod+alt+i", command: "workbench.action.chat.open" },
   { key: "mod+shift+b", command: "workbench.action.tasks.runTask" },
   { key: "ctrl+f5", command: "tulpar.run.file" },
+  { key: "f5", command: "workbench.action.debug.start" },
+  { key: "shift+f5", command: "workbench.action.debug.stop" },
+  { key: "f10", command: "workbench.action.debug.stepOver" },
+  { key: "f11", command: "workbench.action.debug.stepInto" },
   { key: "mod+g", command: "workbench.action.gotoLine" },
   { key: "ctrl+tab", command: "workbench.action.nextEditor" },
   { key: "ctrl+shift+tab", command: "workbench.action.previousEditor" },
@@ -55,6 +59,9 @@ const WORKS_IN_TERMINAL = new Set([
   "workbench.action.chat.open",
   "workbench.action.tasks.runTask",
   "tulpar.run.file",
+  "workbench.action.debug.start",
+  "workbench.action.debug.stop",
+  "workbench.action.debug.continue",
   "workbench.action.terminal.toggleTerminal",
   "workbench.actions.view.problems",
   "workbench.action.terminal.new",
@@ -67,8 +74,9 @@ const WORKS_IN_TERMINAL = new Set([
 
 const MOD_ORDER = ["ctrl", "shift", "alt", "meta"] as const;
 
-/** Приводит одно нажатие из текста ("Shift+Ctrl+P", "cmd+s") к виду "ctrl+shift+p". */
-function normalizeStroke(stroke: string): string {
+/** Приводит одно нажатие из текста ("Shift+Ctrl+P", "cmd+s") к виду "ctrl+shift+p".
+ *  Экспортируется ради тестов. */
+export function normalizeStroke(stroke: string): string {
   const parts = stroke.toLowerCase().split("+").map((p) => p.trim()).filter(Boolean);
   const mods = new Set<string>();
   let key = "";
@@ -92,8 +100,9 @@ const CODE_NAMES: Record<string, string> = {
 };
 
 /** Нажатие клавиатуры → "ctrl+shift+p". Используем физическую клавишу (code),
- *  чтобы сочетания работали в любой раскладке, включая русскую. */
-function strokeFromEvent(e: KeyboardEvent): string | null {
+ *  чтобы сочетания работали в любой раскладке, включая русскую.
+ *  Экспортируется ради тестов. */
+export function strokeFromEvent(e: KeyboardEvent): string | null {
   const code = e.code;
   if (!code || /^(Control|Shift|Alt|Meta|OS)/.test(code)) return null;
   let key: string;
@@ -146,8 +155,26 @@ export function keybindingFor(command: string): string | undefined {
     .join(" ");
 }
 
-let pending: string | null = null;
-let pendingTimer: number | undefined;
+/** Все действующие сочетания — для раздела «Горячие клавиши» в настройках. */
+export function keybindingList(): { strokes: string[]; command: string }[] {
+  return resolved().map((r) => ({ strokes: r.strokes, command: r.command }));
+}
+
+function partName(part: string): string {
+  if (part === "meta") return isMac ? "⌘" : "Win";
+  if (part === "ctrl") return isMac ? "⌃" : "Ctrl";
+  if (part === "shift") return "Shift";
+  if (part === "alt") return isMac ? "⌥" : "Alt";
+  if (part.length === 1) return part.toUpperCase();
+  return part[0].toUpperCase() + part.slice(1);
+}
+
+/** ["ctrl","shift","p"] → "Ctrl+Shift+P"; аккорд — через пробел. */
+export function formatStrokes(strokes: string[]): string {
+  return strokes.map((s) => s.split("+").filter(Boolean).map(partName).join("+")).join(" ");
+}
+
+let pending: string | null = null;let pendingTimer: number | undefined;
 
 export function installKeybindings() {
   window.addEventListener(

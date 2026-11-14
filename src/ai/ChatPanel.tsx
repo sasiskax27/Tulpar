@@ -4,7 +4,7 @@ import {
   messages, streaming, useFile, setUseFile, attached, attach, detach, newChat, stop, send,
   useProject, setUseProject, collecting, attachedDirs, agentMode, setAgentMode, type AgentStep,
   currentFileLabel, insertIntoEditor, relPath,
-  loadChats, openChat, deleteChat, clearChats, currentFolder, type SavedChat,
+  loadChats, openChat, deleteChat, clearChats, currentFolder, type SavedChat, type ChatMsg,
 } from "./chat";
 import { core, baseName, joinPath } from "../ipc";
 import { root } from "../app/workspace";
@@ -200,6 +200,70 @@ function StepView(props: { step: AgentStep }) {
         <div class="agent-step-actions">
           <button class="button-quiet" onClick={() => showStepDiff(st())}>Показать изменения</button>
           <button class="button-quiet" onClick={() => void undoStep(st())}>Отменить</button>
+        </div>
+      </Show>
+    </div>
+  );
+}
+
+/** Сводная карточка задачи: какие файлы изменены, дифф и откат каждого файла. */
+function CheckpointCard(props: { msg: ChatMsg }) {
+  const m = () => props.msg;
+  /** Последний шаг правки каждого файла — он знает прежний текст. */
+  const files = () => {
+    const byPath = new Map<string, { path: string; created: boolean; before: string | null; step?: AgentStep }>();
+    for (const st of m().steps ?? []) {
+      if (!st.undo) continue;
+      byPath.set(st.undo.path, { path: st.undo.path, created: st.undo.before === null, before: st.undo.before, step: st });
+    }
+    for (const c of m().checkpoint ?? []) {
+      if (!byPath.has(c.path)) byPath.set(c.path, { path: c.path, created: c.before === null, before: c.before });
+    }
+    return [...byPath.values()].sort((a, b) => a.path.localeCompare(b.path, "ru"));
+  };
+  const changed = () => files().filter((f) => !f.step?.undone).length;
+
+  return (
+    <div class="agent-checkpoint" classList={{ done: m().rolledBack }}>
+      <div class="agent-checkpoint-head">
+        <span>{m().rolledBack ? "Изменения откачены" : `Изменено файлов: ${changed()}`}</span>
+        <Show when={!m().rolledBack && changed() > 0}>
+          <button class="button-quiet" title="Вернуть все файлы к состоянию до этой задачи" onClick={() => void rollbackTask(m())}>
+            ↶ Откатить всё
+          </button>
+        </Show>
+      </div>
+      <Show when={files().length > 1 || m().rolledBack}>
+        <div class="agent-checkpoint-files">
+          <For each={files()}>
+            {(f) => (
+              <div class="agent-checkpoint-file" classList={{ undone: f.step?.undone || m().rolledBack }}>
+                <span class="agent-file-kind" title={f.created ? "Файл создан задачей" : "Файл изменён"}>
+                  {f.created ? "＋" : "✎"}
+                </span>
+                <span class="agent-file-name" title={f.path}>{relPath(f.path) || baseName(f.path)}</span>
+                <Show when={!m().rolledBack && !f.step?.undone}>
+                  <span class="agent-file-actions">
+                    <Show when={f.step}>
+                      <button class="button-quiet" title="Что именно изменилось" onClick={() => showStepDiff(f.step!)}>
+                        изменения
+                      </button>
+                    </Show>
+                    <button
+                      class="button-quiet"
+                      title="Вернуть файл к состоянию до задачи"
+                      onClick={() => void undoStep(f.step ?? { id: f.path, tool: "edit_file", title: "", status: "done", undo: { path: f.path, before: f.before } })}
+                    >
+                      отменить
+                    </button>
+                  </span>
+                </Show>
+                <Show when={f.step?.undone || m().rolledBack}>
+                  <span class="agent-file-undone">отменено</span>
+                </Show>
+              </div>
+            )}
+          </For>
         </div>
       </Show>
     </div>
@@ -410,17 +474,9 @@ export default function ChatPanel(props: { embedded?: boolean }) {
                       </div>
                     </Show>
                     <Show when={m.checkpoint?.length && !(streaming() && i() === messages.length - 1)}>
-                      <div class="agent-checkpoint" classList={{ done: m.rolledBack }}>
-                        <span>
-                          {m.rolledBack ? "Изменения откачены" : `Изменено файлов: ${m.checkpoint!.length}`}
-                        </span>
-                        <Show when={!m.rolledBack}>
-                          <button class="button-quiet" title="Вернуть все файлы к состоянию до этой задачи" onClick={() => void rollbackTask(m)}>
-                            ↶ Откатить всё
-                          </button>
-                        </Show>
-                      </div>
+                      <CheckpointCard msg={m} />
                     </Show>
+
                     <Show
                       when={m.content}
                       fallback={

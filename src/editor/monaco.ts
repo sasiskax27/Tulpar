@@ -69,6 +69,9 @@ export function editorOptions(s: Settings): monaco.editor.IEditorOptions & monac
     bracketPairColorization: { enabled: s["editor.bracketPairColorization.enabled"] !== false },
     guides: { bracketPairs: "active", indentation: s["editor.guides.indentation"] !== false },
     renderWhitespace: s["editor.renderWhitespace"] ?? "selection",
+    renderLineHighlight: s["editor.renderLineHighlight"] ?? "line",
+    occurrencesHighlight: s["editor.occurrencesHighlight"] !== false ? "singleFile" : "off",
+    cursorSurroundingLines: s["editor.cursorSurroundingLines"] ?? 0,
     stickyScroll: { enabled: s["editor.stickyScroll.enabled"] !== false },
     rulers: String(s["editor.rulers"] ?? "")
       .split(/[,\s]+/)

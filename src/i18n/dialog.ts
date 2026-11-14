@@ -1,5 +1,5 @@
 // Системные диалоги рисует ОС, а не наше окно, — переводим их текст заранее.
-import { ask as rawAsk, open as rawOpen } from "@tauri-apps/plugin-dialog";
+import { ask as rawAsk, open as rawOpen, save as rawSave } from "@tauri-apps/plugin-dialog";
 import { t } from "./translate";
 
 type AskOptions = { title?: string; kind?: "info" | "warning" | "error"; okLabel?: string; cancelLabel?: string };
@@ -22,6 +22,14 @@ export function ask(message: string, options?: string | AskOptions): Promise<boo
 
 export function open(options: OpenOptions = {}): Promise<string | string[] | null> {
   return rawOpen({
+    ...options,
+    title: options.title && t(options.title),
+    filters: options.filters?.map((f) => ({ ...f, name: t(f.name) })),
+  });
+}
+
+export function saveAs(options: { title?: string; defaultPath?: string; filters?: { name: string; extensions: string[] }[] } = {}): Promise<string | null> {
+  return rawSave({
     ...options,
     title: options.title && t(options.title),
     filters: options.filters?.map((f) => ({ ...f, name: t(f.name) })),

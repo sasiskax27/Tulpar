@@ -21,6 +21,12 @@ export interface Settings {
   /** Лигатуры шрифта (=> != ===), если шрифт их поддерживает */
   "editor.fontLigatures": boolean;
   "editor.renderWhitespace": "none" | "selection" | "boundary" | "all";
+  /** Подсветка строки, где стоит курсор */
+  "editor.renderLineHighlight": "none" | "gutter" | "line" | "all";
+  /** Подсвечивать другие вхождения слова под курсором */
+  "editor.occurrencesHighlight": boolean;
+  /** Сколько строк видно над и под курсором при прокрутке */
+  "editor.cursorSurroundingLines": number;
   /** Строка с началом функции/класса прилипает к верху при прокрутке */
   "editor.stickyScroll.enabled": boolean;
   /** Парные скобки разными цветами */
@@ -131,6 +137,9 @@ export const defaultSettings: Settings = {
   "editor.cursorStyle": "line",
   "editor.fontLigatures": true,
   "editor.renderWhitespace": "selection",
+  "editor.renderLineHighlight": "line",
+  "editor.occurrencesHighlight": true,
+  "editor.cursorSurroundingLines": 0,
   "editor.stickyScroll.enabled": true,
   "editor.bracketPairColorization.enabled": true,
   "editor.smoothScrolling": true,
@@ -306,6 +315,29 @@ export function updateSetting<K extends keyof Settings>(key: K, value: Settings[
   pendingChanges[key as string] = value;
   clearTimeout(persistTimer);
   persistTimer = window.setTimeout(() => void persistSettings(), 300);
+}
+
+/** Заменить свои сочетания клавиш и записать keybindings.json. */
+export async function updateUserKeybindings(next: Keybinding[]) {
+  setUserKeybindings(next);
+  try {
+    const path = await core.configEnsure("keybindings.json");
+    await core.writeFile(path, next.length ? JSON.stringify(next, null, 2) + "\n" : "[]\n");
+  } catch (e) {
+    notifyError("Не удалось сохранить keybindings.json", e);
+  }
+}
+
+/** Полностью заменить файл конфига значениями из профиля и перечитать его. */
+export async function replaceConfig(name: ConfigName, text: string) {
+  try {
+    const path = await core.configEnsure(name);
+    if (name === "settings.json") lastOwnWrite = Date.now();
+    await core.writeFile(path, text);
+    await load(name);
+  } catch (e) {
+    notifyError(`Не удалось записать ${name}`, e);
+  }
 }
 
 async function persistSettings() {

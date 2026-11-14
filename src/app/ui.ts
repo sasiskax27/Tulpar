@@ -18,6 +18,6 @@ const [sidebarView, setSidebarView] = createSignal<SidebarView>("explorer");
 export { sidebarView, setSidebarView };
 
 /** Что показано в нижней панели: терминал или чат с ИИ (если чат живёт внизу) */
-export type BottomTab = "terminal" | "chat" | "problems";
+export type BottomTab = "terminal" | "chat" | "problems" | "debug";
 const [bottomTab, setBottomTab] = createSignal<BottomTab>("terminal");
 export { bottomTab, setBottomTab };

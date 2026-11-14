@@ -13,5 +13,15 @@ export default defineConfig({
   build: {
     target: "es2022",
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        // Крупные библиотеки — отдельными кусками: приложение кэшируется,
+        // даже когда Monaco и терминал обновились.
+        manualChunks: {
+          monaco: ["monaco-editor"],
+          vendor: ["solid-js", "@tauri-apps/api", "@xterm/xterm", "emmet-monaco-es"],
+        },
+      },
+    },
   },
 });

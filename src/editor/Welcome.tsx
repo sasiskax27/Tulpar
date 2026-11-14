@@ -191,6 +191,8 @@ export default function Welcome() {
             <div class="start-title">Начать</div>
             {action("Открыть папку", "workbench.action.files.openFolder", "📂")}
             {action("Клонировать с GitHub", "git.clone", "⤓")}
+            {action("Учиться программировать", "tulpar.learn", "🎓")}
+            {action("Код в видео", "tulpar.video.studio", "🎬")}
             {action("Чат с ИИ", "workbench.action.chat.open", "✦")}
             {action("Библиотеки", "workbench.view.packages", "📦")}
             {action("Галерея тем", "tulpar.themes.gallery", "🎨")}

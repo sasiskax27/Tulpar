@@ -192,6 +192,7 @@ export function registerBuiltinCommands() {
       } else r.startRecording();
     },
   });
+  reg({ id: "tulpar.learn", category: "Справка", title: "Учебный режим: учить программирование", run: () => void import("../editor/side").then((m) => m.showLearn()) });
   reg({ id: "workbench.view.testing", category: "Вид", title: "Тесты", run: (args) => showView("tests", args) });
   reg({ id: "testing.runAll", category: "Тесты", title: "Запустить все тесты", run: () => void import("../testing/tests").then((m) => m.runTests()) });
   reg({ id: "workbench.view.packages", category: "Вид", title: "Библиотеки: найти и подключить", run: (args) => showView("packages", args) });

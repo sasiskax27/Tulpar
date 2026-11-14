@@ -1,6 +1,26 @@
 // Generated: Russian UI text -> English. Keys are exact Russian strings;
 // pattern keys use {0}, {1}… for inserted values.
 export const EXACT: Record<string, string> = {
+ "Учебный режим": "Learning mode",
+ "🎓": "🎓",
+ "Уровень": "Level",
+ "Опыт": "Experience",
+ "Дней подряд": "Days in a row",
+ "▶ Показать": "▶ Show",
+ "✓ Проверить": "✓ Check",
+ "Думаю…": "Thinking…",
+ "💡 Подсказка ИИ": "💡 AI hint",
+ "Вернуть начальный код": "Reset the starter code",
+ "✅ Отлично, задание выполнено!": "✅ Great, task completed!",
+ "Ваша страница": "Your page",
+ "Учебный режим: учить программирование": "Learning mode: learn to code",
+ "Учиться программировать": "Learn to code",
+ "✅ Верно!": "✅ Correct!",
+ "Проверка не прошла": "The check failed",
+ "Программа работала дольше 10 секунд — возможно, бесконечный цикл": "The program ran longer than 10 seconds — maybe an infinite loop",
+ "ИИ не подключён — Настройки → ИИ": "AI isn't connected — Settings → AI",
+ "Python с нуля": "Python from scratch",
+ "Первый сайт": "First website",
  "Остановить запись и сделать видео": "Stop recording and make a video",
  "Код в видео": "Code to video",
  "🎬 Код в видео": "🎬 Code to video",
@@ -1304,6 +1324,10 @@ export const EXACT: Record<string, string> = {
 };
 
 export const PATTERNS: Record<string, string> = {
+ "✅ Верно! +{0} опыта": "✅ Correct! +{0} XP",
+ "⭐ {0}": "⭐ {0}",
+ "Пока не так: {0}": "Not quite yet: {0}",
+ "🔥 {0}": "🔥 {0}",
  "{0} · Стоп": "{0} · Stop",
  "Записываю видео… {0}%": "Recording video… {0}%",
  "Длина ролика: {0} с": "Clip length: {0} s",

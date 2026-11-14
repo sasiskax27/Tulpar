@@ -105,7 +105,7 @@ export class Kernel {
   private unlisten: (() => void)[] = [];
   private constructor(readonly id: number, readonly python: string) {}
 
-  static async start(notebookPath: string, h: KernelHandlers): Promise<Kernel> {
+  static async start(notebookPath: string | null, h: KernelHandlers): Promise<Kernel> {
     const isWindows = navigator.userAgent.includes("Windows");
     const py = await pythonFor(root()) ?? (isWindows ? "python" : "python3");
     let kernel: Kernel | null = null;
@@ -140,7 +140,7 @@ export class Kernel {
     });
     let id: number;
     try {
-      id = await core.lspStart(py, ["-u", "-c", KERNEL], parentDir(notebookPath));
+      id = await core.lspStart(py, ["-u", "-c", KERNEL], notebookPath ? parentDir(notebookPath) : root());
     } catch (e) {
       un1();
       un2();

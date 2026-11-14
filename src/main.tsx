@@ -15,6 +15,7 @@ import { initProblems } from "./problems/problems";
 import { scheduleUpdateCheck } from "./app/update";
 import { initCopilot } from "./ai/copilot";
 import { initOutline } from "./editor/outline";
+import { registerSnippets } from "./editor/snippets";
 import { registerInlineCompletions } from "./ai/inline";
 import { initBackups } from "./editor/backup";
 import { root } from "./app/workspace";
@@ -35,6 +36,7 @@ async function start() {
   scheduleUpdateCheck();
   initCopilot();
   initOutline();
+  registerSnippets();
   registerInlineCompletions();
   initBackups();
   // Другая папка — свой репозиторий

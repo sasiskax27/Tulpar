@@ -366,12 +366,29 @@ async function load(name: ConfigName) {
       setLanguages({ ...defaultLanguages, ...(user ?? {}) });
       break;
     }
+    case "snippets.json": {
+      const user = await readConfig<Record<string, UserSnippet>>(name);
+      setUserSnippets(user && typeof user === "object" ? user : {});
+      break;
+    }
   }
 }
 
+// ---------- snippets.json ----------
+
+export interface UserSnippet {
+  prefix: string | string[];
+  body: string | string[];
+  description?: string;
+  /** Языки через запятую; пусто — все */
+  scope?: string;
+}
+const [userSnippets, setUserSnippets] = createSignal<Record<string, UserSnippet>>({});
+export { userSnippets };
+
 /** Загрузить всё при старте и подписаться на изменения файлов. */
 export async function initConfig() {
-  const names: ConfigName[] = ["settings.json", "keybindings.json", "layout.json", "languages.json"];
+  const names: ConfigName[] = ["settings.json", "keybindings.json", "layout.json", "languages.json", "snippets.json"];
   await Promise.all(names.map((n) => load(n).catch(() => undefined)));
   setActiveLayout(layoutConfig().default);
   await events.onConfigChanged((name) => {

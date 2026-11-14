@@ -559,6 +559,7 @@ const sections: Section[] = [
             {fileButton("Клавиши", "workbench.action.openGlobalKeybindings")}
             {fileButton("Раскладка", "tulpar.openLayoutSettings")}
             {fileButton("Языки", "tulpar.openLanguageSettings")}
+            {fileButton("Сниппеты", "workbench.action.openSnippets")}
           </div>
         </div>
         <div class="settings-row">

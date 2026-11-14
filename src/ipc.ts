@@ -13,7 +13,7 @@ export interface ChangeEvent {
   paths: string[];
 }
 
-export type ConfigName = "settings.json" | "keybindings.json" | "layout.json" | "languages.json";
+export type ConfigName = "settings.json" | "keybindings.json" | "layout.json" | "languages.json" | "snippets.json";
 
 export interface UpdateInfo {
   current: string;

@@ -257,6 +257,7 @@ export function registerBuiltinCommands() {
   }
   reg({ id: "tulpar.ai.cancel", title: "ИИ: Отменить запрос", run: () => cancelAi() });
   reg({ id: "workbench.action.openGlobalKeybindings", category: "Настройки", title: "Открыть keybindings.json", run: () => openConfig("keybindings.json") });
+  reg({ id: "workbench.action.openSnippets", category: "Настройки", title: "Свои сниппеты (snippets.json)", run: () => openConfig("snippets.json") });
   reg({ id: "tulpar.openLanguageSettings", category: "Настройки", title: "Открыть languages.json", run: () => openConfig("languages.json") });
   reg({ id: "tulpar.lsp.restart", category: "Языки", title: "Перезапустить языковые серверы", run: () => restartLanguageServers() });
   reg({ id: "tulpar.openLayoutSettings", category: "Настройки", title: "Открыть layout.json", run: () => openConfig("layout.json") });

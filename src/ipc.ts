@@ -130,6 +130,7 @@ export const core = {
   ollamaPull: (host: string, model: string) => invoke<void>("ollama_pull", { host, model }),
   ollamaDelete: (host: string, model: string) => invoke<void>("ollama_delete", { host, model }),
   createFile: (path: string) => invoke<string>("create_file", { path }),
+  projectCreate: (parent: string, name: string) => invoke<string>("project_create", { parent, name }),
   createDir: (path: string) => invoke<string>("create_dir", { path }),
   renamePath: (from: string, to: string) => invoke<string>("rename_path", { from, to }),
   deletePath: (path: string) => invoke<void>("delete_path", { path }),

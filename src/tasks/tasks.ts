@@ -32,7 +32,7 @@ function shellKind(): "powershell" | "cmd" | "posix" {
 }
 
 /** «a, потом b, если a успешно». В Windows PowerShell 5.1 нет «&&». */
-function andThen(a: string, b: string): string {
+export function andThen(a: string, b: string): string {
   return shellKind() === "powershell" ? `${a}; if ($?) { ${b} }` : `${a} && ${b}`;
 }
 

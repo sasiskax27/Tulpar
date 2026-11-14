@@ -34,6 +34,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             workspace::workspace_open,
+            workspace::project_create,
             pkg::pkg_search,
             ext::ext_search,
             ext::ext_install,

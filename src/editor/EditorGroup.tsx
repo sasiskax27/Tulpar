@@ -12,6 +12,7 @@ import { keybindingFor } from "../keybindings/keybindings";
 import { setEditorInstance } from "./instance";
 import { registerAiActions } from "../ai/ai";
 import SidePane from "./SidePane";
+import Welcome from "./Welcome";
 import { currentPath, revealSymbol } from "./outline";
 import { KIND } from "./symbols";
 
@@ -22,8 +23,7 @@ function crumbsOf(path: string): string[] {
   return rel.split(/[\\/]/).filter(Boolean);
 }
 import { isHtml, isMarkdown, previewHtml, previewMarkdown, side, splitEditor } from "./side";
-import { forgetRecent, openFolder, recent, root } from "../app/workspace";
-import { baseName, parentDir } from "../ipc";
+import { root } from "../app/workspace";
 import { registerFixActions } from "../problems/problems";
 import { compareReview, keepAll, keepReview, reviewFor, reviews, undoReview } from "../ai/review";
 
@@ -235,44 +235,3 @@ export default function EditorGroup() {
   );
 }
 
-function Welcome() {
-  const row = (title: string, command: string) => (
-    <button class="welcome-row" onClick={() => void executeCommand(command)}>
-      <span>{title}</span>
-      <kbd>{keybindingFor(command) ?? ""}</kbd>
-    </button>
-  );
-  const recentOthers = () => recent().filter((p) => p !== root()).slice(0, 8);
-  return (
-    <div class="welcome">
-      <div class="welcome-logo">Tulpar</div>
-      <div class="welcome-columns">
-        <div class="welcome-actions">
-          <div class="welcome-title">Начать</div>
-          {row("Открыть папку", "workbench.action.files.openFolder")}
-          {row("Клонировать с GitHub", "git.clone")}
-          {row("Перейти к файлу", "workbench.action.quickOpen")}
-          {row("Все команды", "workbench.action.showCommands")}
-          {row("Чат с ИИ", "workbench.action.chat.open")}
-          {row("Настройки", "workbench.action.openSettings")}
-        </div>
-        <Show when={recentOthers().length}>
-          <div class="welcome-actions">
-            <div class="welcome-title">Недавние проекты</div>
-            <For each={recentOthers()}>
-              {(path) => (
-                <div class="welcome-recent">
-                  <button class="welcome-row" title={path} onClick={() => void openFolder(path)}>
-                    <span>{baseName(path)}</span>
-                    <small>{parentDir(path)}</small>
-                  </button>
-                  <button class="welcome-forget" title="Убрать из списка" onClick={() => forgetRecent(path)}>×</button>
-                </div>
-              )}
-            </For>
-          </div>
-        </Show>
-      </div>
-    </div>
-  );
-}

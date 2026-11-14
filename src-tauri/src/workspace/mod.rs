@@ -301,3 +301,26 @@ pub async fn list_files(state: State<'_, WorkspaceState>) -> Result<Vec<String>,
     files.sort();
     Ok(files)
 }
+
+/// Новая папка проекта внутри выбранной пользователем папки (стартовый экран → «Новый проект»).
+#[tauri::command]
+pub async fn project_create(parent: String, name: String) -> Result<String, String> {
+    let name = name.trim();
+    if name.is_empty() || name.len() > 120 || name.contains(['/', '\\', ':', '*', '?', '"', '<', '>', '|']) || name.starts_with('.') {
+        return Err("недопустимое имя папки".into());
+    }
+    let parent = PathBuf::from(&parent);
+    if !parent.is_dir() {
+        return Err("папка не найдена".into());
+    }
+    let dir = parent.join(name);
+    if dir.exists() {
+        let empty = std::fs::read_dir(&dir).map(|mut d| d.next().is_none()).unwrap_or(false);
+        if !empty {
+            return Err("папка с таким именем уже есть и в ней есть файлы".into());
+        }
+    } else {
+        std::fs::create_dir(&dir).map_err(|e| e.to_string())?;
+    }
+    Ok(to_string(&dir))
+}

@@ -187,6 +187,14 @@ const sections: Section[] = [
         options: [["bottom", "Внизу, рядом с терминалом"], ["sidebar", "В боковой панели"]],
       },
       {
+        key: "tulpar.agent.approve",
+        label: "Агент: спрашивать разрешение",
+        hint: "Агент в чате сам читает файлы, правит код и запускает команды. Любую правку потом можно отменить кнопкой под шагом.",
+        type: "select",
+        options: [["ask", "На правки и команды"], ["edits", "Только на команды"], ["all", "Не спрашивать (осторожно)"]],
+      },
+      { key: "tulpar.agent.maxSteps", label: "Агент: шагов на задачу", type: "number", min: 3, max: 200 },
+      {
         key: "tulpar.ai.provider",
         label: "Какой ИИ использовать",
         hint: () =>

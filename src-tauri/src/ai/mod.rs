@@ -9,6 +9,7 @@
 //! В сеть Tulpar ходит только по явному действию пользователя и только на адрес
 //! из его настроек.
 
+pub mod agent;
 pub mod chat;
 
 use std::time::Duration;

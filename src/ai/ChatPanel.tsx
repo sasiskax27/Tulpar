@@ -2,7 +2,7 @@
 import { createEffect, For, on, Show, type JSX } from "solid-js";
 import {
   messages, streaming, useFile, setUseFile, attached, attach, detach, newChat, stop, send,
-  useProject, setUseProject, collecting, attachedDirs,
+  useProject, setUseProject, collecting, attachedDirs, agentMode, setAgentMode, type AgentStep,
   currentFileLabel, insertIntoEditor, relPath,
 } from "./chat";
 import { core, baseName, joinPath } from "../ipc";
@@ -14,6 +14,7 @@ import { notify } from "../app/notify";
 import { settings } from "../config/store";
 import { executeCommand } from "../commands/registry";
 import { chatDrop } from "../explorer/dnd";
+import { answerStep, showStepDiff, undoStep } from "./agent";
 
 let input: HTMLTextAreaElement | undefined;
 
@@ -154,6 +155,51 @@ function Markdown(props: { text: string }) {
 
 const SUGGESTIONS = ["Объясни этот файл", "Найди ошибки в коде", "Как устроен этот проект?", "Напиши тесты для выделенного кода"];
 
+const STEP_ICON: Record<AgentStep["status"], string> = { running: "◌", pending: "?", done: "✓", denied: "⨯", error: "!" };
+
+function StepView(props: { step: AgentStep }) {
+  const st = () => props.step;
+  return (
+    <div class={`agent-step ${st().status}`} classList={{ undone: st().undone }}>
+      <div class="agent-step-head">
+        <span class="agent-step-icon" aria-hidden="true">{STEP_ICON[st().status]}</span>
+        <span class="agent-step-title">{st().title}</span>
+        <Show when={st().result}>
+          <span class="agent-step-result">{st().result}</span>
+        </Show>
+        <Show when={st().undone}>
+          <span class="agent-step-result">отменено</span>
+        </Show>
+      </div>
+      <Show when={st().detail || st().output}>
+        <details class="agent-step-details" open={st().status === "pending"}>
+          <summary>{st().tool === "run_command" ? (st().output ? "Команда и вывод" : "Команда") : "Подробнее"}</summary>
+          <Show when={st().detail}>
+            <pre class="agent-pre">{st().detail}</pre>
+          </Show>
+          <Show when={st().output}>
+            <pre class="agent-pre output">{st().output}</pre>
+          </Show>
+        </details>
+      </Show>
+      <Show when={st().status === "pending"}>
+        <div class="agent-step-actions">
+          <button class="button" onClick={() => answerStep(st().id, true)}>
+            {st().tool === "run_command" ? "Запустить" : "Разрешить"}
+          </button>
+          <button class="button-quiet" onClick={() => answerStep(st().id, false)}>Отклонить</button>
+        </div>
+      </Show>
+      <Show when={st().status === "done" && st().undo && !st().undone}>
+        <div class="agent-step-actions">
+          <button class="button-quiet" onClick={() => showStepDiff(st())}>Показать изменения</button>
+          <button class="button-quiet" onClick={() => void undoStep(st())}>Отменить</button>
+        </div>
+      </Show>
+    </div>
+  );
+}
+
 /** Кнопка «перенести чат вниз / в боковую панель». */
 export function MoveChatButton() {
   const bottom = () => settings()["tulpar.chat.location"] !== "sidebar";
@@ -250,7 +296,12 @@ export default function ChatPanel(props: { embedded?: boolean }) {
                   </>
                 }
               >
-                <p>Спросите что угодно о своём коде. ИИ видит открытый файл и список файлов проекта.</p>
+                <Show
+                  when={agentMode() && root()}
+                  fallback={<p>Спросите что угодно о своём коде. ИИ видит открытый файл и список файлов проекта.</p>}
+                >
+                  <p>Дайте задачу — агент сам найдёт нужные файлы, поправит код и запустит команды. Правки и команды он покажет и спросит разрешения.</p>
+                </Show>
                 <p class="chat-hint">Перетащите сюда файл или папку из проводника — они приложатся к вопросу. Перетащите имя проекта — ИИ прочитает весь проект.</p>
                 <div class="chat-suggestions">
                   <For each={SUGGESTIONS}>
@@ -269,12 +320,31 @@ export default function ChatPanel(props: { embedded?: boolean }) {
             {(m, i) => (
               <div class={`chat-msg ${m.role}`} classList={{ error: !!m.error }}>
                 <Show when={m.role === "user"} fallback={
-                  <Show when={m.content} fallback={<span class="chat-typing">{collecting() ?? "ИИ думает"}<span>.</span><span>.</span><span>.</span></span>}>
-                    <Markdown text={m.content} />
-                    <Show when={streaming() && i() === messages.length - 1}>
-                      <span class="chat-cursor" />
+                  <>
+                    <Show when={m.steps?.length}>
+                      <div class="agent-steps">
+                        <For each={m.steps}>{(st) => <StepView step={st} />}</For>
+                      </div>
                     </Show>
-                  </Show>
+                    <Show
+                      when={m.content}
+                      fallback={
+                        <Show when={streaming() && i() === messages.length - 1}>
+                          <span class="chat-typing">
+                            {collecting() ?? (m.steps ? (m.steps.some((x) => x.status === "pending") ? "Жду вашего решения" : "Агент работает") : "ИИ думает")}
+                            <span>.</span><span>.</span><span>.</span>
+                          </span>
+                        </Show>
+                      }
+                    >
+                      <Markdown text={m.content} />
+                      <Show when={streaming() && i() === messages.length - 1}>
+                        <Show when={m.steps} fallback={<span class="chat-cursor" />}>
+                          <div class="chat-typing">Агент работает<span>.</span><span>.</span><span>.</span></div>
+                        </Show>
+                      </Show>
+                    </Show>
+                  </>
                 }>
                   <div class="chat-user-text">{m.content}</div>
                   <Show when={m.context?.length}>
@@ -318,6 +388,16 @@ export default function ChatPanel(props: { embedded?: boolean }) {
               {useProject() ? "🗂" : "○"} Весь проект
             </button>
             <button class="chat-chip add" onClick={() => void addFile()}>+ файл</button>
+            <button
+              class="chat-chip agent"
+              classList={{ on: agentMode() }}
+              title={agentMode()
+                ? "Агент: ИИ сам читает файлы, правит код и запускает команды. Нажмите, чтобы просто спрашивать"
+                : "Включить агента: ИИ будет сам выполнять задачи в проекте"}
+              onClick={() => setAgentMode(!agentMode())}
+            >
+              {agentMode() ? "🤖 Агент" : "💬 Вопрос"}
+            </button>
           </Show>
         </div>
         <div class="chat-box">
@@ -325,7 +405,9 @@ export default function ChatPanel(props: { embedded?: boolean }) {
             ref={input}
             class="chat-input"
             rows={1}
-            placeholder="Спросить ИИ… (Enter — отправить, Shift+Enter — новая строка)"
+            placeholder={agentMode() && root()
+              ? "Задача для агента: «добавь проверку ввода», «почини тесты»… (Enter)"
+              : "Спросить ИИ… (Enter — отправить, Shift+Enter — новая строка)"}
             aria-label="Вопрос ИИ"
             onInput={(e) => {
               const el = e.currentTarget;

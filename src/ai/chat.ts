@@ -9,6 +9,22 @@ import { activePath, cursor } from "../editor/tabs";
 import { languageName } from "../editor/monaco";
 import { notifyError } from "../app/notify";
 import { aiBase } from "./ai";
+import { resetAgent, runAgent, stopAgent } from "./agent";
+
+export interface AgentStep {
+  id: string;
+  tool: string;
+  title: string;
+  /** Что именно: команда, правка, содержимое файла */
+  detail?: string;
+  status: "running" | "pending" | "done" | "denied" | "error";
+  result?: string;
+  /** Вывод команды */
+  output?: string;
+  /** Чтобы отменить правку: путь и прежний текст (null — файла не было) */
+  undo?: { path: string; before: string | null };
+  undone?: boolean;
+}
 
 export interface ChatMsg {
   role: "user" | "assistant";
@@ -16,6 +32,8 @@ export interface ChatMsg {
   /** Что было приложено к вопросу — показываем под ним */
   context?: string[];
   error?: boolean;
+  /** Шаги агента: что он смотрел, менял и запускал */
+  steps?: AgentStep[];
 }
 
 const HISTORY = 12;
@@ -29,7 +47,19 @@ const [useFile, setUseFile] = createSignal(true);
 const [attached, setAttached] = createSignal<string[]>([]);
 const [useProject, setUseProject] = createSignal(false);
 const [collecting, setCollecting] = createSignal<string | null>(null);
-export { messages, streaming, useFile, setUseFile, attached, useProject, setUseProject, collecting };
+/** Режим агента: ИИ сам читает, правит и запускает, а не только отвечает */
+const [agentMode, setAgentModeSignal] = createSignal(localStorage.getItem("tulpar.agentMode") !== "0");
+function setAgentMode(on: boolean) {
+  setAgentModeSignal(on);
+  try {
+    localStorage.setItem("tulpar.agentMode", on ? "1" : "0");
+  } catch {
+    // хранилище недоступно — режим просто не запомнится
+  }
+}
+export { messages, streaming, useFile, setUseFile, attached, useProject, setUseProject, collecting, agentMode, setAgentMode };
+/** Для agent.ts: он пишет в ту же ленту чата */
+export const chatInternals = { setMessages, setStreaming };
 
 // ---------- весь проект ----------
 
@@ -144,12 +174,14 @@ export function detach(path: string) {
 
 export function newChat() {
   if (streaming()) void stop();
+  resetAgent();
   setMessages([]);
   setAttached([]);
   setAttachedDirs([]);
 }
 
 export async function stop() {
+  stopAgent();
   const id = streaming();
   if (id) await core.aiChatCancel(id).catch(() => undefined);
 }
@@ -260,14 +292,29 @@ function systemPrompt() {
   );
 }
 
+/** Что пользователь приложил — агенту хватит путей, файлы он прочитает сам. */
+function agentNote(): string {
+  const parts: string[] = [];
+  const dirs = attachedDirs();
+  for (const p of attached()) parts.push(`${dirs.includes(p) ? "folder" : "file"} ${relPath(p)}`);
+  return parts.length ? `\n\n(The user attached: ${parts.join(", ")}.)` : "";
+}
+
 export async function send(text: string) {
   const question = text.trim();
   if (!question || streaming()) return;
+  if (agentMode() && root()) {
+    if (await runAgent(question, agentNote())) return;
+    // модель не умеет инструменты — отвечаем обычным чатом
+  }
   const base = aiBase();
   if (!base) return;
   await ensureListener();
 
-  const history = messages.filter((m) => !m.error).slice(-HISTORY).map((m) => ({ role: m.role, content: m.content }));
+  const history = messages
+    .filter((m) => !m.error && m.content)
+    .slice(-HISTORY)
+    .map((m) => ({ role: m.role, content: m.content }));
   setMessages(produce((list) => {
     list.push({ role: "user", content: question });
     list.push({ role: "assistant", content: "" });

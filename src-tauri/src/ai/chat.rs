@@ -58,7 +58,7 @@ fn delta_text(provider: &str, data: &str) -> Option<String> {
     }
 }
 
-fn key_or_env(key: &str, env: &str) -> String {
+pub(crate) fn key_or_env(key: &str, env: &str) -> String {
     let k = key.trim();
     if k.is_empty() { std::env::var(env).unwrap_or_default() } else { k.to_owned() }
 }

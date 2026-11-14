@@ -1229,3 +1229,46 @@ body.resizing .side-island { transition: none; }
 .build-detail { font-size: 11.5px; color: var(--tp-fg-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40%; }
 .build-play { font-size: 10px; color: var(--tp-ok); opacity: 0; }
 .build-row:hover .build-play { opacity: 1; }
+
+/* ---------- агент в чате ---------- */
+
+.chat-chip.agent { margin-left: auto; border: 1px solid var(--tp-border); }
+.chat-chip.agent.on { color: var(--tp-gold); border-color: color-mix(in srgb, var(--tp-gold) 55%, transparent); background: color-mix(in srgb, var(--tp-gold) 10%, transparent); }
+.agent-steps { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.agent-step {
+  border: 1px solid var(--tp-border);
+  border-radius: calc(var(--tp-radius) * 0.8);
+  padding: 5px 8px;
+  font-size: 12.5px;
+  background: color-mix(in srgb, var(--tp-bg-hover) 45%, transparent);
+}
+.agent-step.pending { border-color: color-mix(in srgb, var(--tp-gold) 70%, transparent); background: color-mix(in srgb, var(--tp-gold) 8%, transparent); }
+.agent-step.undone { opacity: 0.6; }
+.agent-step-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.agent-step-icon { width: 14px; flex-shrink: 0; text-align: center; font-weight: 700; color: var(--tp-fg-muted); }
+.agent-step.done .agent-step-icon { color: var(--tp-ok); }
+.agent-step.error .agent-step-icon, .agent-step.denied .agent-step-icon { color: var(--tp-error); }
+.agent-step.pending .agent-step-icon { color: var(--tp-gold); }
+.agent-step.running .agent-step-icon { color: var(--tp-gold); animation: chat-dot 1.2s infinite; }
+.agent-step-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agent-step-result { font-size: 11.5px; color: var(--tp-fg-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 45%; }
+.agent-step.error .agent-step-result { color: var(--tp-error); }
+.agent-step-details { margin: 4px 0 0 22px; }
+.agent-step-details summary { cursor: pointer; color: var(--tp-fg-muted); font-size: 11.5px; }
+.agent-pre {
+  margin: 4px 0 0;
+  max-height: 260px;
+  overflow: auto;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--tp-code-bg);
+  font-family: var(--tp-font-mono, 'JetBrains Mono', Consolas, monospace);
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
+}
+.agent-pre.output { color: var(--tp-fg-muted); }
+.agent-step-actions { display: flex; gap: 6px; margin: 6px 0 2px 22px; }
+.agent-step-actions .button, .agent-step-actions .button-quiet { font-size: 12px; padding: 3px 10px; }
+@media (prefers-reduced-motion: reduce) { .agent-step.running .agent-step-icon { animation: none; } }

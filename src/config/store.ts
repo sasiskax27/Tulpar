@@ -57,6 +57,10 @@ export interface Settings {
   "tulpar.ai.inlineModel": string;
   /** Сколько символов кода проекта отдавать ИИ в режиме «Весь проект» */
   "tulpar.ai.projectChars": number;
+  /** Агент: что спрашивать перед действием. ask — правки и команды, edits — только команды, all — ничего */
+  "tulpar.agent.approve": "ask" | "edits" | "all";
+  /** Сколько шагов агент может сделать за одну задачу */
+  "tulpar.agent.maxSteps": number;
   /** Где живёт чат с ИИ: внизу рядом с терминалом или в боковой панели */
   "tulpar.chat.location": "bottom" | "sidebar";
   /** Свои действия ИИ в меню по правому клику */
@@ -106,6 +110,8 @@ export const defaultSettings: Settings = {
   "tulpar.ai.language": "русский",
   "tulpar.ai.inline": false,
   "tulpar.chat.location": "bottom",
+  "tulpar.agent.approve": "ask",
+  "tulpar.agent.maxSteps": 30,
   "tulpar.ai.inlineModel": "",
   "tulpar.ai.customActions": [],
   "tulpar.ai.projectChars": 60000,

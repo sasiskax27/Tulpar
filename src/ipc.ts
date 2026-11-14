@@ -15,6 +15,34 @@ export interface ChangeEvent {
 
 export type ConfigName = "settings.json" | "keybindings.json" | "layout.json" | "languages.json";
 
+export interface ToolCall {
+  id: string;
+  name: string;
+  args: Record<string, unknown>;
+}
+
+export interface AgentMessage {
+  role: "user" | "assistant" | "tool";
+  content: string;
+  toolCalls?: ToolCall[];
+  toolCallId?: string;
+}
+
+export interface AgentStepRequest {
+  provider: string;
+  baseUrl: string;
+  model: string;
+  apiKey: string;
+  system: string;
+  messages: AgentMessage[];
+  tools: { name: string; description: string; parameters: unknown }[];
+}
+
+export interface AgentReply {
+  text: string;
+  toolCalls: ToolCall[];
+}
+
 export interface SearchOptions {
   query: string;
   caseSensitive: boolean;
@@ -113,6 +141,10 @@ export const core = {
   gitDiffForMessage: () => invoke<string>("git_diff_for_message"),
   aiFill: (request: { host: string; model: string; prefix: string; suffix: string; maxTokens: number }) =>
     invoke<string>("ai_fill", { request }),
+  aiAgentStep: (request: AgentStepRequest) => invoke<AgentReply>("ai_agent_step", { request }),
+  agentWrite: (path: string, content: string) => invoke<string>("agent_write", { path, content }),
+  agentRun: (command: string, timeoutSecs?: number) =>
+    invoke<{ code: number | null; output: string; timedOut: boolean }>("agent_run", { command, timeoutSecs }),
   aiChat: (request: { id: string; provider: string; baseUrl: string; model: string; apiKey: string; system: string; messages: { role: string; content: string }[] }) =>
     invoke<string>("ai_chat", { request }),
   aiChatCancel: (id: string) => invoke<void>("ai_chat_cancel", { id }),

@@ -139,6 +139,11 @@ export const core = {
   transferPaths: (sources: string[], targetDir: string, mode: "copy" | "move") =>
     invoke<string[]>("transfer_paths", { sources, targetDir, mode }),
   gitStatus: () => invoke<GitStatus>("git_status"),
+  gitBlameLine: (path: string, line: number, content?: string) =>
+    invoke<{ author: string; time: number; summary: string; hash: string; uncommitted: boolean } | null>("git_blame_line", { path, line, content }),
+  gitLog: (path?: string, limit?: number) =>
+    invoke<{ hash: string; author: string; time: number; subject: string; refs: string }[]>("git_log", { path, limit }),
+  gitShowCommit: (hash: string) => invoke<string>("git_show_commit", { hash }),
   gitShowHead: (path: string) => invoke<string>("git_show_head", { path }),
   gitStage: (paths: string[]) => invoke<void>("git_stage", { paths }),
   gitUnstage: (paths: string[]) => invoke<void>("git_unstage", { paths }),

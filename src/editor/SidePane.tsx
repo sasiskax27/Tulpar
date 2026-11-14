@@ -56,6 +56,19 @@ function SideEditor(props: { path: string }) {
   return <div ref={host} class="side-monaco" />;
 }
 
+function TextView(props: { text: string; language: string }) {
+  let host!: HTMLDivElement;
+  onMount(() => {
+    const model = monaco.editor.createModel(props.text, props.language);
+    const editor = monaco.editor.create(host, { ...editorOptions(settings()), model, readOnly: true, minimap: { enabled: false } });
+    onCleanup(() => {
+      editor.dispose();
+      model.dispose();
+    });
+  });
+  return <div ref={host} class="side-monaco" />;
+}
+
 function MarkdownPreview(props: { path: string }) {
   const text = useText(() => props.path);
   let box!: HTMLDivElement;
@@ -153,6 +166,7 @@ const TITLES: Record<SideView["kind"], string> = {
   markdown: "Предпросмотр · ",
   html: "Страница · ",
   media: "",
+  text: "",
 };
 
 export default function SidePane() {
@@ -163,7 +177,7 @@ export default function SidePane() {
       <div class="side-pane-header">
         <span class="side-pane-title" title={view().path}>
           {TITLES[view().kind]}
-          {baseName(view().path)}
+          {view().kind === "text" ? (view() as { title: string }).title : baseName(view().path)}
         </span>
         <Show when={view().kind === "editor" && others().length}>
           <select
@@ -196,6 +210,9 @@ export default function SidePane() {
           </Match>
           <Match when={view().kind === "media"}>
             <MediaView path={view().path} />
+          </Match>
+          <Match when={view().kind === "text" && (view() as Extract<SideView, { kind: "text" }>)}>
+            {(v) => <TextView text={v().text} language={v().language} />}
           </Match>
         </Switch>
       </div>

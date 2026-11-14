@@ -1,15 +1,17 @@
 // Панель git (Ctrl+Shift+G): изменения, коммит, ветки, отправка и получение.
-import { For, onCleanup, onMount, Show, type JSX } from "solid-js";
+import { createEffect, createSignal, For, on, onCleanup, onMount, Show, type JSX } from "solid-js";
 import {
   status, busy, message, setMessage, refresh, stage, unstage, discard, commit, sync, init,
-  switchBranch, showDiff, suggestMessage, stagedFiles, changedFiles,
+  switchBranch, showDiff, suggestMessage, stagedFiles, changedFiles, headVersion,
 } from "./git";
 import { root } from "../app/workspace";
 import { identity, github, checkAccount, setupIdentity, signInGithub, cloneRepo, publishToGithub } from "./account";
 import { openFile } from "../editor/tabs";
 import { executeCommand } from "../commands/registry";
 import { showContextMenu } from "../app/ContextMenu";
-import { baseName, type GitFile } from "../ipc";
+import { baseName, core, type GitFile } from "../ipc";
+import { showText } from "../editor/side";
+import { ago } from "./blame";
 
 const LETTER: Record<string, { text: string; title: string; cls: string }> = {
   M: { text: "M", title: "Изменён", cls: "mod" },
@@ -107,6 +109,49 @@ function Section(props: { title: string; files: GitFile[]; staged: boolean }) {
         <For each={props.files}>{(f) => <FileRow file={f} staged={props.staged} />}</For>
       </div>
     </Show>
+  );
+}
+
+type Commit = { hash: string; author: string; time: number; subject: string; refs: string };
+
+/** История коммитов: клик — изменения коммита справа. */
+function History() {
+  const [open, setOpen] = createSignal(false);
+  const [commits, setCommits] = createSignal<Commit[]>([]);
+  const load = async () => setCommits(await core.gitLog(undefined, 200).catch(() => []));
+  createEffect(on([open, headVersion], ([o]) => o && void load()));
+  return (
+    <div class="git-history">
+      <button class="git-section-header git-history-head" onClick={() => setOpen(!open())}>
+        <span>{open() ? "▾" : "▸"} История коммитов</span>
+      </button>
+      <Show when={open()}>
+        <Show when={commits().length} fallback={<div class="git-clean">Коммитов пока нет</div>}>
+          <For each={commits()}>
+            {(c) => (
+              <button
+                class="git-commit-item"
+                title={`${c.hash.slice(0, 8)} · ${c.author}`}
+                onClick={async () => {
+                  const text = await core.gitShowCommit(c.hash).catch((e) => String(e));
+                  showText(`${c.hash.slice(0, 7)} · ${c.subject}`, text, "diff");
+                }}
+              >
+                <span class="git-commit-subject">
+                  <Show when={c.refs}>
+                    <span class="git-commit-refs">{c.refs.replace("HEAD -> ", "")}</span>
+                  </Show>
+                  {c.subject}
+                </span>
+                <span class="git-commit-meta">
+                  {c.author} · {ago(c.time)}
+                </span>
+              </button>
+            )}
+          </For>
+        </Show>
+      </Show>
+    </div>
   );
 }
 
@@ -248,6 +293,7 @@ export default function GitPanel() {
               <div class="git-clean">Изменений нет — всё закоммичено</div>
             </Show>
           </div>
+          <History />
         </Show>
       </Show>
     </div>

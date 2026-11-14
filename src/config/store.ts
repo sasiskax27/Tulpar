@@ -37,6 +37,8 @@ export interface Settings {
   "editor.folding": boolean;
   /** Хлебные крошки над кодом: путь файла и функция, в которой курсор */
   "breadcrumbs.enabled": boolean;
+  /** Автор и время изменения строки с курсором — бледным текстом в конце строки */
+  "git.blame.inline": boolean;
   "files.trimTrailingWhitespace": boolean;
   "files.insertFinalNewline": boolean;
   "terminal.integrated.fontFamily": string;
@@ -137,6 +139,7 @@ export const defaultSettings: Settings = {
   "editor.guides.indentation": true,
   "editor.folding": true,
   "breadcrumbs.enabled": true,
+  "git.blame.inline": true,
   "files.trimTrailingWhitespace": false,
   "files.insertFinalNewline": false,
   "terminal.integrated.fontFamily": "",

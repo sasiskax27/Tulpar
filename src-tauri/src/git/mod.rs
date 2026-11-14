@@ -171,6 +171,136 @@ pub async fn git_show_head(state: State<'_, WorkspaceState>, path: String) -> Re
     }
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BlameLine {
+    author: String,
+    /** Unix-время коммита */
+    time: i64,
+    summary: String,
+    hash: String,
+    /** Строка ещё не закоммичена */
+    uncommitted: bool,
+}
+
+/// Кто и когда последним менял строку (git blame для одной строки).
+#[tauri::command]
+pub async fn git_blame_line(state: State<'_, WorkspaceState>, path: String, line: u32, content: Option<String>) -> Result<Option<BlameLine>, String> {
+    let root = current_root(&state)?;
+    let rel = rel_paths(&root, &state, &[path])?.remove(0);
+    let range = format!("{line},{line}");
+    let mut args = vec!["blame".to_string(), "--porcelain".into(), "-L".into(), range];
+    // Несохранённый текст — через --contents -, чтобы номера строк совпадали
+    let has_contents = content.is_some();
+    if has_contents {
+        args.push("--contents".into());
+        args.push("-".into());
+    }
+    args.push("--".into());
+    args.push(rel);
+    let out = tauri::async_runtime::spawn_blocking(move || -> Result<String, String> {
+        use std::io::Write;
+        let refs: Vec<&str> = args.iter().map(String::as_str).collect();
+        let mut cmd = git(&root, &refs);
+        if has_contents {
+            cmd.stdin(Stdio::piped());
+        }
+        let mut child = cmd.stdout(Stdio::piped()).stderr(Stdio::piped()).spawn().map_err(|e| e.to_string())?;
+        if let (Some(text), Some(mut stdin)) = (content, child.stdin.take()) {
+            let _ = stdin.write_all(text.as_bytes());
+        }
+        let out = child.wait_with_output().map_err(|e| e.to_string())?;
+        if !out.status.success() {
+            return Err(String::from_utf8_lossy(&out.stderr).trim().to_string());
+        }
+        Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    })
+    .await
+    .map_err(|e| e.to_string())?;
+    let out = match out {
+        Ok(o) => o,
+        // Файл не в репозитории или строки ещё нет — просто нет данных
+        Err(_) => return Ok(None),
+    };
+    Ok(parse_blame(&out))
+}
+
+fn parse_blame(out: &str) -> Option<BlameLine> {
+    let mut lines = out.lines();
+    let hash = lines.next()?.split_whitespace().next()?.to_string();
+    let mut author = String::new();
+    let mut time = 0i64;
+    let mut summary = String::new();
+    for l in lines {
+        if let Some(v) = l.strip_prefix("author ") {
+            author = v.to_string();
+        } else if let Some(v) = l.strip_prefix("author-time ") {
+            time = v.trim().parse().unwrap_or(0);
+        } else if let Some(v) = l.strip_prefix("summary ") {
+            summary = v.to_string();
+        }
+    }
+    let uncommitted = hash.chars().all(|c| c == '0');
+    Some(BlameLine { author, time, summary, hash: hash.chars().take(8).collect(), uncommitted })
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Commit {
+    hash: String,
+    author: String,
+    time: i64,
+    subject: String,
+    refs: String,
+}
+
+/// История коммитов (всего проекта или одного файла).
+#[tauri::command]
+pub async fn git_log(state: State<'_, WorkspaceState>, path: Option<String>, limit: Option<u32>) -> Result<Vec<Commit>, String> {
+    let root = current_root(&state)?;
+    let mut args = vec![
+        "log".to_string(),
+        format!("-n{}", limit.unwrap_or(100).min(1000)),
+        "--pretty=format:%H%x1f%an%x1f%at%x1f%s%x1f%D%x1e".into(),
+    ];
+    if let Some(p) = path {
+        args.push("--".into());
+        args.push(rel_paths(&root, &state, &[p])?.remove(0));
+    }
+    let out = match run_async(root, args).await {
+        Ok(o) => o,
+        Err(e) if e.contains("does not have any commits") => return Ok(vec![]),
+        Err(e) => return Err(e),
+    };
+    Ok(out
+        .split('\u{1e}')
+        .filter_map(|rec| {
+            let f: Vec<&str> = rec.trim_matches(|c| c == '\n' || c == '\r').split('\u{1f}').collect();
+            if f.len() < 5 {
+                return None;
+            }
+            Some(Commit {
+                hash: f[0].to_string(),
+                author: f[1].to_string(),
+                time: f[2].parse().unwrap_or(0),
+                subject: f[3].to_string(),
+                refs: f[4].to_string(),
+            })
+        })
+        .collect())
+}
+
+/// Изменения одного коммита (patch) — для просмотра.
+#[tauri::command]
+pub async fn git_show_commit(state: State<'_, WorkspaceState>, hash: String) -> Result<String, String> {
+    if !hash.chars().all(|c| c.is_ascii_hexdigit()) || hash.len() < 4 {
+        return Err("некорректный коммит".into());
+    }
+    let root = current_root(&state)?;
+    let out = run_async(root, vec!["show".into(), "--stat".into(), "--patch".into(), "--format=fuller".into(), hash]).await?;
+    Ok(out.chars().take(400_000).collect())
+}
+
 #[tauri::command]
 pub async fn git_stage(state: State<'_, WorkspaceState>, paths: Vec<String>) -> Result<(), String> {
     let root = current_root(&state)?;
@@ -307,6 +437,19 @@ pub async fn git_diff_for_message(state: State<'_, WorkspaceState>) -> Result<St
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn parses_blame_porcelain() {
+        let out = "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678 3 3 1\nauthor Artur\nauthor-mail <a@b>\nauthor-time 1794600000\nauthor-tz +0500\nsummary Добавил склад\nfilename x.py\n\tprint(1)\n";
+        let b = parse_blame(out).unwrap();
+        assert_eq!(b.author, "Artur");
+        assert_eq!(b.time, 1794600000);
+        assert_eq!(b.summary, "Добавил склад");
+        assert_eq!(b.hash, "a1b2c3d4");
+        assert!(!b.uncommitted);
+        let z = parse_blame("0000000000000000000000000000000000000000 1 1 1\nauthor Not Committed Yet\n").unwrap();
+        assert!(z.uncommitted);
+    }
 
     #[test]
     fn parses_branch_and_files() {

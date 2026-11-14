@@ -8,7 +8,8 @@ export type SideView =
   | { kind: "editor"; path: string }
   | { kind: "markdown"; path: string }
   | { kind: "html"; path: string }
-  | { kind: "media"; path: string };
+  | { kind: "media"; path: string }
+  | { kind: "text"; path: string; title: string; text: string; language: string };
 
 const [side, setSide] = createSignal<SideView | null>(null);
 export { side, setSide };
@@ -58,4 +59,9 @@ export function showMedia(path: string) {
 
 export function closeSide() {
   setSide(null);
+}
+
+/** Показать справа текст только для чтения (например, изменения коммита). */
+export function showText(title: string, text: string, language = "plaintext") {
+  setSide({ kind: "text", path: title, title, text, language });
 }

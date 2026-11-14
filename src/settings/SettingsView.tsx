@@ -225,6 +225,7 @@ const sections: Section[] = [
       { key: "editor.bracketPairColorization.enabled", label: "Цветные скобки", hint: "Парные скобки разными цветами.", type: "toggle" },
       { key: "editor.stickyScroll.enabled", label: "Липкие заголовки", hint: "Строка с началом функции или класса остаётся наверху при прокрутке.", type: "toggle" },
       { key: "editor.guides.indentation", label: "Линии отступов", type: "toggle" },
+      { key: "git.blame.inline", label: "Кто менял строку", hint: "Автор, время и сообщение коммита — бледным текстом в конце строки с курсором.", type: "toggle" },
       { key: "breadcrumbs.enabled", label: "Хлебные крошки", hint: "Над кодом: путь файла и функция, в которой стоит курсор.", type: "toggle" },
       { key: "editor.folding", label: "Сворачивание блоков", hint: "Стрелки слева от кода, чтобы скрыть функцию или цикл.", type: "toggle" },
       {

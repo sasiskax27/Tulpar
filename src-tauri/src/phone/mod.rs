@@ -35,7 +35,7 @@ pub struct PhoneInfo {
 const PAGE: &str = include_str!("phone.html");
 
 /// IP этого компьютера в локальной сети (пакеты при этом не отправляются).
-fn lan_ip() -> String {
+pub(crate) fn lan_ip() -> String {
     UdpSocket::bind("0.0.0.0:0")
         .and_then(|s| {
             s.connect("8.8.8.8:80")?;
@@ -45,7 +45,7 @@ fn lan_ip() -> String {
         .unwrap_or_else(|_| "127.0.0.1".into())
 }
 
-fn respond(stream: &mut TcpStream, status: &str, kind: &str, body: &[u8]) {
+pub(crate) fn respond(stream: &mut TcpStream, status: &str, kind: &str, body: &[u8]) {
     let head = format!(
         "HTTP/1.1 {status}\r\nContent-Type: {kind}\r\nContent-Length: {}\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n",
         body.len()
@@ -54,14 +54,18 @@ fn respond(stream: &mut TcpStream, status: &str, kind: &str, body: &[u8]) {
     let _ = stream.write_all(body);
 }
 
-struct Request {
-    method: String,
-    path: String,
-    headers: Vec<(String, String)>,
-    body: Vec<u8>,
+pub(crate) struct Request {
+    pub method: String,
+    pub path: String,
+    pub headers: Vec<(String, String)>,
+    pub body: Vec<u8>,
 }
 
 fn read_request(stream: &TcpStream) -> Option<Request> {
+    read_request_limited(stream, 64 * 1024)
+}
+
+pub(crate) fn read_request_limited(stream: &TcpStream, limit: usize) -> Option<Request> {
     let mut reader = BufReader::new(stream.try_clone().ok()?);
     let mut line = String::new();
     reader.read_line(&mut line).ok()?;
@@ -81,7 +85,7 @@ fn read_request(stream: &TcpStream) -> Option<Request> {
         }
         if let Some((k, v)) = h.split_once(':') {
             if k.eq_ignore_ascii_case("content-length") {
-                len = v.trim().parse().unwrap_or(0).min(64 * 1024);
+                len = v.trim().parse().unwrap_or(0).min(limit);
             }
             headers.push((k.trim().to_string(), v.trim().to_string()));
         }
@@ -93,7 +97,7 @@ fn read_request(stream: &TcpStream) -> Option<Request> {
     Some(Request { method, path, headers, body })
 }
 
-fn query_param(path: &str, key: &str) -> Option<String> {
+pub(crate) fn query_param(path: &str, key: &str) -> Option<String> {
     let q = path.split_once('?')?.1;
     q.split('&').find_map(|kv| {
         let (k, v) = kv.split_once('=')?;

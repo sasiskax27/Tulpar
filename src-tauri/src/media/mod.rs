@@ -23,8 +23,8 @@ fn image_ext(path: &Path) -> Result<String, String> {
     path.extension()
         .and_then(|e| e.to_str())
         .map(|e| e.to_lowercase())
-        .filter(|e| IMAGE_EXT.contains(&e.as_str()) || VIDEO_EXT.contains(&e.as_str()))
-        .ok_or_else(|| "поддерживаются картинки PNG, JPG, WebP, GIF, BMP и видео MP4, WebM".to_string())
+        .filter(|e| IMAGE_EXT.contains(&e.as_str()) || VIDEO_EXT.contains(&e.as_str()) || e == "pdf" || e == "ico")
+        .ok_or_else(|| "поддерживаются картинки PNG, JPG, WebP, GIF, BMP, ICO, документы PDF и видео MP4, WebM".to_string())
 }
 
 fn is_video(ext: &str) -> bool {
@@ -99,6 +99,8 @@ pub async fn image_read(path: String) -> Result<ImageData, String> {
         "jpg" | "jpeg" => "image/jpeg".to_string(),
         "mp4" | "m4v" => "video/mp4".to_string(),
         "webm" => "video/webm".to_string(),
+        "pdf" => "application/pdf".to_string(),
+        "ico" => "image/x-icon".to_string(),
         other => format!("image/{other}"),
     };
     Ok(ImageData { mime, base64: base64_encode(&bytes) })

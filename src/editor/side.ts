@@ -19,7 +19,7 @@ export type SideView =
   | { kind: "web"; path: string; url: string }
   | { kind: "text"; path: string; title: string; text: string; language: string };
 
-export type ToolId = "http" | "regex" | "todo" | "history" | "stats" | "toolbox";
+export type ToolId = "http" | "regex" | "todo" | "history" | "stats" | "toolbox" | "env" | "generate" | "review" | "collab";
 
 const TOOL_TITLES: Record<ToolId, string> = {
   http: "🌐 Запросы",
@@ -28,6 +28,10 @@ const TOOL_TITLES: Record<ToolId, string> = {
   history: "⏳ Машина времени",
   stats: "📊 Моя статистика",
   toolbox: "🧰 Инструменты",
+  env: "🔐 Переменные .env",
+  generate: "🪄 Генератор файлов",
+  review: "🔍 ИИ-ревью проекта",
+  collab: "👥 Вместе по сети",
 };
 
 /** Встроенный инструмент справа: HTTP-клиент, регулярки, TODO и т. д. */
@@ -38,7 +42,7 @@ export function showTool(tool: ToolId) {
 const [side, setSide] = createSignal<SideView | null>(null);
 export { side, setSide };
 
-const MEDIA_RE = /\.(png|jpe?g|gif|webp|bmp|ico|svg|mp4|webm)$/i;
+const MEDIA_RE = /\.(png|jpe?g|gif|webp|bmp|ico|svg|mp4|webm|pdf)$/i;
 const MARKDOWN_RE = /\.(md|mdx|markdown)$/i;
 const HTML_RE = /\.html?$/i;
 

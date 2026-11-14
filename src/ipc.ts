@@ -198,6 +198,9 @@ export const core = {
   backupList: () => invoke<[string, string][]>("backup_list"),
   httpRequest: (request: { method: string; url: string; headers: [string, string][]; body: string | null; timeoutSecs?: number }) =>
     invoke<HttpResponse>("http_request", { request }),
+  collabStart: (token: string) => invoke<{ url: string; ip: string; port: number }>("collab_start", { token }),
+  collabStop: () => invoke<void>("collab_stop"),
+  collabBroadcast: (messages: string[]) => invoke<number>("collab_broadcast", { messages }),
   configEnsure: (name: ConfigName) => invoke<string>("config_ensure", { name }),
 };
 

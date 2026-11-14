@@ -1685,9 +1685,16 @@ body.resizing .side-island { transition: none; }
 .md-preview img { max-width: 100%; border-radius: 6px; }
 .md-preview li.task { list-style: none; margin-left: -18px; }
 .html-preview { position: absolute; inset: 0; width: 100%; height: 100%; border: none; background: #fff; }
-.media-view { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background:
-  repeating-conic-gradient(color-mix(in srgb, var(--tp-fg) 6%, transparent) 0% 25%, transparent 0% 50%) 50% / 20px 20px; }
-.media-view img, .media-view video { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 6px; box-shadow: var(--tp-shadow); }
+.media-wrap { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.media-tools { display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-bottom: 1px solid var(--tp-border); flex: none; }
+.media-tools .icon-button.on { background: var(--tp-bg-selected); }
+.media-zoom { min-width: 44px; text-align: center; font-size: 12px; color: var(--tp-fg-muted); font-variant-numeric: tabular-nums; }
+.media-size { margin-left: auto; font-size: 12px; color: var(--tp-fg-muted); }
+.media-view { position: relative; flex: 1; min-height: 0; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.media-view.checker { background: repeating-conic-gradient(color-mix(in srgb, var(--tp-fg) 6%, transparent) 0% 25%, transparent 0% 50%) 50% / 20px 20px; }
+.media-view.pdf { padding: 0; }
+.media-view img, .media-view video { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 6px; box-shadow: var(--tp-shadow); margin: auto; }
+.media-pdf { width: 100%; height: 100%; border: 0; background: #fff; }
 
 /* ---------- структура и хлебные крошки ---------- */
 
@@ -2301,3 +2308,46 @@ body.resizing .side-island { transition: none; }
 .tool .toolbox-list button { text-align: left; border-color: transparent; background: none; }
 .tool .toolbox-list button.on { background: var(--tp-bg-selected); border-color: var(--tp-accent); }
 .toolbox-work { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+
+/* .env */
+.env-secret { filter: blur(4px); transition: filter .15s; }
+.env-secret:hover { filter: blur(2px); }
+.env-table { width: 100%; border-collapse: collapse; }
+.env-table td { padding: 3px 4px; border-bottom: 1px solid var(--tp-border); }
+.env-table input { width: 100%; box-sizing: border-box; }
+.env-key { font-family: var(--tp-font-mono, monospace); font-weight: 700; white-space: nowrap; width: 1%; padding-right: 10px !important; }
+.env-actions { white-space: nowrap; width: 1%; }
+.tool .env-actions button { padding: 2px 6px; }
+.env-table tr.dup .env-key { color: var(--tp-gold); }
+
+/* ИИ-ревью проекта */
+.review-progress { position: relative; height: 22px; background: var(--tp-bg-hover); border-radius: 6px; overflow: hidden; }
+.review-progress .fill { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--tp-accent) 40%, transparent); transition: width .3s; }
+.review-progress span { position: relative; padding-left: 8px; line-height: 22px; font-size: 12px; }
+.review-score { display: flex; align-items: baseline; gap: 6px; }
+.review-score b { font-size: 30px; }
+.review-list { display: flex; flex-direction: column; gap: 4px; }
+.review-item { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: start; padding: 6px 8px; border-radius: 8px; background: var(--tp-bg-hover); border-left: 3px solid var(--tp-fg-muted); }
+.review-item.error { border-left-color: var(--tp-error); }
+.review-item.warning { border-left-color: var(--tp-gold); }
+.tool .review-where { border: 0; background: none; padding: 0; font-family: var(--tp-font-mono, monospace); font-size: 12px; color: var(--tp-accent); text-decoration: underline; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tool .review-fix { padding: 2px 8px; font-size: 12px; }
+
+/* Вместе по сети */
+.collab-choose { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 700px) { .collab-choose { grid-template-columns: 1fr; } }
+.collab-card { border: 1px solid var(--tp-border); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.collab-card h3 { margin: 0; }
+.collab-card p { margin: 0; }
+.collab-host { display: flex; gap: 16px; align-items: flex-start; }
+.collab-qr { width: 150px; height: 150px; flex: none; background: #fff; border-radius: 8px; padding: 4px; }
+.collab-qr svg { width: 100%; height: 100%; }
+.collab-host-info { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.collab-link { word-break: break-all; background: var(--tp-code-bg); padding: 4px 6px; border-radius: 6px; font-size: 12px; }
+.collab-files { display: flex; flex-wrap: wrap; gap: 4px; font-size: 12px; }
+.collab-files span { background: var(--tp-bg-hover); padding: 2px 8px; border-radius: 6px; }
+.collab-editor { flex: 1; min-height: 300px; border: 1px solid var(--tp-border); border-radius: 8px; overflow: hidden; }
+.collab-peers { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; }
+.collab-peer { border-left: 3px solid var(--c); background: var(--tp-bg-hover); padding: 2px 8px; border-radius: 6px; }
+.collab-caret { position: relative; }
+.collab-caret::after { position: absolute; top: -1.15em; left: -2px; color: #fff; font-size: 10px; line-height: 1.2; padding: 0 4px; border-radius: 3px 3px 3px 0; white-space: nowrap; pointer-events: none; z-index: 5; font-family: var(--tp-font-ui, sans-serif); }

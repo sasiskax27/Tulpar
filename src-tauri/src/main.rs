@@ -17,6 +17,7 @@ mod testing;
 mod sqlite;
 mod db;
 mod phone;
+mod collab;
 mod search;
 mod terminal;
 mod transfer;
@@ -28,6 +29,7 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .manage(workspace::WorkspaceState::default())
         .manage(phone::PhoneState::default())
+        .manage(collab::CollabState::default())
         .manage(config::ConfigState::default())
         .manage(lsp::LspState::default())
         .manage(terminal::TerminalState::default())
@@ -49,6 +51,9 @@ fn main() {
             testing::tests_run,
             sqlite::sqlite_tables,
             phone::phone_start,
+            collab::collab_start,
+            collab::collab_stop,
+            collab::collab_broadcast,
             phone::phone_stop,
             phone::phone_set_state,
             db::db_query,

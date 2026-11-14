@@ -124,7 +124,7 @@ export function takeReveal(path: string): monaco.IRange | undefined {
 
 export async function openFile(requested: string, reveal?: monaco.IRange) {
   // Картинки и видео — не текст: показываем их справа
-  if (/\.(png|jpe?g|gif|webp|bmp|ico|svg|mp4|webm)$/i.test(requested)) {
+  if (/\.(png|jpe?g|gif|webp|bmp|ico|mp4|webm|pdf)$/i.test(requested)) {
     const { showMedia } = await import("./side");
     showMedia(requested);
     return;
@@ -153,6 +153,17 @@ export async function openFile(requested: string, reveal?: monaco.IRange) {
   if (activePath() === path && reveal) setActivePath(null);
   setActivePath(path);
   persistSession();
+  // SVG — это код: открываем текстом, а рядом живой предпросмотр
+  if (/\.svg$/i.test(path)) {
+    const { side, showMedia } = await import("./side");
+    if (!side() || side()!.kind === "media") showMedia(path);
+  }
+  // .env — рядом таблица переменных со скрытыми секретами
+  const { isEnvFile } = await import("../tools/env");
+  if (isEnvFile(path)) {
+    const { side, showTool } = await import("./side");
+    if (!side()) showTool("env");
+  }
 }
 
 function scheduleAutoSave(path: string) {

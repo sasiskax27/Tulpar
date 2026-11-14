@@ -201,6 +201,8 @@ export default function Welcome() {
             {action("HTTP-клиент", "tulpar.http", "🌐")}
             {action("Доска TODO", "tulpar.todo", "📋")}
             {action("Моя статистика", "tulpar.stats", "📊")}
+            {action("Вместе по сети", "tulpar.collab", "👥")}
+            {action("ИИ-ревью проекта", "tulpar.review", "🔍")}
             {action("Настройки", "workbench.action.openSettings", "⚙")}
           </section>
         </div>

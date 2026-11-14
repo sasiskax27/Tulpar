@@ -7,6 +7,10 @@ import TodoBoard from "./TodoBoard";
 import HistoryView from "./HistoryView";
 import StatsView from "./StatsView";
 import Toolbox from "./Toolbox";
+import EnvView from "./EnvView";
+import GenerateView from "./GenerateView";
+import ReviewView from "./ReviewView";
+import CollabView from "../collab/CollabView";
 
 export default function ToolView(props: { tool: ToolId }) {
   return (
@@ -17,6 +21,10 @@ export default function ToolView(props: { tool: ToolId }) {
       <Match when={props.tool === "history"}><HistoryView /></Match>
       <Match when={props.tool === "stats"}><StatsView /></Match>
       <Match when={props.tool === "toolbox"}><Toolbox /></Match>
+      <Match when={props.tool === "env"}><EnvView /></Match>
+      <Match when={props.tool === "generate"}><GenerateView /></Match>
+      <Match when={props.tool === "review"}><ReviewView /></Match>
+      <Match when={props.tool === "collab"}><CollabView /></Match>
     </Switch>
   );
 }

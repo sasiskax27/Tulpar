@@ -152,28 +152,78 @@ function HtmlPreview(props: { path: string }) {
 function MediaView(props: { path: string }) {
   const [url, setUrl] = createSignal<string | null>(null);
   const [error, setError] = createSignal<string | null>(null);
+  const [zoom, setZoom] = createSignal(1);
+  const [checker, setChecker] = createSignal(true);
+  const [size, setSize] = createSignal("");
   const ext = () => props.path.split(".").pop()!.toLowerCase();
+  const kind = () => (ext() === "pdf" ? "pdf" : /^(mp4|webm)$/.test(ext()) ? "video" : "image");
+  const setSvg = (svg: string) => setUrl(URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" })));
   createEffect(
     on(() => props.path, (p) => {
       setUrl(null);
       setError(null);
+      setZoom(1);
+      setSize("");
       if (ext() === "svg") {
-        void core.readFile(p).then((svg) => setUrl(URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }))), (e) => setError(String(e)));
+        // Файл открыт в редакторе — предпросмотр обновляется на каждую правку
+        const model = modelFor(p);
+        if (model) {
+          setSvg(model.getValue());
+          let timer = 0;
+          const sub = model.onDidChangeContent(() => {
+            clearTimeout(timer);
+            timer = window.setTimeout(() => setSvg(model.getValue()), 150);
+          });
+          onCleanup(() => {
+            clearTimeout(timer);
+            sub.dispose();
+          });
+        } else void core.readFile(p).then(setSvg, (e) => setError(String(e)));
         return;
       }
-      void core.imageRead(p).then((d) => setUrl(toBlobUrl(MIME[ext()] ?? d.mime, d.base64)), (e) => setError(String(e)));
+      void core.imageRead(p).then((d) => setUrl(toBlobUrl(kind() === "pdf" ? "application/pdf" : MIME[ext()] ?? d.mime, d.base64)), (e) => setError(String(e)));
     }),
   );
   createEffect(on(url, (_u, prev) => prev && URL.revokeObjectURL(prev)));
   return (
-    <div class="media-view">
-      <Show when={!error()} fallback={<p class="settings-intro">{error()}</p>}>
-        <Show when={url()} fallback={<p class="settings-intro">Загружаю…</p>}>
-          <Show when={/^(mp4|webm)$/.test(ext())} fallback={<img src={url()!} alt={baseName(props.path)} />}>
-            <video src={url()!} controls />
+    <div class="media-wrap">
+      <Show when={kind() === "image" && url()}>
+        <div class="media-tools">
+          <button class="icon-button" title="Уменьшить" onClick={() => setZoom((z) => Math.max(0.1, z / 1.25))}>−</button>
+          <span class="media-zoom">{Math.round(zoom() * 100)}%</span>
+          <button class="icon-button" title="Увеличить" onClick={() => setZoom((z) => Math.min(16, z * 1.25))}>+</button>
+          <button class="icon-button" title="Вписать" onClick={() => setZoom(1)}>⤢</button>
+          <button class="icon-button" classList={{ on: checker() }} title="Шахматный фон для прозрачности" onClick={() => setChecker(!checker())}>▦</button>
+          <span class="media-size" data-no-translate>{size()}</span>
+        </div>
+      </Show>
+      <div class="media-view" classList={{ checker: kind() === "image" && checker(), pdf: kind() === "pdf" }}>
+        <Show when={!error()} fallback={<p class="settings-intro">{error()}</p>}>
+          <Show when={url()} fallback={<p class="settings-intro">Загружаю…</p>}>
+            <Switch>
+              <Match when={kind() === "video"}>
+                <video src={url()!} controls />
+              </Match>
+              <Match when={kind() === "pdf"}>
+                <iframe class="media-pdf" src={url()!} title={baseName(props.path)} />
+              </Match>
+              <Match when={kind() === "image"}>
+                <img
+                  src={url()!}
+                  alt={baseName(props.path)}
+                  style={zoom() === 1 ? undefined : { "max-width": "none", "max-height": "none", width: `${zoom() * 100}%` }}
+                  onLoad={(e) => setSize(`${e.currentTarget.naturalWidth} × ${e.currentTarget.naturalHeight}`)}
+                  onWheel={(e) => {
+                    if (!e.ctrlKey) return;
+                    e.preventDefault();
+                    setZoom((z) => Math.min(16, Math.max(0.1, z * (e.deltaY < 0 ? 1.15 : 1 / 1.15))));
+                  }}
+                />
+              </Match>
+            </Switch>
           </Show>
         </Show>
-      </Show>
+      </div>
     </div>
   );
 }

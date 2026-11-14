@@ -64,6 +64,7 @@ export default function EditorGroup() {
     registerFixActions(editor);
     registerDebugActions(editor);
     registerDebugGutter(editor);
+    void import("../tools/env").then((m) => m.registerEnvMasking(editor, (model) => m.isEnvFile(model.uri.path)));
     onCleanup(() => {
       setEditorInstance(undefined);
       diffEditor?.dispose();

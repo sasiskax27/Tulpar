@@ -47,7 +47,9 @@ export const THEME_NAMES: [string, string][] = [
 /** Все темы: встроенные и из установленных расширений. */
 export function allThemes(): [string, string][] {
   const ext = [...extThemes().values()].map((t): [string, string] => [t.id, `${t.label} · ${t.ext.split(".").pop()}`]);
-  return [...THEME_NAMES, ...ext];
+  const saved = (settings()["tulpar.customThemes"] ?? {}) as Record<string, { name: string }>;
+  const custom = Object.entries(saved).map(([id, t]): [string, string] => [`custom:${id}`, `${t.name} ✦`]);
+  return [...THEME_NAMES, ...custom, ...ext];
 }
 
 // ---------- тема из фото ----------
@@ -105,8 +107,23 @@ function photo(): PhotoTheme {
 function pal(id: string): Palette | undefined {
   if (id === "photo") return photoPalette(photo());
   if (id.startsWith("ext:")) return extThemes().get(id)?.palette;
+  if (id.startsWith("custom:")) return customPalette(id);
   return PALETTES[id as keyof typeof PALETTES];
 }
+
+function customPalette(id: string): Palette | undefined {
+  const t = ((settings()["tulpar.customThemes"] ?? {}) as Record<string, { palette: Record<string, string | boolean> }>)[id.slice("custom:".length)];
+  if (!t) return undefined;
+  // Недостающие цвета берём из «Ночной степи» — старые файлы тем не ломаются
+  return { ...PALETTES.steppe, ...(t.palette as Partial<Palette>) } as Palette;
+}
+
+/** Палитра любой темы (для галереи и редактора тем). Для классических — ближайшая своя. */
+export function paletteOf(id: string): Palette {
+  return pal(id) ?? (id === "light" ? PALETTES.dawn : PALETTES.steppe);
+}
+
+export const BASE_PALETTES = PALETTES;
 
 /** Главный оттенок картинки: 24 корзины оттенка, вес = насыщенность × близость яркости к 55%. */
 export function photoThemeFromPixels(data: Uint8ClampedArray): PhotoTheme {
@@ -159,6 +176,18 @@ export function monacoTheme(id: string): string {
     return "tulpar-photo";
   }
   if (id in PALETTES) return `tulpar-${id}`;
+  if (id.startsWith("custom:")) {
+    const p = customPalette(id);
+    if (p) {
+      const name = "tulpar-" + id.replace(/[^a-zA-Z0-9]+/g, "-");
+      const key = JSON.stringify(p);
+      if (definedExt.get(name) !== key) {
+        defineOne(name.slice("tulpar-".length), p);
+        definedExt.set(name, key);
+      }
+      return name;
+    }
+  }
   const ext = extThemes().get(id);
   if (ext) {
     const name = "tulpar-" + id.replace(/[^a-zA-Z0-9]+/g, "-");

@@ -1,6 +1,7 @@
 // Раздел «Расширения»: темы и сниппеты VS Code из открытого каталога Open VSX.
 import { createEffect, createSignal, For, on, onCleanup, Show } from "solid-js";
 import { core, type ExtSearchItem } from "../ipc";
+import { executeCommand } from "../commands/registry";
 import { settings, updateSetting } from "../config/store";
 import { extBusy, extThemes, installedExtensions, installExtension, uninstallExtension } from "./extensions";
 
@@ -51,6 +52,11 @@ export default function ExtensionsPanel() {
     <div class="ext-panel">
       <div class="panel-header">
         <span class="panel-title">Расширения</span>
+        <div class="panel-actions">
+          <button class="button-quiet" title="Галерея тем: все темы, своя тема, поделиться" onClick={() => void executeCommand("tulpar.themes.gallery")}>
+            🎨 Галерея
+          </button>
+        </div>
       </div>
       <div class="ext-search">
         <input

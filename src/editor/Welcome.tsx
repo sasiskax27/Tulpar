@@ -193,7 +193,7 @@ export default function Welcome() {
             {action("Клонировать с GitHub", "git.clone", "⤓")}
             {action("Чат с ИИ", "workbench.action.chat.open", "✦")}
             {action("Библиотеки", "workbench.view.packages", "📦")}
-            {action("Темы и расширения", "workbench.view.extensions", "🎨")}
+            {action("Галерея тем", "tulpar.themes.gallery", "🎨")}
             {action("Настройки", "workbench.action.openSettings", "⚙")}
           </section>
         </div>

@@ -77,6 +77,8 @@ export interface Settings {
   "terminal.integrated.fontSize": number;
   /** Оттенок темы «Из фоновой картинки», вычисляется из картинки */
   "tulpar.photoTheme": { hue: number; sat: number; light: boolean } | null;
+  /** Свои темы из галереи: id → название и палитра */
+  "tulpar.customThemes": Record<string, { name: string; palette: Record<string, string | boolean> }>;
   /** Фоновая картинка: путь к файлу или null */
   "tulpar.background.image": string | null;
   "tulpar.background.opacity": number;
@@ -172,6 +174,7 @@ export const defaultSettings: Settings = {
   "terminal.integrated.shell": null,
   "terminal.integrated.fontSize": 13,
   "tulpar.photoTheme": null,
+  "tulpar.customThemes": {},
   "tulpar.background.image": null,
   "tulpar.background.opacity": 0.15,
   "tulpar.background.blur": 0,

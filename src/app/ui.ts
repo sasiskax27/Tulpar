@@ -13,7 +13,7 @@ const [settingsVisible, setSettingsVisible] = createSignal(false);
 export { settingsVisible, setSettingsVisible };
 
 /** Что показано в боковой панели: проводник или поиск */
-export type SidebarView = "explorer" | "search" | "git" | "chat" | "build" | "outline" | "extensions";
+export type SidebarView = "explorer" | "search" | "git" | "chat" | "build" | "outline" | "extensions" | "packages";
 const [sidebarView, setSidebarView] = createSignal<SidebarView>("explorer");
 export { sidebarView, setSidebarView };
 

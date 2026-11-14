@@ -11,6 +11,7 @@ mod git;
 mod lsp;
 mod media;
 mod ollama;
+mod pkg;
 mod search;
 mod terminal;
 mod transfer;
@@ -33,6 +34,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             workspace::workspace_open,
+            pkg::pkg_search,
             ext::ext_search,
             ext::ext_install,
             ext::ext_list,

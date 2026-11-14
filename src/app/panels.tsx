@@ -9,6 +9,7 @@ import EditorGroup from "../editor/EditorGroup";
 import TerminalPanel from "../terminal/TerminalPanel";
 import BuildPanel from "../tasks/BuildPanel";
 import ExtensionsPanel from "../extensions/ExtensionsPanel";
+import PackagesPanel from "../packages/PackagesPanel";
 
 export const panels: Record<string, Component> = {
   explorer: SideView,
@@ -19,6 +20,7 @@ export const panels: Record<string, Component> = {
   terminal: TerminalPanel,
   build: BuildPanel,
   extensions: ExtensionsPanel,
+  packages: PackagesPanel,
 };
 
 export function UnknownPanel(props: { id: string }) {

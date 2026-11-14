@@ -159,6 +159,7 @@ export const core = {
   aiModels: (provider: string, baseUrl: string, apiKey: string) =>
     invoke<{ id: string; free: boolean }[]>("ai_models", { provider, baseUrl, apiKey }),
   updateCheck: () => invoke<UpdateInfo | null>("update_check"),
+  pkgSearch: (registry: string, query: string) => invoke<PkgItem[]>("pkg_search", { registry, query }),
   extSearch: (query: string, category?: string) => invoke<ExtSearchItem[]>("ext_search", { query, category: category ?? null }),
   extInstall: (namespace: string, name: string) => invoke<InstalledExt>("ext_install", { namespace, name }),
   extList: () => invoke<InstalledExt[]>("ext_list"),
@@ -237,4 +238,13 @@ export interface InstalledExt {
   description: string;
   themes: { label: string; uiTheme: string; file: string }[];
   snippets: { language: string; file: string }[];
+}
+
+export interface PkgItem {
+  name: string;
+  version: string;
+  description: string;
+  downloads?: number | null;
+  /** Maven: group:artifact */
+  id: string;
 }

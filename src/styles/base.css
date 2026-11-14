@@ -1569,3 +1569,27 @@ body.resizing .side-island { transition: none; }
 .ext-theme.on { border-color: var(--tp-accent); box-shadow: 0 0 0 1px var(--tp-accent) inset; }
 .ext-swatch { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; border: 1px solid; }
 .ext-swatch i { width: 6px; height: 6px; border-radius: 50%; display: block; }
+
+/* ---------- Библиотеки ---------- */
+.pkg-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.pkg-registries { display: flex; flex-wrap: wrap; gap: 4px; padding: 2px 10px 6px; }
+.pkg-registries button { padding: 3px 9px; border-radius: 999px; border: 1px solid var(--tp-border); background: transparent; color: var(--tp-fg-muted); cursor: pointer; font-size: 12px; position: relative; }
+.pkg-registries button.found { color: var(--tp-fg); }
+.pkg-registries button.found::after { content: ""; position: absolute; top: 2px; right: 2px; width: 5px; height: 5px; border-radius: 50%; background: var(--tp-ok); }
+.pkg-registries button.on { background: var(--tp-accent); border-color: var(--tp-accent); color: var(--tp-on-accent); }
+.pkg-top { padding: 0 10px 8px; display: flex; flex-direction: column; gap: 6px; }
+.pkg-lang { font-size: 11px; color: var(--tp-fg-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.pkg-manager { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; font-size: 12px; color: var(--tp-fg-muted); }
+.pkg-manager b { color: var(--tp-fg); }
+.pkg-dev { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+.pkg-note { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; font-size: 12px; color: var(--tp-fg-muted); }
+.pkg-list { flex: 1; overflow: auto; padding: 0 6px 10px; }
+.pkg-dep { display: flex; align-items: center; gap: 6px; padding: 3px 6px; border-radius: 6px; font-size: 12px; }
+.pkg-dep:hover { background: var(--tp-bg-hover); }
+.pkg-name { color: var(--tp-fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pkg-ver { color: var(--tp-fg-muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pkg-tag { font-size: 10px; padding: 0 5px; border-radius: 4px; background: var(--tp-bg-hover); color: var(--tp-fg-muted); }
+.pkg-dep .icon-button { opacity: 0; }
+.pkg-dep:hover .icon-button { opacity: 1; }
+.pkg-foot { font-size: 11px; color: var(--tp-fg-muted); padding: 10px 6px 0; line-height: 1.4; }
+.pkg-foot a { color: var(--tp-accent); }

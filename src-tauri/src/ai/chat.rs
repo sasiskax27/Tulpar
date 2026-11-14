@@ -134,7 +134,7 @@ pub async fn ai_chat(app: AppHandle, state: State<'_, ChatState>, request: ChatR
         if !response.status().is_success() {
             let code = response.status().as_u16();
             let body = response.text().await.unwrap_or_default();
-            return Err(format!("сервер ответил ошибкой {code}: {}", server_error(&body)));
+            return Err(super::friendly_error(code, &server_error(&body)));
         }
         let mut full = String::new();
         let mut buffer: Vec<u8> = Vec::new();

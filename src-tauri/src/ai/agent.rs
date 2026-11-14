@@ -295,7 +295,7 @@ pub async fn ai_agent_step(request: AgentRequest) -> Result<AgentReply, String> 
                 request.model.trim()
             ));
         }
-        return Err(format!("сервер ответил ошибкой {code}: {msg}"));
+        return Err(super::friendly_error(code, &msg));
     }
     let v: Value = serde_json::from_str(&body).map_err(|_| "сервер прислал непонятный ответ".to_string())?;
     Ok(parse_reply(&request.provider, &v))

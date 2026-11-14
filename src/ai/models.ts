@@ -47,17 +47,21 @@ export interface CloudModel {
   tag: string;
   title: string;
   note: string;
+  /** Работает на бесплатном тарифе (без гарантии: Ollama не публикует точный список) */
+  free: boolean;
 }
 
 export const cloudCatalog: CloudModel[] = [
-  { tag: "deepseek-v4.1-flash:cloud", title: "DeepSeek V4.1 Flash", note: "Быстрая и экономная — хороший выбор для бесплатного лимита." },
-  { tag: "glm-5.3-flash:cloud", title: "GLM 5.3 Flash", note: "Быстрая модель для кода и агента." },
-  { tag: "minimax-m3.1-flash:cloud", title: "MiniMax M3.1 Flash", note: "Лёгкая быстрая модель, умеет работать агентом." },
-  { tag: "qwen3.5:cloud", title: "Qwen 3.5 (облако)", note: "Старшая Qwen 3.5 — та же семья, что ваша 4B, но намного умнее." },
-  { tag: "gemma4:cloud", title: "Gemma 4 (облако)", note: "Модель Google." },
-  { tag: "kimi-k2.7-code:cloud", title: "Kimi K2.7 Code", note: "Сильная модель именно для кода. Тратит лимит быстрее." },
-  { tag: "glm-5.3:cloud", title: "GLM 5.3", note: "Большая модель для сложных задач. Тратит лимит быстрее." },
-  { tag: "deepseek-v4-pro:cloud", title: "DeepSeek V4 Pro", note: "Одна из самых сильных. Расходует лимит быстрее всех." },
+  { tag: "gpt-oss:20b-cloud", title: "gpt-oss 20B (облако)", free: true, note: "Экономная — бесплатного лимита хватает надолго. Хороший старт." },
+  { tag: "nemotron-3-nano:30b-cloud", title: "Nemotron 3 Nano 30B", free: true, note: "Экономная модель NVIDIA." },
+  { tag: "qwen3.5:cloud", title: "Qwen 3.5 (облако)", free: true, note: "Старшая Qwen 3.5 — намного умнее вашей 4B. Тратит лимит быстрее." },
+  { tag: "deepseek-v4-flash:cloud", title: "DeepSeek V4 Flash", free: true, note: "Сильная для кода. Тратит лимит быстрее." },
+  { tag: "gpt-oss:120b-cloud", title: "gpt-oss 120B (облако)", free: true, note: "Большая модель OpenAI. Тратит лимит быстрее." },
+  { tag: "gemma4:cloud", title: "Gemma 4 (облако)", free: true, note: "Модель Google." },
+  { tag: "minimax-m2.7:cloud", title: "MiniMax M2.7", free: true, note: "Хороша для агента." },
+  { tag: "glm-5.2:cloud", title: "GLM 5.2", free: false, note: "Обычно нужна подписка Ollama Pro." },
+  { tag: "kimi-k2.6:cloud", title: "Kimi K2.6", free: false, note: "Обычно нужна подписка Ollama Pro." },
+  { tag: "deepseek-v4-pro:cloud", title: "DeepSeek V4 Pro", free: false, note: "Обычно нужна подписка Ollama Pro или Max." },
 ];
 
 // ---------- модели OpenCode Zen ----------

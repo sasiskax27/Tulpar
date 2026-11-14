@@ -141,6 +141,7 @@ export default function LocalAi() {
               <span class="model-title">
                 {m.title}
                 <span class="model-badge cloud">облако</span>
+                <span class="model-badge" classList={{ paid: !m.free }}>{m.free ? "бесплатно" : "платно"}</span>
               </span>
               <small>{m.tag} · почти не занимает места</small>
               <small>{m.note}</small>

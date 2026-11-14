@@ -58,7 +58,7 @@ async function modelChoices(name: string): Promise<{ items: ModelChoice[]; title
         .map((m) => ({ label: m.name, detail: "на компьютере · бесплатно", value: m.name }));
       const cloud = cloudCatalog.map((m) => ({
         label: m.tag,
-        detail: `облако · бесплатно с лимитом · ${isInstalled(m.tag) ? "готова" : "нажмите «Установить» в «Локальный ИИ» и войдите"}`,
+        detail: `облако · ${m.free ? "бесплатно с лимитом" : "нужна подписка Ollama"} · ${isInstalled(m.tag) ? "готова" : "нажмите «Установить» в «Локальный ИИ» и войдите"}`,
         value: m.tag,
       }));
       return { items: [...local, ...cloud], title: "Модель Ollama: на компьютере или в облаке (бесплатно)" };

@@ -50,7 +50,7 @@
   --tp-font-size-ui: 13px;
   --tp-activity-width: 48px;
   --tp-tab-height: 35px;
-  --tp-status-height: 22px;
+  --tp-status-height: 24px;
   --tp-row-height: 22px;
 }
 
@@ -296,7 +296,7 @@ body.dragging-file, body.dragging-file * { cursor: grabbing !important; }
 .git-letter.del { color: #f14c4c; }
 .git-clean { padding: 16px 20px; color: var(--tp-fg-muted); }
 .icon-button:disabled { opacity: 0.4; cursor: default; background: none; }
-.status-bar button.status-item { color: inherit; height: 100%; }
+.status-bar button.status-item { color: inherit; font-size: 12px; }
 
 /* метки изменённых строк на полях редактора */
 .git-gutter-added { border-left: 3px solid #2ea043; margin-left: 3px; }
@@ -930,17 +930,28 @@ kbd { font-family: inherit; font-size: 12px; opacity: 0.8; }
 
 .status-bar {
   height: var(--tp-status-height);
-  background: var(--tp-status-bg);
-  color: var(--tp-status-fg);
+  background: var(--tp-bg-sidebar);
+  color: var(--tp-fg-muted);
+  border-top: 1px solid var(--tp-border);
   display: flex;
   justify-content: space-between;
   font-size: 12px;
   flex-shrink: 0;
+  padding: 0 6px;
 }
-.status-bar.no-folder { background: var(--tp-status-bg-empty); }
-.status-left, .status-right { display: flex; }
-.status-item { padding: 0 8px; display: flex; align-items: center; white-space: nowrap; }
-.status-item:hover { background: rgba(255, 255, 255, 0.12); }
+.status-left, .status-right { display: flex; align-items: center; gap: 2px; }
+.status-item {
+  padding: 0 8px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  border-radius: 4px;
+}
+button.status-item:hover { background: var(--tp-bg-hover); color: var(--tp-fg-strong); }
+.status-item.accent { color: var(--tp-gold); }
+.status-item.warn { color: var(--tp-fg); }
 
 /* ---------- уведомления ---------- */
 

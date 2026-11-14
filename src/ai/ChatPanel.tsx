@@ -2,6 +2,7 @@
 import { createEffect, For, on, Show, type JSX } from "solid-js";
 import {
   messages, streaming, useFile, setUseFile, attached, attach, detach, newChat, stop, send,
+  useProject, setUseProject, collecting,
   currentFileLabel, insertIntoEditor, relPath,
 } from "./chat";
 import { core, baseName, joinPath } from "../ipc";
@@ -230,7 +231,7 @@ export default function ChatPanel() {
             {(m, i) => (
               <div class={`chat-msg ${m.role}`} classList={{ error: !!m.error }}>
                 <Show when={m.role === "user"} fallback={
-                  <Show when={m.content} fallback={<span class="chat-typing">ИИ думает<span>.</span><span>.</span><span>.</span></span>}>
+                  <Show when={m.content} fallback={<span class="chat-typing">{collecting() ?? "ИИ думает"}<span>.</span><span>.</span><span>.</span></span>}>
                     <Markdown text={m.content} />
                     <Show when={streaming() && i() === messages.length - 1}>
                       <span class="chat-cursor" />
@@ -268,6 +269,16 @@ export default function ChatPanel() {
             )}
           </For>
           <Show when={root()}>
+            <button
+              class="chat-chip"
+              classList={{ off: !useProject() }}
+              title={useProject()
+                ? "ИИ прочитает файлы проекта. Если не помещаются — возьмёт самые подходящие к вопросу. Нажмите, чтобы выключить"
+                : "Дать ИИ прочитать весь проект"}
+              onClick={() => setUseProject(!useProject())}
+            >
+              {useProject() ? "🗂" : "○"} Весь проект
+            </button>
             <button class="chat-chip add" onClick={() => void addFile()}>+ файл</button>
           </Show>
         </div>

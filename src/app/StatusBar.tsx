@@ -15,11 +15,11 @@ export default function StatusBar() {
     settings()["editor.insertSpaces"] ? `Пробелы: ${settings()["editor.tabSize"]}` : `Табы: ${settings()["editor.tabSize"]}`;
 
   return (
-    <footer class="status-bar" classList={{ "no-folder": !root() }}>
+    <footer class="status-bar">
       <div class="status-left">
         <span class="status-item">{root() ? baseName(root()!) : "Нет открытой папки"}</span>
         <Show when={gitStatus()?.isRepo}>
-          <button class="status-item" title="Переключить ветку" onClick={() => void executeCommand("git.checkout")}>
+          <button class="status-item accent" title="Переключить ветку" onClick={() => void executeCommand("git.checkout")}>
             ⎇ {gitStatus()?.branch ?? "без ветки"}
             <Show when={gitStatus()?.ahead || gitStatus()?.behind}>
               {"  "}↓{gitStatus()?.behind} ↑{gitStatus()?.ahead}
@@ -33,7 +33,7 @@ export default function StatusBar() {
           ⊞ {activeLayout()}
         </button>
         <Show when={unsaved()}>
-          <button class="status-item" title="Сохранить всё (Ctrl+Alt+S)" onClick={() => void executeCommand("workbench.action.files.saveAll")}>
+          <button class="status-item warn" title="Сохранить всё (Ctrl+Alt+S)" onClick={() => void executeCommand("workbench.action.files.saveAll")}>
             ● Не сохранено: {unsaved()}
           </button>
         </Show>

@@ -1,7 +1,7 @@
 // Чат с ИИ: история разговора, контекст из проекта, потоковый ответ.
 import { createSignal } from "solid-js";
 import { createStore, produce } from "solid-js/store";
-import { core, events, baseName, sepOf } from "../ipc";
+import { core, events, baseName, sepOf, joinPath } from "../ipc";
 import { settings } from "../config/store";
 import { root } from "../app/workspace";
 import { editorInstance } from "../editor/instance";
@@ -27,7 +27,80 @@ const [messages, setMessages] = createStore<ChatMsg[]>([]);
 const [streaming, setStreaming] = createSignal<string | null>(null);
 const [useFile, setUseFile] = createSignal(true);
 const [attached, setAttached] = createSignal<string[]>([]);
-export { messages, streaming, useFile, setUseFile, attached };
+const [useProject, setUseProject] = createSignal(false);
+const [collecting, setCollecting] = createSignal<string | null>(null);
+export { messages, streaming, useFile, setUseFile, attached, useProject, setUseProject, collecting };
+
+// ---------- весь проект ----------
+
+const TEXT_EXT = new Set(
+  ("py rs go c h cpp hpp cc cxx cs java kt kts scala swift dart rb php lua pl r jl ex exs erl hs ml fs fsx " +
+    "js jsx mjs cjs ts tsx vue svelte astro html htm css scss sass less json jsonc yaml yml toml ini cfg conf " +
+    "xml gradle sql graphql proto md mdx txt rst sh bash zsh ps1 bat cmd dockerfile makefile cmake tf nix zig v sol")
+    .split(" "),
+);
+const SKIP_NAMES = new Set(["package-lock.json", "yarn.lock", "pnpm-lock.yaml", "Cargo.lock", "poetry.lock", "uv.lock", "composer.lock", "Gemfile.lock", "go.sum", "bun.lock"]);
+const MAX_FILE = 60_000;
+const MAX_CANDIDATES = 600;
+
+function isProjectText(rel: string): boolean {
+  const name = rel.split("/").pop()!;
+  if (SKIP_NAMES.has(name) || /\.min\.(js|css)$/.test(name) || name.endsWith(".map")) return false;
+  const lower = name.toLowerCase();
+  if (lower === "dockerfile" || lower === "makefile" || lower === "cmakelists.txt") return true;
+  const ext = lower.includes(".") ? lower.split(".").pop()! : "";
+  return TEXT_EXT.has(ext);
+}
+
+/** Слова вопроса для оценки, какие файлы к нему относятся. */
+function terms(question: string): string[] {
+  return [...new Set(question.toLowerCase().match(/[\p{L}\p{N}_]{3,}/gu) ?? [])].slice(0, 30);
+}
+
+/** Файлы проекта в пределах лимита. Помещается всё — берём всё; не помещается —
+ *  самые подходящие к вопросу (совпадения в имени и в тексте) и открытый файл. */
+async function collectProject(question: string, activeRel: string | null): Promise<{ text: string; used: number; total: number }> {
+  const budget = Math.max(5_000, Number(settings()["tulpar.ai.projectChars"]) || 60_000);
+  const all = (await core.listFiles().catch(() => [] as string[])).filter(isProjectText);
+  const candidates = all.slice(0, MAX_CANDIDATES);
+  const r = root()!;
+  const files: { rel: string; text: string; score: number }[] = [];
+  const words = terms(question);
+  for (let i = 0; i < candidates.length; i += 24) {
+    setCollecting(`Читаю проект: ${Math.min(i + 24, candidates.length)} из ${candidates.length}`);
+    const batch = await Promise.all(
+      candidates.slice(i, i + 24).map(async (rel) => {
+        const text = await core.readFile(joinPath(r, rel)).catch(() => null);
+        if (text === null || text.length > MAX_FILE) return null;
+        const lowerPath = rel.toLowerCase();
+        const lowerText = text.toLowerCase();
+        let score = rel === activeRel ? 1000 : 0;
+        for (const w of words) {
+          if (lowerPath.includes(w)) score += 8;
+          let count = 0;
+          for (let at = lowerText.indexOf(w); at !== -1 && count < 10; at = lowerText.indexOf(w, at + w.length)) count++;
+          score += count;
+        }
+        // Главные файлы проекта полезны почти для любого вопроса
+        if (/(^|\/)(readme\.md|main\.\w+|index\.\w+|app\.\w+|lib\.rs|mod\.rs|package\.json|cargo\.toml|pyproject\.toml|pom\.xml|build\.gradle(\.kts)?)$/i.test(rel)) score += 3;
+        return { rel, text, score };
+      }),
+    );
+    for (const f of batch) if (f) files.push(f);
+  }
+  setCollecting(null);
+  const totalSize = files.reduce((n, f) => n + f.text.length, 0);
+  const chosen = totalSize <= budget ? files : [...files].sort((a, b) => b.score - a.score);
+  const parts: string[] = [];
+  let size = 0;
+  for (const f of chosen) {
+    const block = `--- ${f.rel} ---\n${f.text}`;
+    if (size + block.length > budget) continue;
+    parts.push(block);
+    size += block.length;
+  }
+  return { text: parts.join("\n\n"), used: parts.length, total: all.length };
+}
 
 let listening = false;
 
@@ -104,11 +177,23 @@ async function projectTree(): Promise<string> {
 }
 
 /** Собрать контекст: открытый файл или выделение, приложенные файлы, список файлов проекта. */
-async function buildContext(): Promise<{ text: string; labels: string[] }> {
+async function buildContext(question: string): Promise<{ text: string; labels: string[] }> {
   const parts: string[] = [];
   const labels: string[] = [];
   const editor = editorInstance();
   const model = editor?.getModel();
+  if (useProject() && root()) {
+    const activeRel = model && model.uri.scheme === "file" ? relPath(model.uri.fsPath) : null;
+    const project = await collectProject(question, activeRel);
+    if (project.used) {
+      parts.push(
+        `Код проекта (${project.used} из ${project.total} файлов` +
+          (project.used < project.total ? ", выбраны самые подходящие к вопросу" : "") +
+          `):\n${project.text}`,
+      );
+      labels.push(`весь проект: ${project.used} из ${project.total} файлов`);
+    }
+  }
   if (useFile() && model && model.uri.scheme === "file") {
     const rel = relPath(model.uri.fsPath);
     const lang = languageName(model.getLanguageId());
@@ -155,16 +240,22 @@ export async function send(text: string) {
   if (!base) return;
   await ensureListener();
 
-  const { text: context, labels } = await buildContext();
   const history = messages.filter((m) => !m.error).slice(-HISTORY).map((m) => ({ role: m.role, content: m.content }));
   setMessages(produce((list) => {
-    list.push({ role: "user", content: question, context: labels });
+    list.push({ role: "user", content: question });
     list.push({ role: "assistant", content: "" });
   }));
 
   const id = crypto.randomUUID();
   setStreaming(id);
   try {
+    // Контекст собираем уже после появления вопроса — пока читается проект,
+    // в чате видно «Читаю проект…»
+    const { text: context, labels } = await buildContext(question);
+    setMessages(produce((list) => {
+      const user = list[list.length - 2];
+      if (user?.role === "user") user.context = labels;
+    }));
     const full = await core.aiChat({
       id,
       ...base,

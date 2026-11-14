@@ -38,6 +38,8 @@ export interface Settings {
   "tulpar.ai.inline": boolean;
   /** Отдельная быстрая модель для подсказок; пусто — та же, что для действий */
   "tulpar.ai.inlineModel": string;
+  /** Сколько символов кода проекта отдавать ИИ в режиме «Весь проект» */
+  "tulpar.ai.projectChars": number;
   /** Свои действия ИИ в меню по правому клику */
   "tulpar.ai.customActions": CustomAiAction[];
   [key: string]: unknown;
@@ -77,6 +79,7 @@ export const defaultSettings: Settings = {
   "tulpar.ai.inline": false,
   "tulpar.ai.inlineModel": "",
   "tulpar.ai.customActions": [],
+  "tulpar.ai.projectChars": 60000,
 };
 
 // ---------- keybindings.json (формат VS Code) ----------

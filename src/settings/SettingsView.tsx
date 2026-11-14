@@ -204,6 +204,14 @@ const sections: Section[] = [
         placeholder: "qwen2.5-coder:1.5b",
       },
       {
+        key: "tulpar.ai.projectChars",
+        label: "Объём «Весь проект» в чате",
+        hint: "Сколько символов кода отдавать ИИ. У маленьких локальных моделей память меньше — для них лучше 20 000–40 000.",
+        type: "number",
+        min: 5000,
+        max: 400000,
+      },
+      {
         key: "tulpar.ai.language",
         label: "Язык комментариев",
         hint: "На каком языке ИИ пишет комментарии и объяснения.",

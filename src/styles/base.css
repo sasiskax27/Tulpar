@@ -1923,3 +1923,17 @@ body.resizing .side-island { transition: none; }
   background: var(--tp-bg-input, transparent); color: var(--tp-fg); font-family: var(--tp-font-mono, monospace); font-size: 12px;
 }
 .debug-eval:disabled { opacity: 0.55; }
+
+/* @-упоминания в чате */
+.chat-box { position: relative; }
+.mention-popup {
+  position: absolute; left: 0; right: 0; bottom: calc(100% + 6px); z-index: 30;
+  max-height: 280px; overflow: auto; padding: 4px;
+  border-radius: 10px; border: 1px solid var(--tp-border);
+  background: var(--tp-bg-sidebar); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+.mention-item { width: 100%; display: flex; align-items: baseline; gap: 10px; padding: 5px 8px; border-radius: 6px; text-align: left; color: var(--tp-fg); background: none; border: 0; cursor: pointer; }
+.mention-item.on { background: var(--tp-bg-hover); }
+.mention-item.special .mention-label { color: var(--tp-accent); font-weight: 600; }
+.mention-label { white-space: nowrap; }
+.mention-hint { font-size: 11px; color: var(--tp-fg-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

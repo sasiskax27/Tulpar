@@ -1,6 +1,16 @@
 // Generated: Russian UI text -> English. Keys are exact Russian strings;
 // pattern keys use {0}, {1}… for inserted values.
 export const EXACT: Record<string, string> = {
+ "последний вывод терминала": "latest terminal output",
+ "ошибки и предупреждения из «Проблем»": "errors and warnings from “Problems”",
+ "незакоммиченные изменения (diff)": "uncommitted changes (diff)",
+ "выделенный код в редакторе": "selected code in the editor",
+ "Упоминания": "Mentions",
+ "Спросить ИИ… @ — файл, терминал, ошибки (Enter — отправить)": "Ask AI… @ — file, terminal, errors (Enter to send)",
+ "@терминал": "@terminal",
+ "@ошибки": "@errors",
+ "@выделение": "@selection",
+ "@git": "@git",
  "Перезапустить (Ctrl+Shift+F5)": "Restart (Ctrl+Shift+F5)",
  "Пауза": "Pause",
  "убрать все": "remove all",
@@ -1107,6 +1117,7 @@ export const EXACT: Record<string, string> = {
 };
 
 export const PATTERNS: Record<string, string> = {
+ "@ошибки: {0}": "@errors: {0}",
  "Программа завершилась, код {0}.": "The program exited with code {0}.",
  "строка {0}": "line {0}",
  "стр. {0}": "ln {0}",

@@ -1,4 +1,5 @@
 // Чат с ИИ: история разговора, контекст из проекта, потоковый ответ.
+import { resolveMentions } from "./mentions";
 import { aiLanguage } from "../i18n/translate";
 import { createSignal } from "solid-js";
 import { createStore, produce } from "solid-js/store";
@@ -408,6 +409,10 @@ async function buildContext(question: string): Promise<{ text: string; labels: s
       // файл исчез — просто не прикладываем
     }
   }
+  // @-упоминания: @файл, @терминал, @ошибки, @git, @выделение
+  const mentioned = await resolveMentions(question);
+  parts.push(...mentioned.blocks);
+  labels.push(...mentioned.labels);
   const tree = await projectTree();
   if (tree) parts.push(`Файлы проекта ${baseName(root()!)}:\n${tree}`);
   return { text: parts.join("\n\n"), labels };
@@ -435,7 +440,10 @@ export async function send(text: string) {
   const question = text.trim();
   if (!question || streaming()) return;
   if (agentMode() && root()) {
-    if (await runAgent(question, agentNote())) return;
+    // Агенту отдаём упомянутое сразу — меньше лишних шагов
+    const mentioned = await resolveMentions(question);
+    const extra = mentioned.blocks.length ? `\n\n<context>\n${mentioned.blocks.join("\n\n").slice(0, 40_000)}\n</context>` : "";
+    if (await runAgent(question, agentNote() + extra)) return;
     // модель не умеет инструменты — отвечаем обычным чатом
   }
   const base = aiBase();

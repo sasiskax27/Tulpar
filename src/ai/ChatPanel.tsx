@@ -1,5 +1,6 @@
 // Панель чата с ИИ (Ctrl+Alt+I).
-import { createEffect, For, on, Show, type JSX } from "solid-js";
+import { createEffect, createSignal, For, on, Show, type JSX } from "solid-js";
+import { suggest, type MentionItem } from "./mentions";
 import {
   messages, streaming, useFile, setUseFile, attached, attach, detach, newChat, stop, send,
   useProject, setUseProject, collecting, attachedDirs, agentMode, setAgentMode, type AgentStep,
@@ -18,6 +19,56 @@ import { chatDrop } from "../explorer/dnd";
 import { answerStep, rollbackTask, showStepDiff, undoStep } from "./agent";
 
 let input: HTMLTextAreaElement | undefined;
+
+// ---------- подсказки @-упоминаний ----------
+const [mention, setMention] = createSignal<{ start: number; query: string } | null>(null);
+const [mentionItems, setMentionItems] = createSignal<MentionItem[]>([]);
+const [mentionIndex, setMentionIndex] = createSignal(0);
+let mentionSeq = 0;
+
+function updateMention(el: HTMLTextAreaElement) {
+  const caret = el.selectionStart ?? el.value.length;
+  const before = el.value.slice(0, caret);
+  const m = /(^|\s)@([^\s@]*)$/.exec(before);
+  if (!m) {
+    setMention(null);
+    return;
+  }
+  const start = caret - m[2].length - 1;
+  setMention({ start, query: m[2] });
+  const my = ++mentionSeq;
+  void suggest(m[2]).then((items) => {
+    if (my !== mentionSeq) return;
+    setMentionItems(items);
+    setMentionIndex(0);
+    if (!items.length) setMention(null);
+  });
+}
+
+function applyMention(item: MentionItem) {
+  const m = mention();
+  if (!input || !m) return;
+  const caret = input.selectionStart ?? input.value.length;
+  const text = `@${item.insert} `;
+  input.value = input.value.slice(0, m.start) + text + input.value.slice(caret);
+  const pos = m.start + text.length;
+  input.setSelectionRange(pos, pos);
+  input.focus();
+  setMention(null);
+}
+
+/** Клавиши в поле ввода, пока открыт список упоминаний. true — клавиша обработана. */
+function mentionKey(e: KeyboardEvent): boolean {
+  if (!mention() || !mentionItems().length) return false;
+  const n = mentionItems().length;
+  if (e.key === "ArrowDown") setMentionIndex((i) => (i + 1) % n);
+  else if (e.key === "ArrowUp") setMentionIndex((i) => (i - 1 + n) % n);
+  else if (e.key === "Enter" || e.key === "Tab") applyMention(mentionItems()[mentionIndex()]);
+  else if (e.key === "Escape") setMention(null);
+  else return false;
+  e.preventDefault();
+  return true;
+}
 
 export function focusChat(text?: string) {
   queueMicrotask(() => {
@@ -569,20 +620,46 @@ export default function ChatPanel(props: { embedded?: boolean }) {
           </Show>
         </div>
         <div class="chat-box">
+          <Show when={mention() && mentionItems().length}>
+            <div class="mention-popup" role="listbox" aria-label="Упоминания">
+              <For each={mentionItems()}>
+                {(item, i) => (
+                  <button
+                    class="mention-item"
+                    classList={{ on: i() === mentionIndex(), special: item.kind === "special" }}
+                    role="option"
+                    aria-selected={i() === mentionIndex()}
+                    onMouseDown={(e) => (e.preventDefault(), applyMention(item))}
+                    onMouseEnter={() => setMentionIndex(i())}
+                  >
+                    <span class="mention-label" data-no-translate={item.kind === "file" ? "" : undefined}>
+                      {item.label}
+                    </span>
+                    <span class="mention-hint" data-no-translate={item.kind === "file" ? "" : undefined}>
+                      {item.hint}
+                    </span>
+                  </button>
+                )}
+              </For>
+            </div>
+          </Show>
           <textarea
             ref={input}
             class="chat-input"
             rows={1}
             placeholder={agentMode() && root()
               ? "Задача для агента: «добавь проверку ввода», «почини тесты»… (Enter)"
-              : "Спросить ИИ… (Enter — отправить, Shift+Enter — новая строка)"}
+              : "Спросить ИИ… @ — файл, терминал, ошибки (Enter — отправить)"}
             aria-label="Вопрос ИИ"
             onInput={(e) => {
               const el = e.currentTarget;
               el.style.height = "auto";
               el.style.height = Math.min(el.scrollHeight, 200) + "px";
+              updateMention(el);
             }}
+            onBlur={() => setTimeout(() => setMention(null), 150)}
             onKeyDown={(e) => {
+              if (mentionKey(e)) return;
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 submit();

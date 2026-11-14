@@ -229,3 +229,20 @@ export function interruptTerminal(title: string): boolean {
   void core.terminalWrite(s.id, "\x03").catch(() => undefined);
   return true;
 }
+
+/** Последние строки терминала (для @терминал в чате ИИ). Без пустых хвостов. */
+export function terminalText(maxLines = 120, session = activeSession() ?? sessions()[0]): string {
+  if (!session) return "";
+  const buf = session.term.buffer.active;
+  const lines: string[] = [];
+  const end = buf.length;
+  for (let i = Math.max(0, end - maxLines * 2); i < end; i++) {
+    const line = buf.getLine(i);
+    if (!line) continue;
+    // Перенесённые строки склеиваем с предыдущей
+    if (line.isWrapped && lines.length) lines[lines.length - 1] += line.translateToString(true);
+    else lines.push(line.translateToString(true));
+  }
+  while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+  return lines.slice(-maxLines).join("\n");
+}

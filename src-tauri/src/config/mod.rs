@@ -99,5 +99,5 @@ pub fn start_watching(app: AppHandle) {
     let state: State<ConfigState> = app.state();
     if let Ok(mut slot) = state.watcher.lock() {
         *slot = Some(watcher);
-    }
+    };
 }

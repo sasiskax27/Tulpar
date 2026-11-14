@@ -25,8 +25,11 @@ export function resetAgent() {
   history = [];
 }
 
+let waitingStopByUser = false;
+
 export function stopAgent() {
   stopRequested = true;
+  waitingStopByUser = true;
   for (const [, resolve] of waiting) resolve(false);
   waiting.clear();
 }
@@ -89,7 +92,7 @@ const TOOLS = [
   },
   {
     name: "run_command",
-    description: `Run a shell command in the project folder and get its output (${isWindows ? "Windows PowerShell 5.1: chain with ';', no '&&'" : "sh"}). Use for builds, tests, git, installing packages. Not for long-running servers.`,
+    description: `Run a shell command in the project folder and get its output (${isWindows ? "Windows PowerShell 5.1: chain with ';', no '&&'" : "sh"}). Use for builds, tests, git, installing packages. Not for long-running servers. The command gets no keyboard input: a program that asks for input must get it through a pipe, for example ${isWindows ? "'Anna' | python hello.py" : "echo Anna | python3 hello.py"}.`,
     parameters: {
       type: "object",
       properties: { command: str, timeout_seconds: { ...int, description: "Default 120" } },
@@ -194,8 +197,27 @@ async function ask(stepId: string): Promise<boolean> {
   return ok;
 }
 
+/** Сколько раз подряд ИИ присылал один и тот же вызов — небольшие модели зацикливаются. */
+const seen = new Map<string, { count: number; denied: boolean }>();
+
 /** Выполнить вызов инструмента; вернуть текст для ИИ. */
 async function execute(call: ToolCall): Promise<string> {
+  const key = call.name + JSON.stringify(call.args);
+  const prev = seen.get(key);
+  const changes = call.name === "edit_file" || call.name === "write_file" || call.name === "run_command";
+  if (prev && (prev.denied || (changes && prev.count >= 1) || prev.count >= 2)) {
+    prev.count++;
+    if (prev.count >= 4) stopRequested = true;
+    return prev.denied
+      ? "The user already rejected exactly this action. Do NOT repeat it. Do something else or finish and explain."
+      : "You already did exactly this. Do NOT repeat it — use the earlier result, then continue with the next step or finish.";
+  }
+  const result = await executeOnce(call);
+  seen.set(key, { count: (prev?.count ?? 0) + 1, denied: result.startsWith("Пользователь") });
+  return result;
+}
+
+async function executeOnce(call: ToolCall): Promise<string> {
   const a = call.args as Record<string, any>;
   const stepId = crypto.randomUUID();
   const step = (title: string, detail?: string) =>
@@ -290,7 +312,11 @@ async function execute(call: ToolCall): Promise<string> {
         if (needsApproval("run_command") && !(await ask(stepId))) return "Пользователь не разрешил запускать эту команду.";
         const r = await core.agentRun(command, Number(a.timeout_seconds) || undefined);
         const status = r.timedOut ? "остановлена по времени" : `код выхода ${r.code ?? "?"}`;
-        updateStep(stepId, { status: r.code === 0 ? "done" : "error", result: status, output: r.output });
+        updateStep(stepId, {
+          status: r.code === 0 ? "done" : "error",
+          result: r.output.trim() ? status : `${status}, вывода нет`,
+          output: r.output,
+        });
         return `${status}\n${r.output || "(нет вывода)"}`;
       }
       default:
@@ -416,7 +442,7 @@ function contextNote(): string {
   if (!model || model.uri.scheme !== "file") return "";
   const sel = editorInstance()!.getSelection();
   const where = sel && !sel.isEmpty() ? `, selected lines ${sel.startLineNumber}-${sel.endLineNumber}` : `, cursor at line ${editorInstance()!.getPosition()?.lineNumber ?? 1}`;
-  return `\n\n(The user has ${relPath(model.uri.fsPath)} open${where}.)`;
+  return `\n\n(For reference only: the editor currently shows ${relPath(model.uri.fsPath)}${where}. Do not change or run this file unless the task is about it.)`;
 }
 
 /** Выполнить задачу агентом. Возвращает false, если модель не умеет инструменты. */
@@ -425,11 +451,13 @@ export async function runAgent(question: string, attachedNote: string): Promise<
   if (!base) return true;
   const runId = crypto.randomUUID();
   stopRequested = false;
+  waitingStopByUser = false;
   chatInternals.setMessages(produce((list) => {
     list.push({ role: "user", content: question, context: ["агент"] });
     list.push({ role: "assistant", content: "", steps: [] });
   }));
   chatInternals.setStreaming(runId);
+  seen.clear();
   history.push({ role: "user", content: question + attachedNote + contextNote() });
   const maxSteps = Math.max(3, Number(settings()["tulpar.agent.maxSteps"]) || 30);
   try {
@@ -453,6 +481,7 @@ export async function runAgent(question: string, attachedNote: string): Promise<
       }
     }
     if (!stopRequested) appendText(`Остановился после ${maxSteps} шагов. Напишите «продолжай», если нужно доделать.`);
+    else if (!waitingStopByUser) appendText("Агент начал повторять одно и то же действие — остановил его. Попробуйте сформулировать задачу точнее.");
     else appendText("Остановлено.");
     return true;
   } catch (e) {

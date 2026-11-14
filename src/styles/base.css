@@ -1272,3 +1272,4 @@ body.resizing .side-island { transition: none; }
 .agent-step-actions { display: flex; gap: 6px; margin: 6px 0 2px 22px; }
 .agent-step-actions .button, .agent-step-actions .button-quiet { font-size: 12px; padding: 3px 10px; }
 @media (prefers-reduced-motion: reduce) { .agent-step.running .agent-step-icon { animation: none; } }
+.chat-warn { font-size: 12px; color: var(--tp-gold); border-left: 2px solid var(--tp-gold); padding-left: 8px; }

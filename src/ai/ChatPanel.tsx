@@ -155,6 +155,11 @@ function Markdown(props: { text: string }) {
 
 const SUGGESTIONS = ["Объясни этот файл", "Найди ошибки в коде", "Как устроен этот проект?", "Напиши тесты для выделенного кода"];
 
+/** Открыта домашняя папка целиком (C:\\Users\\имя, /home/имя), а не проект. */
+function isHomeFolder(path: string | null): boolean {
+  return !!path && /^(?:[A-Za-z]:[\\/]Users[\\/][^\\/]+|\/(?:home|Users)\/[^/]+)[\\/]?$/.test(path);
+}
+
 const STEP_ICON: Record<AgentStep["status"], string> = { running: "◌", pending: "?", done: "✓", denied: "⨯", error: "!" };
 
 function StepView(props: { step: AgentStep }) {
@@ -234,11 +239,13 @@ export default function ChatPanel(props: { embedded?: boolean }) {
   // Прокрутка вниз по мере ответа, если пользователь сам не листает вверх
   createEffect(
     on(
-      () => messages.map((m) => m.content.length).join(","),
+      () => messages.map((m) => `${m.content.length}:${(m.steps ?? []).map((st) => st.status).join("")}`).join(","),
       () => {
         if (!list) return;
-        const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 120;
-        if (nearBottom) queueMicrotask(() => list!.scrollTo({ top: list!.scrollHeight }));
+        const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 200;
+        // Шаг ждёт решения — прокручиваем к нему, даже если пользователь листал вверх
+        const pending = messages.some((m) => m.steps?.some((st) => st.status === "pending"));
+        if (nearBottom || pending) requestAnimationFrame(() => list!.scrollTo({ top: list!.scrollHeight }));
       },
     ),
   );
@@ -301,6 +308,11 @@ export default function ChatPanel(props: { embedded?: boolean }) {
                   fallback={<p>Спросите что угодно о своём коде. ИИ видит открытый файл и список файлов проекта.</p>}
                 >
                   <p>Дайте задачу — агент сам найдёт нужные файлы, поправит код и запустит команды. Правки и команды он покажет и спросит разрешения.</p>
+                  <Show when={isHomeFolder(root())}>
+                    <p class="chat-warn">
+                      Сейчас открыта вся домашняя папка. Агенту будет проще и быстрее, если открыть папку конкретного проекта (Ctrl+K Ctrl+O).
+                    </p>
+                  </Show>
                 </Show>
                 <p class="chat-hint">Перетащите сюда файл или папку из проводника — они приложатся к вопросу. Перетащите имя проекта — ИИ прочитает весь проект.</p>
                 <div class="chat-suggestions">

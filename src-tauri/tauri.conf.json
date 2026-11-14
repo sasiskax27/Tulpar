@@ -16,6 +16,7 @@
         "title": "Tulpar",
         "width": 1280,
         "height": 800,
+        "maximized": true,
         "minWidth": 640,
         "minHeight": 400
       }

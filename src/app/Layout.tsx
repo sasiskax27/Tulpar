@@ -7,8 +7,8 @@
 //  ├────┴─────────┴──────────────────┴─────────┤
 //  │                status bar                 │
 //  └───────────────────────────────────────────┘
-import { createSignal, For, onCleanup, Show } from "solid-js";
-import { bottomVisible, setSidebarVisible, sidebarVisible } from "./ui";
+import { createEffect, createSignal, For, onCleanup, Show, untrack } from "solid-js";
+import { bottomTab, bottomVisible, setSidebarVisible, sidebarVisible } from "./ui";
 import { Dynamic } from "solid-js/web";
 import { activeLayout, layoutConfig, settings, updateSetting, type Slot } from "../config/store";
 import { panels, UnknownPanel } from "./panels";
@@ -108,6 +108,12 @@ function ClassicLayout() {
 }
 
 function CenterColumn(props: { hasBottom: boolean }) {
+  // Чату внизу нужно место: при открытии делаем панель повыше, если она низкая
+  createEffect(() => {
+    if (!bottomVisible() || bottomTab() !== "chat") return;
+    const want = Math.min(480, Math.round(window.innerHeight * 0.5));
+    if (untrack(bottomHeight) < want) setBottomHeight(want);
+  });
   return (
     <main class="slot-center-column">
       <section class="slot slot-center">

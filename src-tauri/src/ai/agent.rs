@@ -301,7 +301,11 @@ fn shell_command(command: &str) -> Command {
     {
         use std::os::windows::process::CommandExt;
         let mut c = Command::new("powershell");
-        c.args(["-NoProfile", "-NonInteractive", "-Command", command]);
+        // Иначе PowerShell 5.1 перекодирует вывод программ в OEM-866 и кириллица ломается
+        let script = format!(
+            "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $OutputEncoding = [System.Text.Encoding]::UTF8; {command}"
+        );
+        c.args(["-NoProfile", "-NonInteractive", "-Command", script.as_str()]);
         c.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
         c
     }
@@ -325,6 +329,8 @@ pub async fn agent_run(state: State<'_, WorkspaceState>, command: String, timeou
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .env("GIT_TERMINAL_PROMPT", "0")
+            .env("PYTHONIOENCODING", "utf-8")
+            .env("PYTHONUTF8", "1")
             .spawn()
             .map_err(|e| format!("не удалось запустить: {e}"))?;
         let mut out = child.stdout.take().unwrap();

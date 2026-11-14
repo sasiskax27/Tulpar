@@ -211,6 +211,8 @@ export interface ServerConfig {
   args?: string[];
   /** Подсказка, как установить сервер, если его нет */
   install?: string;
+  /** Запасные серверы: если основной не установлен или падает, пробуем их по очереди */
+  alternatives?: ServerConfig[];
 }
 
 /** Ключ — id языка в Monaco. TypeScript и JavaScript по умолчанию обслуживает
@@ -230,7 +232,16 @@ const clangd: ServerConfig = {
 
 export const defaultLanguages: Record<string, ServerConfig | null> = {
   rust: { command: "rust-analyzer", install: "rustup component add rust-analyzer" },
-  python: { command: "basedpyright-langserver", args: ["--stdio"], install: "pip install basedpyright" },
+  python: {
+    command: "basedpyright-langserver",
+    args: ["--stdio"],
+    install: "npm install -g basedpyright",
+    alternatives: [
+      { command: "pyright-langserver", args: ["--stdio"], install: "npm install -g pyright" },
+      { command: "jedi-language-server", install: "pip install -U jedi-language-server" },
+      { command: "pylsp", install: "pip install -U python-lsp-server" },
+    ],
+  },
   go: { command: "gopls", install: "go install golang.org/x/tools/gopls@latest" },
   c: clangd,
   cpp: clangd,

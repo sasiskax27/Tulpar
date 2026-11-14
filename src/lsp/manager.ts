@@ -95,7 +95,11 @@ function serverKey(cfg: ServerConfig): string {
   return [cfg.command, ...(cfg.args ?? [])].join(" ");
 }
 
-async function startServer(cfg: ServerConfig): Promise<LspClient | null> {
+/** Серверы, которых нет на компьютере (в этом сеансе) */
+const missing = new Set<string>();
+
+/** quiet — не сообщать о неудаче: после него попробуем запасной сервер. */
+async function startServer(cfg: ServerConfig, quiet = false): Promise<LspClient | null> {
   const key = serverKey(cfg);
   const r = root();
   const gen = generation;
@@ -105,7 +109,8 @@ async function startServer(cfg: ServerConfig): Promise<LspClient | null> {
   } catch (e) {
     const msg = String(e);
     if (msg.startsWith("not-found:")) {
-      if (!warnedMissing.has(key)) {
+      missing.add(key);
+      if (!quiet && !warnedMissing.has(key)) {
         warnedMissing.add(key);
         const install = cfg.install;
         notify(
@@ -124,8 +129,10 @@ async function startServer(cfg: ServerConfig): Promise<LspClient | null> {
             : undefined,
         );
       }
-    } else {
+    } else if (!quiet) {
       notify(msg, "error");
+    } else {
+      crashed.add(key);
     }
     return null;
   }
@@ -179,7 +186,10 @@ async function startServer(cfg: ServerConfig): Promise<LspClient | null> {
       client.crashReported = true;
       // Причина приходит в stderr вместе с событием завершения — даём ему дойти
       await new Promise((r) => setTimeout(r, 700));
-      if (gen === generation) crashNotice(cfg, client.stderr || (e instanceof Error ? e.message : String(e)));
+      if (gen === generation) {
+        if (quiet) crashed.add(key);
+        else crashNotice(cfg, client.stderr || (e instanceof Error ? e.message : String(e)));
+      }
     }
     client.dispose();
     byServerId.delete(id);
@@ -190,15 +200,64 @@ async function startServer(cfg: ServerConfig): Promise<LspClient | null> {
   return client;
 }
 
+/** Основной сервер языка и запасные — по очереди, пока какой-то не заработает. */
+async function firstWorking(cfgs: ServerConfig[], languageId: string): Promise<LspClient | null> {
+  for (let i = 0; i < cfgs.length; i++) {
+    const cfg = cfgs[i];
+    const key = serverKey(cfg);
+    if (crashed.has(key) || missing.has(key)) continue;
+    let p = clients.get(key);
+    if (!p) {
+      // Последний вариант сообщает о неудаче сам; остальные — тихо
+      p = startServer(cfg, i < cfgs.length - 1 || cfgs.length > 1);
+      clients.set(key, p);
+    }
+    const client = await p;
+    if (client) return client;
+    clients.delete(key);
+  }
+  if (cfgs.length > 1) noServerNotice(cfgs, languageId);
+  return null;
+}
+
+const noServerWarned = new Set<string>();
+
+/** Ни один сервер языка не заработал — предложить установить. */
+function noServerNotice(cfgs: ServerConfig[], languageId: string) {
+  if (noServerWarned.has(languageId)) return;
+  noServerWarned.add(languageId);
+  const actions = cfgs
+    .filter((c) => c.install)
+    .slice(0, 2)
+    .map((c) => ({
+      label: `Установить ${c.command.replace(/-langserver|-language-server/, "")}`,
+      run: () => {
+        void runInTerminal(c.install!);
+        notify("Когда установка закончится, нажмите «Перезапустить серверы».", "info", [
+          { label: "Перезапустить серверы", run: () => { noServerWarned.delete(languageId); void restart(); } },
+        ]);
+      },
+    }));
+  notify(
+    `Для ${languageId} не работает ни один языковой сервер (${cfgs.map((c) => c.command).join(", ")}) — нет автодополнения по коду, подсказок и ошибок. Установите один из них:`,
+    "error",
+    actions,
+  );
+}
+
 function clientForLanguage(languageId: string): Promise<LspClient | null> | null {
   const cfg = languages()[languageId];
   if (!cfg?.command) return null;
-  const key = serverKey(cfg);
-  if (crashed.has(key)) return null;
+  const cfgs = [cfg, ...(cfg.alternatives ?? [])];
+  const key = `lang:${languageId}:${cfgs.map(serverKey).join("|")}`;
   let p = clients.get(key);
   if (!p) {
-    p = startServer(cfg);
+    p = firstWorking(cfgs, languageId);
     clients.set(key, p);
+    // Неудачу не кэшируем навсегда: после «Перезапустить» попробуем снова
+    void p.then((c) => {
+      if (!c) clients.delete(key);
+    });
   }
   return p;
 }
@@ -265,6 +324,7 @@ export function clientFor(model: monaco.editor.ITextModel): LspClient | undefine
 async function stopAll() {
   generation++;
   crashed.clear();
+  missing.clear();
   const all = [...byServerId.entries()];
   byServerId.clear();
   clients.clear();

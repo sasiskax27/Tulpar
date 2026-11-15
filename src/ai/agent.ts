@@ -607,7 +607,7 @@ function contextNote(): string {
 
 /** Выполнить задачу агентом. Возвращает false, если модель не умеет инструменты. */
 export async function runAgent(question: string, attachedNote: string): Promise<boolean> {
-  const base = aiBase();
+  const base = aiBase("agent");
   if (!base) return true;
   const runId = crypto.randomUUID();
   stopRequested = false;

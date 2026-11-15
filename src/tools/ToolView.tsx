@@ -2,6 +2,11 @@
 import { lazy, Match, Switch } from "solid-js";
 import type { ToolId } from "../editor/side";
 const HttpClient = lazy(() => import("./HttpClient"));
+const ProcessView = lazy(() => import("../system/ProcessView"));
+const LogsView = lazy(() => import("../system/LogsView"));
+const BenchView = lazy(() => import("../ai/BenchView"));
+const VmView = lazy(() => import("../vm/VmView"));
+const CommandCenter = lazy(() => import("../system/CommandCenter"));
 const RegexLab = lazy(() => import("./RegexLab"));
 const TodoBoard = lazy(() => import("./TodoBoard"));
 const HistoryView = lazy(() => import("./HistoryView"));
@@ -53,6 +58,11 @@ export default function ToolView(props: { tool: ToolId }) {
       <Match when={props.tool === "docker"}><DockerView /></Match>
       <Match when={props.tool === "servers"}><ServersView /></Match>
       <Match when={props.tool === "store"}><StoreView /></Match>
+      <Match when={props.tool === "processes"}><ProcessView /></Match>
+      <Match when={props.tool === "logs"}><LogsView /></Match>
+      <Match when={props.tool === "bench"}><BenchView /></Match>
+      <Match when={props.tool === "vm"}><VmView /></Match>
+      <Match when={props.tool === "command"}><CommandCenter /></Match>
     </Switch>
   );
 }

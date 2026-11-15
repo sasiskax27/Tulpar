@@ -23,6 +23,8 @@ mod ssh;
 mod services;
 mod webserver;
 mod login;
+mod system;
+mod vm;
 mod search;
 mod terminal;
 mod transfer;
@@ -42,6 +44,7 @@ fn main() {
         .manage(phone::PhoneState::default())
         .manage(collab::CollabState::default())
         .manage(services::ServicesState::default())
+        .manage(vm::VmState::default())
         .manage(webserver::WebServerState::default())
         .manage(config::ConfigState::default())
         .manage(lsp::LspState::default())
@@ -74,6 +77,14 @@ fn main() {
             ssh::ssh_deploy,
             login::oauth_capture,
             login::github_cli_token,
+            system::sys_query,
+            system::sys_kill,
+            system::sys_tail,
+            vm::vm_info,
+            vm::vm_img,
+            vm::vm_start,
+            vm::vm_status,
+            vm::vm_stop,
             services::service_start,
             services::service_stop,
             services::service_status,
@@ -174,6 +185,7 @@ fn main() {
                 app.state::<lsp::LspState>().kill_all();
                 app.state::<terminal::TerminalState>().kill_all();
                 app.state::<services::ServicesState>().kill_all();
+                app.state::<vm::VmState>().kill_all();
             }
         });
 }

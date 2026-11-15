@@ -176,7 +176,7 @@ export async function showDiff(f: GitFile) {
 
 /** ИИ пишет сообщение коммита по изменениям. */
 export async function suggestMessage() {
-  const base = aiBase();
+  const base = aiBase("quick");
   if (!base) return;
   setBusy("ИИ пишет сообщение");
   try {

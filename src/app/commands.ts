@@ -243,6 +243,12 @@ export function registerBuiltinCommands() {
   tool("tulpar.docker", "docker", "Docker: контейнеры и образы");
   tool("tulpar.servers", "servers", "Серверы: SSH, файлы, сервисы, деплой");
   tool("tulpar.store", "store", "Магазин Tulpar: языки, серверы, базы данных, инструменты");
+  tool("tulpar.commandCenter", "command", "Command Center: компьютер, порты, ошибки, ИИ, серверы, Docker");
+  tool("tulpar.processes", "processes", "Процессы и порты: кто занял порт, что ест память");
+  tool("tulpar.logs", "logs", "Логи: системный журнал и лог-файлы, разбор ошибок ИИ");
+  tool("tulpar.bench", "bench", "Сравнение моделей ИИ и выбор модели под задачу");
+  tool("tulpar.vm", "vm", "VM Studio: виртуальные машины (QEMU)");
+  reg({ id: "tulpar.aiConnect", category: "ИИ", title: "Подключить ИИ (Gemini, Groq, OpenRouter, Hugging Face…)", run: () => void import("../editor/side").then((m) => m.showTool("store")) });
   reg({ id: "tulpar.runtimes", category: "Инструменты", title: "Поставить язык в один клик (Python, Node, Go, Java…)", run: () => void import("../editor/side").then((m) => m.showTool("store")) });
   reg({ id: "tulpar.webserver", category: "Инструменты", title: "Запустить сайт (встроенный веб-сервер)", run: () => void import("../editor/side").then((m) => m.showTool("store")) });
   brainCmd("tulpar.team", "Команда ИИ: кодер → тестировщик → ревьюер", () => import("../brain/team").then((m) => m.runTeam()));

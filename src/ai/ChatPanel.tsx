@@ -163,7 +163,7 @@ function CodeBlock(props: { lang: string; code: string }) {
 }
 
 /** Ответ ИИ: блоки ``` — отдельно, остальное — абзацами. */
-function Markdown(props: { text: string }) {
+export function Markdown(props: { text: string }) {
   const blocks = () => {
     const out: { kind: "text" | "code"; lang: string; body: string }[] = [];
     const re = /```([^\n`]*)\n([\s\S]*?)(```|$)/g;

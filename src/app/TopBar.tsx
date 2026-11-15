@@ -82,6 +82,14 @@ export default function TopBar() {
         </For>
         <span class="top-sep" />
         <button
+          class="top-btn"
+          title={hint("Command Center", "tulpar.commandCenter")}
+          aria-label="Command Center"
+          onClick={() => void executeCommand("tulpar.commandCenter")}
+        >
+          {icons.center(17)}
+        </button>
+        <button
           class="top-btn top-store"
           title={hint("Магазин Tulpar", "tulpar.store")}
           aria-label="Магазин Tulpar"

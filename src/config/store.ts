@@ -101,6 +101,8 @@ export interface Settings {
   "tulpar.ai.apiKey": string;
   /** Думающим моделям Ollama разрешено размышлять перед ответом (медленнее) */
   "tulpar.ai.think": boolean;
+  /** Какой сервис брать для задачи (id из tulpar.ai.profiles); пусто — основной */
+  "tulpar.ai.routes": { chat?: string; agent?: string; quick?: string };
   /** Модель, адрес и ключ для каждого сервиса: при переключении ничего не теряется */
   "tulpar.ai.profiles": Record<string, { model: string; baseUrl: string; apiKey: string }>;
   /** На каком языке ИИ пишет комментарии и объяснения */
@@ -208,6 +210,7 @@ export const defaultSettings: Settings = {
   "tulpar.ai.model": "",
   "tulpar.ai.apiKey": "",
   "tulpar.ai.think": false,
+  "tulpar.ai.routes": {},
   "tulpar.ai.profiles": {},
   "tulpar.ai.language": "",
   "tulpar.ai.inline": false,

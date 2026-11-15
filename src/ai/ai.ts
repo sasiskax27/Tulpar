@@ -160,7 +160,26 @@ export interface AiBase {
 
 /** Куда и к какой модели слать запросы. null — ИИ не настроен (пользователь
  *  увидит подсказку и окно настроек). */
-export function aiBase(): AiBase | null {
+export type AiPurpose = "chat" | "agent" | "quick";
+
+/** Модель под задачу: если в «Сравнении моделей» назначен сервис для этой задачи
+ *  и для него сохранены модель и ключ — берём его, иначе основной. */
+function routed(purpose: AiPurpose | undefined): AiBase | null {
+  if (!purpose) return null;
+  const cfg = settings();
+  const id = cfg["tulpar.ai.routes"]?.[purpose];
+  if (!id || id === cfg["tulpar.ai.provider"]) return null;
+  const p = cfg["tulpar.ai.profiles"]?.[id];
+  const defaults = providers[id];
+  if (!p || !defaults) return null;
+  const model = p.model.trim() || defaults.model;
+  if (!model) return null;
+  return { provider: id, baseUrl: p.baseUrl.trim() || defaults.baseUrl, model, apiKey: p.apiKey };
+}
+
+export function aiBase(purpose?: AiPurpose): AiBase | null {
+  const viaRoute = routed(purpose);
+  if (viaRoute) return viaRoute;
   const cfg = settings();
   const provider = cfg["tulpar.ai.provider"];
   const defaults = providers[provider];

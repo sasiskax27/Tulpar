@@ -15,6 +15,7 @@ const svg = (children: JSX.Element, size = 20) => (
 );
 
 export const icons = {
+  center: (size?: number) => svg(<><rect x="3" y="3" width="8" height="8" rx="1.5" /><rect x="13" y="3" width="8" height="5" rx="1.5" /><rect x="13" y="10" width="8" height="11" rx="1.5" /><rect x="3" y="13" width="8" height="8" rx="1.5" /></>, size),
   store: (size?: number) => svg(<><path d="M3 9l1.5-5h15L21 9" /><path d="M3 9h18v1a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z" /><path d="M5 12v8h14v-8" /><path d="M10 20v-5h4v5" /></>, size),
   explorer: (size?: number) => svg(<><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /></>, size),
   search: (size?: number) => svg(<><circle cx="10.5" cy="10.5" r="6.5" /><path d="M20 20l-4.8-4.8" /></>, size),

@@ -1,7 +1,8 @@
 // Выбор ИИ-сервиса карточками: бесплатные сверху, вход в браузере, проверка связи.
 import { For, Show } from "solid-js";
-import { settings } from "../config/store";
+import { settings, updateSetting } from "../config/store";
 import { core } from "../ipc";
+import { providers } from "../ai/ai";
 import { login, loginBusy, serviceById, services, switchService, testConnection } from "../ai/services";
 
 export default function AiServices(props: { compact?: boolean }) {
@@ -26,6 +27,50 @@ export default function AiServices(props: { compact?: boolean }) {
         {(s) => (
           <div class="ai-service-panel">
             <div class="ai-service-note">{s().note}</div>
+            <ol class="ai-steps">
+              <For each={s().steps}>{(step) => <li>{step}</li>}</For>
+            </ol>
+            <Show when={s().needsKey}>
+              <label class="ai-field">
+                <span>Ключ API</span>
+                <input
+                  class="settings-input"
+                  type="password"
+                  placeholder="вставьте ключ сюда"
+                  value={String(settings()["tulpar.ai.apiKey"] ?? "")}
+                  onChange={(e) => updateSetting("tulpar.ai.apiKey", e.currentTarget.value.trim())}
+                />
+              </label>
+            </Show>
+            <Show when={s().models.length}>
+              <div class="ai-field">
+                <span>Модель</span>
+                <div class="ai-models">
+                  <For each={s().models}>
+                    {(m) => (
+                      <button
+                        class="ai-model"
+                        classList={{ on: (settings()["tulpar.ai.model"] || providers[s().id]?.model) === m.id }}
+                        onClick={() => updateSetting("tulpar.ai.model", m.id)}
+                        title={m.id}
+                      >
+                        <b data-no-translate>{m.id}</b>
+                        <small>{m.note}</small>
+                      </button>
+                    )}
+                  </For>
+                </div>
+              </div>
+            </Show>
+            <label class="ai-field">
+              <span>Своя модель</span>
+              <input
+                class="settings-input"
+                placeholder={providers[s().id]?.model || "название модели"}
+                value={String(settings()["tulpar.ai.model"] ?? "")}
+                onChange={(e) => updateSetting("tulpar.ai.model", e.currentTarget.value.trim())}
+              />
+            </label>
             <div class="settings-buttons wrap">
               <Show when={s().login}>
                 {(kind) => (
@@ -45,8 +90,8 @@ export default function AiServices(props: { compact?: boolean }) {
                 {loginBusy() === "test" ? "Проверяем…" : "Проверить связь"}
               </button>
             </div>
-            <Show when={s().needsKey && !settings()["tulpar.ai.apiKey"] && !s().login}>
-              <div class="ai-service-warn">Нажмите «Получить ключ», создайте ключ на сайте и вставьте его в поле «Ключ API» ниже.</div>
+            <Show when={s().needsKey && !settings()["tulpar.ai.apiKey"]}>
+              <div class="ai-service-warn">Ключа пока нет — сделайте шаги выше, иначе ИИ не ответит.</div>
             </Show>
           </div>
         )}

@@ -464,7 +464,7 @@ export async function send(text: string) {
     if (await runAgent(question, agentNote() + extra)) return;
     // модель не умеет инструменты — отвечаем обычным чатом
   }
-  const base = aiBase();
+  const base = aiBase("chat");
   if (!base) return;
   await ensureListener();
 

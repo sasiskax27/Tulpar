@@ -34,6 +34,14 @@ export default function ActivityBar() {
       <div class="activity-spacer" />
       <button
         class="activity-item"
+        title={hint("Command Center", "tulpar.commandCenter")}
+        aria-label="Command Center"
+        onClick={() => void executeCommand("tulpar.commandCenter")}
+      >
+        {icons.center(20)}
+      </button>
+      <button
+        class="activity-item"
         title={hint("Магазин Tulpar", "tulpar.store")}
         aria-label="Магазин Tulpar"
         onClick={() => void executeCommand("tulpar.store")}

@@ -5,7 +5,7 @@ import { settings } from "../config/store";
 import { aiLanguage } from "../i18n/translate";
 
 export async function askAi(system: string, prompt: string): Promise<string | null> {
-  const base = aiBase();
+  const base = aiBase("quick");
   if (!base) return null;
   const lang = aiLanguage(settings()["tulpar.ai.language"]);
   return core.aiComplete({ ...base, system: `${system} Answer in this language: ${lang}.`, prompt });

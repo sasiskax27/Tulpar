@@ -19,9 +19,14 @@ export type SideView =
   | { kind: "web"; path: string; url: string }
   | { kind: "text"; path: string; title: string; text: string; language: string };
 
-export type ToolId = "http" | "regex" | "todo" | "history" | "stats" | "toolbox" | "env" | "generate" | "review" | "collab" | "csv" | "battle" | "achievements" | "games" | "typing" | "bughunt" | "quiz" | "snake" | "flight" | "doctor" | "security" | "docker" | "servers" | "store";
+export type ToolId = "http" | "regex" | "todo" | "history" | "stats" | "toolbox" | "env" | "generate" | "review" | "collab" | "csv" | "battle" | "achievements" | "games" | "typing" | "bughunt" | "quiz" | "snake" | "flight" | "doctor" | "security" | "docker" | "servers" | "store" | "processes" | "logs" | "bench" | "vm" | "command";
 
 const TOOL_TITLES: Record<ToolId, string> = {
+  processes: "⚙ Процессы и порты",
+  logs: "📜 Логи",
+  bench: "🏁 Сравнение моделей",
+  vm: "🖥 VM Studio",
+  command: "🛰 Command Center",
   http: "🌐 Запросы",
   regex: "🔣 Регулярки",
   todo: "📋 Доска TODO",

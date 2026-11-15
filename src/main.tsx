@@ -34,6 +34,16 @@ async function start() {
 
   await Promise.all([initConfig(), initWorkspaceEvents(), initExtensions()]);
   void import("./tools/init").then((m) => m.initTools());
+  // Неожиданные ошибки не теряем молча: в консоль и короткое уведомление
+  let lastNotice = 0;
+  window.addEventListener("unhandledrejection", (e) => {
+    const err = e.reason as { name?: string; message?: string } | undefined;
+    if (!err || err.name === "Canceled" || err.name === "AbortError" || /Canceled|ResizeObserver/.test(String(err.message ?? err))) return;
+    console.error("Tulpar:", err);
+    if (Date.now() - lastNotice < 5000) return;
+    lastNotice = Date.now();
+    void import("./app/notify").then((n) => n.notify(`Что-то пошло не так: ${String(err.message ?? err).slice(0, 160)}`, "error"));
+  });
   // Язык из настроек; при смене — перезагрузить окно, чтобы перевести всё сразу
   createRoot(() =>
     createEffect(

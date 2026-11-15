@@ -1,4 +1,4 @@
-import { createEffect, For, onMount, Show } from "solid-js";
+import { createEffect, For, lazy, onMount, Show } from "solid-js";
 import Layout from "./Layout";
 import Palette from "../palette/Palette";
 import InputBox from "./InputBox";
@@ -8,7 +8,7 @@ import AiOverlay from "../ai/AiOverlay";
 import ContextMenu from "./ContextMenu";
 import QuickPick from "./QuickPick";
 import Onboarding, { maybeShowOnboarding } from "./Onboarding";
-import ThemeGallery from "./ThemeGallery";
+const ThemeGallery = lazy(() => import("./ThemeGallery"));
 import VideoStudio from "../video/VideoStudio";
 import PhoneDialog from "../phone/PhoneDialog";
 import HypeLayer from "../hype/HypeLayer";

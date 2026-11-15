@@ -1,19 +1,19 @@
 // Правая половина редактора: второй файл, предпросмотр Markdown/HTML, картинки и видео.
-import { createEffect, createSignal, For, Match, on, onCleanup, onMount, Show, Switch } from "solid-js";
+import { createEffect, createSignal, For, lazy, Match, on, onCleanup, onMount, Show, Switch } from "solid-js";
 import { monaco, editorOptions } from "./monaco";
 import { modelFor, saveFile, tabs, onDidSave } from "./tabs";
 import { settings } from "../config/store";
 import { core, baseName, parentDir, joinPath } from "../ipc";
 import { closeSide, setSide, side, type SideView } from "./side";
 import { markdownToHtml } from "./markdown";
-import SqliteView from "./SqliteView";
-import NotebookView from "../notebook/NotebookView";
-import DbView from "../databases/DbView";
-import LearnView from "../learn/LearnView";
-import MapView from "../projectmap/MapView";
-import VariantsView from "../variants/VariantsView";
+const SqliteView = lazy(() => import("./SqliteView"));
+const NotebookView = lazy(() => import("../notebook/NotebookView"));
+const DbView = lazy(() => import("../databases/DbView"));
+const LearnView = lazy(() => import("../learn/LearnView"));
+const MapView = lazy(() => import("../projectmap/MapView"));
+const VariantsView = lazy(() => import("../variants/VariantsView"));
 import WebPreview from "./WebPreview";
-import ToolView from "../tools/ToolView";
+const ToolView = lazy(() => import("../tools/ToolView"));
 
 const MIME: Record<string, string> = {
   png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", bmp: "image/bmp",

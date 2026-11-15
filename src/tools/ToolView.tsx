@@ -1,28 +1,28 @@
-// Встроенные инструменты в правой половине.
-import { Match, Switch } from "solid-js";
+// Встроенные инструменты в правой половине. Каждый грузится только когда его открыли.
+import { lazy, Match, Switch } from "solid-js";
 import type { ToolId } from "../editor/side";
-import HttpClient from "./HttpClient";
-import RegexLab from "./RegexLab";
-import TodoBoard from "./TodoBoard";
-import HistoryView from "./HistoryView";
-import StatsView from "./StatsView";
-import Toolbox from "./Toolbox";
-import EnvView from "./EnvView";
-import GenerateView from "./GenerateView";
-import ReviewView from "./ReviewView";
-import CollabView from "../collab/CollabView";
-import CsvView from "./CsvView";
-import BattleView from "../hype/BattleView";
-import AchievementsView from "../hype/AchievementsView";
-import GamesHub from "../games/GamesHub";
-import TypingGame from "../games/TypingGame";
-import BugHunt from "../games/BugHunt";
-import QuizGame from "../games/QuizGame";
-import SnakeGame from "../games/SnakeGame";
-import FlightView from "../flight/FlightView";
-import DoctorView from "../doctor/DoctorView";
-import SecurityView from "../security/SecurityView";
-import DockerView from "../docker/DockerView";
+const HttpClient = lazy(() => import("./HttpClient"));
+const RegexLab = lazy(() => import("./RegexLab"));
+const TodoBoard = lazy(() => import("./TodoBoard"));
+const HistoryView = lazy(() => import("./HistoryView"));
+const StatsView = lazy(() => import("./StatsView"));
+const Toolbox = lazy(() => import("./Toolbox"));
+const EnvView = lazy(() => import("./EnvView"));
+const GenerateView = lazy(() => import("./GenerateView"));
+const ReviewView = lazy(() => import("./ReviewView"));
+const CollabView = lazy(() => import("../collab/CollabView"));
+const CsvView = lazy(() => import("./CsvView"));
+const BattleView = lazy(() => import("../hype/BattleView"));
+const AchievementsView = lazy(() => import("../hype/AchievementsView"));
+const GamesHub = lazy(() => import("../games/GamesHub"));
+const TypingGame = lazy(() => import("../games/TypingGame"));
+const BugHunt = lazy(() => import("../games/BugHunt"));
+const QuizGame = lazy(() => import("../games/QuizGame"));
+const SnakeGame = lazy(() => import("../games/SnakeGame"));
+const FlightView = lazy(() => import("../flight/FlightView"));
+const DoctorView = lazy(() => import("../doctor/DoctorView"));
+const SecurityView = lazy(() => import("../security/SecurityView"));
+const DockerView = lazy(() => import("../docker/DockerView"));
 
 export default function ToolView(props: { tool: ToolId }) {
   return (

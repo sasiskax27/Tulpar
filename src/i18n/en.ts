@@ -1896,6 +1896,7 @@ export const EXACT: Record<string, string> = {
 };
 
 export const PATTERNS: Record<string, string> = {
+  "Что-то пошло не так: {0}": "Something went wrong: {0}",
   "Найдено проблем: {0}": "Problems found: {0}",
   "Doctor: найдено проблем — {0}": "Doctor: problems found — {0}",
   "{0} не найден — нужен для {1}": "{0} not found — needed for {1}",

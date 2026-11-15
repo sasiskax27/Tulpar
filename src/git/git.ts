@@ -123,6 +123,7 @@ export async function commit() {
   const done = await act("Коммит", () => core.gitCommit(text, all).then(() => true));
   if (done) {
     setMessage("");
+    void import("../flight/flight").then((f) => f.log("commit", `Коммит: ${text.split("\n")[0]}`, true));
     notify(all ? "Закоммичены все изменения" : "Коммит готов");
   }
 }

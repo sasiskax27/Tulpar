@@ -24,7 +24,27 @@ struct ConfigChanged {
 }
 
 pub fn dir() -> Option<PathBuf> {
-    dirs::config_dir().map(|d| d.join("tulpar"))
+    portable_dir().or_else(|| dirs::config_dir().map(|d| d.join("tulpar")))
+}
+
+/// Переносной режим: рядом с tulpar.exe лежит файл `portable` (или папка
+/// `tulpar-data`) — тогда все настройки хранятся в `tulpar-data` рядом с
+/// программой, и Tulpar можно носить на флешке.
+pub fn portable_dir() -> Option<PathBuf> {
+    let exe_dir = std::env::current_exe().ok()?.parent()?.to_path_buf();
+    let data = exe_dir.join("tulpar-data");
+    if exe_dir.join("portable").exists() || exe_dir.join("portable.txt").exists() || data.is_dir() {
+        let _ = std::fs::create_dir_all(&data);
+        Some(data)
+    } else {
+        None
+    }
+}
+
+/// Включён ли переносной режим (для интерфейса).
+#[tauri::command]
+pub fn is_portable() -> bool {
+    portable_dir().is_some()
 }
 
 fn template(name: &str) -> &'static str {

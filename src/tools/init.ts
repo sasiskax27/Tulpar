@@ -12,12 +12,15 @@ export function initTools() {
   if (started) return;
   started = true;
   registerErrorExplain();
+  void import("../perf/lowend").then((m) => m.initLowEnd());
   onDidSave((model) => {
     void import("../hype/achievements").then((a) => a.count("saves", 1, { 1: "first-file", 100: "saves-100" }));
     if (model.uri.scheme !== "file") return;
     // Ключ — путь как во вкладках (fsPath меняет регистр буквы диска в Windows)
     const path = tabs.find((t) => !t.diffOf && modelFor(t.path) === model)?.path ?? model.uri.fsPath;
     void addSnapshot(path, model.getValue(), "save");
+    void import("../flight/flight").then((f) => f.log("save", `Сохранён ${path.split(/[\\/]/).pop()}`));
+    if (/[\\/]\.tulpar[\\/]brain\.md$/.test(path)) void import("../brain/brain").then((b) => b.reloadBrain());
   });
   const watch = (model: monaco.editor.ITextModel) => {
     if (model.uri.scheme !== "file") return;

@@ -1,6 +1,7 @@
 // Агент в чате: ИИ сам смотрит файлы, ищет по проекту, правит код и запускает
 // команды, пока не выполнит задачу. Каждый шаг виден в чате; правки и команды
 // по умолчанию ждут разрешения (настройка tulpar.agent.approve).
+import { brainPrompt } from "../brain/brain";
 import { aiLanguage } from "../i18n/translate";
 import { produce } from "solid-js/store";
 import { core, baseName, joinPath, parentDir, type AgentMessage, type ToolCall } from "../ipc";
@@ -568,7 +569,7 @@ function systemPrompt() {
     "- Use paths relative to the project folder, for example src/main.py.",
     '- Call tools through the tool-calling mechanism. If you cannot, write exactly one JSON object per call: {"name": "write_file", "arguments": {"path": "hello.py", "content": "..."}} and nothing else.',
     `When done, reply with a short summary of what you changed, in ${lang}. Write all messages to the user in ${lang}.`,
-  ].join("\n");
+    ].concat(brainPrompt() ? [brainPrompt().trim()] : []).join("\n");
 }
 
 function contextNote(): string {

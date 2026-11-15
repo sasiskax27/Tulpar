@@ -357,6 +357,10 @@ export async function runTests(target?: TestCase | { file: string }): Promise<vo
         setResults((prev) => (updated ? prev.map((t) => (t.id === single.id || (t.selector && t.selector === updated.selector) ? { ...updated, id: t.id } : t)) : prev));
       } else setResults(list);
     });
+    {
+      const failed = list.filter((t) => t.status === "failed").length;
+      if (list.length) void import("../flight/flight").then((f) => f.log("test", failed ? `Тесты: упало ${failed} из ${list.length}` : `Тесты прошли: ${list.length}`, !failed));
+    }
     if (run.timedOut) notify("Тесты остановлены: шли дольше 15 минут", "error");
     else if (!list.length && !missingTool(fw, run.output) && run.code !== 0) {
       notify("Тесты не запустились — посмотрите вывод внизу панели", "error");

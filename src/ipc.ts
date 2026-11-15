@@ -201,6 +201,7 @@ export const core = {
   collabStart: (token: string) => invoke<{ url: string; ip: string; port: number }>("collab_start", { token }),
   collabStop: () => invoke<void>("collab_stop"),
   collabBroadcast: (messages: string[]) => invoke<number>("collab_broadcast", { messages }),
+  isPortable: () => invoke<boolean>("is_portable"),
   configEnsure: (name: ConfigName) => invoke<string>("config_ensure", { name }),
 };
 

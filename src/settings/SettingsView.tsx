@@ -876,13 +876,14 @@ const funFields: FieldDef[] = [
   { key: "tulpar.stats.enabled", label: "Считать время за кодом", hint: "Для «Моей статистики» и ачивок. Данные только на этом компьютере.", type: "toggle" },
   { key: "tulpar.history.enabled", label: "Машина времени", hint: "Копия файла при каждом сохранении и перед правками ИИ — локально, даже без git.", type: "toggle" },
   { key: "tulpar.history.perFile", label: "Сколько версий хранить на файл", type: "number", min: 5, max: 500 },
+  { key: "tulpar.lowEnd", label: "Режим для слабых ПК", hint: "Выключает анимации, размытие, мини-карту, цветные скобки и подсказки ИИ при наборе. Выключите — всё вернётся как было.", type: "toggle" },
 ];
 
 type Layout = { id: string; group: GroupId; title: string; intro?: Text; keys: string[]; extraFrom?: string; extra?: () => JSX.Element };
 
 /** Как настройки разложены по разделам: короткие разделы по смыслу. */
 const LAYOUT: Layout[] = [
-  { id: "general", group: "general", title: "Основное", keys: ["workbench.language", "files.autoSave", "tulpar.update.check", "tulpar.chat.location"] },
+  { id: "general", group: "general", title: "Основное", keys: ["workbench.language", "tulpar.lowEnd", "files.autoSave", "tulpar.update.check", "tulpar.chat.location"] },
   { id: "saving", group: "general", title: "Сохранение файлов", keys: ["editor.formatOnSave", "files.trimTrailingWhitespace", "files.insertFinalNewline"] },
   { id: "text", group: "code", title: "Текст и шрифт", keys: ["editor.fontSize", "editor.fontFamily", "editor.lineHeight", "editor.fontLigatures", "editor.wordWrap", "editor.mouseWheelZoom"] },
   { id: "cursor", group: "code", title: "Курсор и прокрутка", keys: ["editor.cursorStyle", "editor.cursorBlinking", "editor.renderLineHighlight", "editor.cursorSurroundingLines", "editor.smoothScrolling"] },

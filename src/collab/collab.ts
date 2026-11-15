@@ -156,6 +156,7 @@ function hostReceive(guest: string, raw: string) {
         setPeers([...peers(), { id: guest, name, color: peers().length + 1 }]);
         notify(`👥 ${name} подключился`);
         void import("../hype/achievements").then((a) => a.unlock("collab"));
+        void import("../flight/flight").then((f) => f.log("collab", `${name} подключился к совместной работе`));
       }
       refreshPeerStyles();
       broadcast({ t: "peers", list: [{ id: "host", name: hostName, color: 0 }, ...peers()] });

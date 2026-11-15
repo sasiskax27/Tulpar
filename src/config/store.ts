@@ -121,6 +121,7 @@ export interface Settings {
   "tulpar.history.perFile": number;
   "tulpar.present.scale": number;
   "tulpar.voice.language": "auto" | "ru-RU" | "kk-KZ" | "en-US";
+  "tulpar.lowEnd": boolean;
   /** Агент: что спрашивать перед действием. ask — правки и команды, edits — только команды, all — ничего */
   "tulpar.agent.approve": "ask" | "edits" | "all";
   /** Сколько шагов агент может сделать за одну задачу */
@@ -216,6 +217,7 @@ export const defaultSettings: Settings = {
   "tulpar.history.perFile": 80,
   "tulpar.present.scale": 1.6,
   "tulpar.voice.language": "auto",
+  "tulpar.lowEnd": false,
   "tulpar.agent.approve": "ask",
   "tulpar.agent.maxSteps": 30,
   "tulpar.ai.inlineModel": "",

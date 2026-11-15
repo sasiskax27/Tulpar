@@ -40,6 +40,11 @@ function wrap<T>(req: IDBRequest<T>): Promise<T> {
 const [version, setVersion] = createSignal(0);
 export { version as historyVersion };
 
+export async function allSnapshots(): Promise<Snapshot[]> {
+  const d = await db();
+  return wrap(d.transaction(STORE).objectStore(STORE).getAll() as IDBRequest<Snapshot[]>);
+}
+
 export async function snapshots(path: string): Promise<Snapshot[]> {
   const d = await db();
   const list = await wrap(d.transaction(STORE).objectStore(STORE).index("path").getAll(path) as IDBRequest<Snapshot[]>);

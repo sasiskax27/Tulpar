@@ -70,8 +70,16 @@ function rebuild() {
     const rank = { error: 0, warning: 1, info: 2 };
     list.sort((a, b) => a.path.localeCompare(b.path) || rank[a.severity] - rank[b.severity] || a.line - b.line);
     setProblems(list);
+    const errs = list.filter((p) => p.severity === "error").length;
+    if (errs !== lastErrors) {
+      const before = lastErrors;
+      lastErrors = errs;
+      if (before >= 0) void import("../flight/flight").then((f) => f.log("errors", `Ошибок: ${before} → ${errs}`, errs < before));
+    }
   }, 150);
 }
+
+let lastErrors = -1;
 
 /** Диагностика от языкового сервера (вызывается из lsp/manager). */
 export function setLspDiagnostics(uri: string, diagnostics: any[]) {
@@ -244,6 +252,7 @@ export function goTo(p: Problem) {
 
 /** Попросить агента исправить проблемы. */
 export async function fixWithAi(list: Problem[]) {
+  void import("../flight/flight").then((f) => f.log("agent", `ИИ исправляет ошибок: ${list.length}`));
   void import("../hype/achievements").then((a) => a.unlock("bug-hunter"));
   if (!list.length) return;
   const describe = (p: Problem) =>

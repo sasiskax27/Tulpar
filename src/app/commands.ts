@@ -222,6 +222,27 @@ export function registerBuiltinCommands() {
   hype("tulpar.voiceChat", "Спросить ИИ голосом", () => import("../hype/voice").then((m) => m.toggleVoice("chat")));
   hype("tulpar.roast", "Прожарить текущий файл 😈", () => import("../hype/misc").then((m) => m.roastFile()));
   hype("tulpar.timelapse", "Таймлапс файла в видео", () => import("../hype/misc").then((m) => m.timelapse()));
+  const brainCmd = (id: string, title: string, run: () => Promise<unknown>) => reg({ id, category: "ИИ", title, run: () => void run() });
+  brainCmd("tulpar.brain.build", "Project Brain: изучить проект", () => import("../brain/brain").then((m) => m.buildBrain()));
+  brainCmd("tulpar.brain.remember", "Project Brain: запомнить правило или решение…", async () => {
+    const { askInput } = await import("./InputBox");
+    const note = await askInput({ title: "Что запомнить о проекте?", placeholder: "Например: «стили пишем на Tailwind, без отдельных CSS-файлов»" });
+    if (note) await (await import("../brain/brain")).remember(note);
+  });
+  brainCmd("tulpar.brain.open", "Project Brain: открыть память проекта", async () => {
+    const b = await import("../brain/brain");
+    const p = b.brainPath();
+    if (!p) return;
+    if (!b.brain()) await b.buildBrain();
+    const { openFile } = await import("../editor/tabs");
+    await openFile(p);
+  });
+  tool("tulpar.flight", "flight", "Лента событий и поиск по истории (Recall)");
+  tool("tulpar.doctor", "doctor", "Tulpar Doctor: проверить проект");
+  tool("tulpar.security", "security", "Центр безопасности: уязвимые пакеты и ключи в коде");
+  tool("tulpar.docker", "docker", "Docker: контейнеры и образы");
+  brainCmd("tulpar.team", "Команда ИИ: кодер → тестировщик → ревьюер", () => import("../brain/team").then((m) => m.runTeam()));
+  reg({ id: "tulpar.lowEnd", category: "Вид", title: "Режим для слабых ПК: вкл/выкл", run: () => void import("../perf/lowend").then((m) => m.toggleLowEnd()) });
   tool("tulpar.toolbox", "toolbox", "Инструменты: JSON → TypeScript, Base64, JWT, хэши, цвета…");
   reg({ id: "tulpar.variants", category: "ИИ", title: "ИИ: Три варианта…", run: () => void import("../variants/variants").then((m) => m.makeVariants()) });
   reg({

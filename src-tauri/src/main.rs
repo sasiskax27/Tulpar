@@ -25,6 +25,10 @@ mod update;
 mod workspace;
 
 fn main() {
+    // Переносной режим: данные WebView2 (история, статистика) — тоже рядом с программой
+    if let Some(data) = config::portable_dir() {
+        std::env::set_var("WEBVIEW2_USER_DATA_FOLDER", data.join("webview"));
+    }
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(workspace::WorkspaceState::default())
@@ -52,6 +56,7 @@ fn main() {
             sqlite::sqlite_tables,
             phone::phone_start,
             collab::collab_start,
+            config::is_portable,
             collab::collab_stop,
             collab::collab_broadcast,
             phone::phone_stop,

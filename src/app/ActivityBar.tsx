@@ -34,6 +34,16 @@ export default function ActivityBar() {
       <div class="activity-spacer" />
       <button
         class="activity-item"
+        title={hint("Магазин Tulpar", "tulpar.store")}
+        aria-label="Магазин Tulpar"
+        onClick={() => void executeCommand("tulpar.store")}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 9l1.5-5h15L21 9" /><path d="M3 9h18v1a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z" /><path d="M5 12v8h14v-8" /><path d="M10 20v-5h4v5" />
+        </svg>
+      </button>
+      <button
+        class="activity-item"
         title={hint("Терминал", "workbench.action.terminal.toggleTerminal")}
         aria-label="Терминал"
         onClick={() => void executeCommand("workbench.action.terminal.toggleTerminal")}

@@ -72,6 +72,7 @@ export const EXACT: Record<string, string> = {
   "Сетевой диск": "Network drive",
   "🏪 Магазин": "🏪 Store",
   "Магазин": "Store",
+  "Магазин Tulpar": "Tulpar Store",
   "Магазин Tulpar: языки, серверы, базы данных, инструменты": "Tulpar Store: languages, servers, databases, tools",
   "Запустить сайт (встроенный веб-сервер)": "Run site (built-in web server)",
   "нет входа по ключу — нажмите «Подключить ключ»": "no key login — click “Connect key”",

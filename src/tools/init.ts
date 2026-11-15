@@ -3,12 +3,14 @@ import { monaco } from "../editor/monaco";
 import { modelFor, onDidSave, tabs } from "../editor/tabs";
 import { addSnapshot } from "./history";
 import { recordEdit } from "./stats";
+import { registerErrorExplain } from "./explain";
 
 let started = false;
 
 export function initTools() {
   if (started) return;
   started = true;
+  registerErrorExplain();
   onDidSave((model) => {
     if (model.uri.scheme !== "file") return;
     // Ключ — путь как во вкладках (fsPath меняет регистр буквы диска в Windows)

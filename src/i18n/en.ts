@@ -1,6 +1,15 @@
 // Generated: Russian UI text -> English. Keys are exact Russian strings;
 // pattern keys use {0}, {1}… for inserted values.
 export const EXACT: Record<string, string> = {
+  "✦ Объяснить с ИИ": "✦ Explain with AI",
+  "Объясни простыми словами ошибку и покажи, как исправить.": "Explain this error in simple words and show how to fix it.",
+  "📑 Таблица": "📑 Table",
+  "Показать CSV таблицей": "Show CSV as a table",
+  "Режим презентации (крупно, клавиши на экране)": "Presentation mode (large text, keys on screen)",
+  "Откройте файл .csv или .tsv — он появится здесь таблицей.": "Open a .csv or .tsv file — it will appear here as a table.",
+  "первая строка — заголовки": "first row is headers",
+  "Фильтр": "Filter",
+  "Сортировать": "Sort",
   ".env добавлен в .gitignore — секреты не попадут в git": ".env added to .gitignore — secrets won't get into git",
   ".env.example создан: ключи без секретных значений, его можно коммитить": ".env.example created: keys without secret values, safe to commit",
   "Откройте файл .env — здесь появится таблица переменных со скрытыми секретами.": "Open a .env file — a table of variables with hidden secrets will appear here.",
@@ -1585,6 +1594,10 @@ export const EXACT: Record<string, string> = {
 };
 
 export const PATTERNS: Record<string, string> = {
+  "строк: {0} · столбцов: {1} · разделитель «{2}»": "rows: {0} · columns: {1} · delimiter “{2}”",
+  "Показаны первые {0} строк из {1}. Используйте фильтр.": "Showing the first {0} of {1} rows. Use the filter.",
+  "заполнено {0} · разных {1}": "filled {0} · distinct {1}",
+  "Σ {0} · среднее {1} · мин {2} · макс {3}": "Σ {0} · avg {1} · min {2} · max {3}",
   "переменных: {0}": "variables: {0}",
   "ИИ читает проект: часть {0} из {1}": "AI is reading the project: part {0} of {1}",
   "/100 · файлов проверено: {0}": "/100 · files checked: {0}",

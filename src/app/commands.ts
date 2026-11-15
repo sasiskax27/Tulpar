@@ -205,6 +205,8 @@ export function registerBuiltinCommands() {
   tool("tulpar.generate", "generate", "Генератор: .gitignore, Dockerfile, CI, README, лицензия…");
   tool("tulpar.review", "review", "ИИ-ревью всего проекта", "ИИ");
   tool("tulpar.collab", "collab", "Вместе по сети: совместное редактирование");
+  tool("tulpar.csv", "csv", "Показать CSV таблицей");
+  reg({ id: "tulpar.present", category: "Вид", title: "Режим презентации (крупно, клавиши на экране)", run: () => void import("../tools/present").then((m) => m.togglePresentation()) });
   tool("tulpar.toolbox", "toolbox", "Инструменты: JSON → TypeScript, Base64, JWT, хэши, цвета…");
   reg({ id: "tulpar.variants", category: "ИИ", title: "ИИ: Три варианта…", run: () => void import("../variants/variants").then((m) => m.makeVariants()) });
   reg({

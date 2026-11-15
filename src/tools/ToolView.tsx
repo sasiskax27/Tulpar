@@ -11,6 +11,7 @@ import EnvView from "./EnvView";
 import GenerateView from "./GenerateView";
 import ReviewView from "./ReviewView";
 import CollabView from "../collab/CollabView";
+import CsvView from "./CsvView";
 
 export default function ToolView(props: { tool: ToolId }) {
   return (
@@ -25,6 +26,7 @@ export default function ToolView(props: { tool: ToolId }) {
       <Match when={props.tool === "generate"}><GenerateView /></Match>
       <Match when={props.tool === "review"}><ReviewView /></Match>
       <Match when={props.tool === "collab"}><CollabView /></Match>
+      <Match when={props.tool === "csv"}><CsvView /></Match>
     </Switch>
   );
 }

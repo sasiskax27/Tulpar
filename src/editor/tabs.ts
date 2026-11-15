@@ -164,6 +164,11 @@ export async function openFile(requested: string, reveal?: monaco.IRange) {
     const { side, showTool } = await import("./side");
     if (!side()) showTool("env");
   }
+  // CSV/TSV — рядом таблица
+  if (/\.(csv|tsv)$/i.test(path)) {
+    const { side, showTool } = await import("./side");
+    if (!side()) showTool("csv");
+  }
 }
 
 function scheduleAutoSave(path: string) {

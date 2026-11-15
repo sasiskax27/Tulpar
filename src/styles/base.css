@@ -2351,3 +2351,18 @@ body.resizing .side-island { transition: none; }
 .collab-peer { border-left: 3px solid var(--c); background: var(--tp-bg-hover); padding: 2px 8px; border-radius: 6px; }
 .collab-caret { position: relative; }
 .collab-caret::after { position: absolute; top: -1.15em; left: -2px; color: #fff; font-size: 10px; line-height: 1.2; padding: 0 4px; border-radius: 3px 3px 3px 0; white-space: nowrap; pointer-events: none; z-index: 5; font-family: var(--tp-font-ui, sans-serif); }
+
+/* Режим презентации */
+.present-keys { position: fixed; right: 24px; bottom: 48px; z-index: 9999; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; pointer-events: none; }
+.present-keys span { background: rgba(20, 20, 24, .88); color: #fff; font: 600 20px/1.2 var(--tp-font-ui, system-ui); padding: 8px 14px; border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.35); transition: opacity .45s, transform .45s; }
+.present-keys span.out { opacity: 0; transform: translateY(6px); }
+.monaco-editor .present-dim { opacity: .28; transition: opacity .2s; }
+
+/* CSV */
+.csv-wrap { flex: 1; min-height: 0; overflow: auto; border: 1px solid var(--tp-border); border-radius: 8px; }
+.csv-table { border-collapse: collapse; font-size: 12.5px; font-family: var(--tp-font-mono, monospace); }
+.csv-table th { position: sticky; top: 0; background: var(--tp-bg-sidebar); cursor: pointer; text-align: left; font-weight: 700; z-index: 1; }
+.csv-table th, .csv-table td { border: 1px solid var(--tp-border); padding: 3px 8px; white-space: nowrap; max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
+.csv-table td.num { text-align: right; color: var(--tp-accent); }
+.csv-table td:focus { outline: 2px solid var(--tp-accent); white-space: normal; background: var(--tp-bg-input); }
+.csv-table .csv-n { color: var(--tp-fg-muted); text-align: right; position: sticky; left: 0; background: var(--tp-bg-sidebar); }

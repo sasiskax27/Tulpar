@@ -30,6 +30,7 @@ const defaults: Keybinding[] = [
   { key: "f10", command: "workbench.action.debug.stepOver" },
   { key: "f11", command: "workbench.action.debug.stepInto" },
   { key: "shift+f11", command: "workbench.action.debug.stepOut" },
+  { key: "ctrl+alt+p", command: "tulpar.present" },
   { key: "f9", command: "editor.debug.action.toggleBreakpoint" },
   { key: "ctrl+shift+f5", command: "workbench.action.debug.restart" },
   { key: "mod+g", command: "workbench.action.gotoLine" },

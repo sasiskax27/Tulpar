@@ -141,6 +141,16 @@ async function readText(path: string): Promise<string | null> {
   return core.readFile(path).catch(() => null);
 }
 
+/**
+ * Маленькие модели иногда кладут в файл markdown-обёртку: «```html … ```».
+ * Снимаем её, если весь текст обёрнут (кроме самих .md-файлов).
+ */
+export function stripFence(text: string, path = ""): string {
+  if (/\.(md|markdown|mdx)$/i.test(path)) return text;
+  const m = /^\s*```[\w+#.-]*[ \t]*\r?\n([\s\S]*?)\r?\n?```\s*$/.exec(text);
+  return m ? m[1] + "\n" : text;
+}
+
 async function writeText(path: string, text: string) {
   const model = modelFor(path);
   // Копия «до правки ИИ» — в Машину времени
@@ -383,7 +393,7 @@ async function executeOnce(call: ToolCall): Promise<string> {
       }
       case "write_file": {
         const path = abs(a.path);
-        const content = String(a.content ?? "");
+        const content = stripFence(String(a.content ?? ""), path);
         const before = await readText(path);
         step(`${before === null ? "Создаю" : "Перезаписываю"} ${relPath(path)}`, preview(content));
         const saved = await applyChange(stepId, "write_file", path, before, content);

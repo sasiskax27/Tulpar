@@ -9,7 +9,6 @@ import { core, baseName } from "../ipc";
 import { settings } from "../config/store";
 import { notify, notifyError } from "../app/notify";
 import { askInput } from "../app/InputBox";
-import { setSettingsVisible } from "../app/ui";
 import { executeCommand, registerCommand } from "../commands/registry";
 
 const MAX_CHARS = 60_000;
@@ -155,13 +154,13 @@ export function aiBase(): AiBase | null {
   const defaults = providers[provider];
   if (!defaults) {
     notify("ИИ не настроен. Выберите, какой ИИ использовать, в разделе «ИИ».");
-    setSettingsVisible(true);
+    void import("../app/ui").then((u) => u.openSettingsAt("ai"));
     return null;
   }
   const model = cfg["tulpar.ai.model"].trim() || defaults.model;
   if (!model) {
     notify("Укажите модель ИИ в настройках, раздел «ИИ».");
-    setSettingsVisible(true);
+    void import("../app/ui").then((u) => u.openSettingsAt("ai"));
     return null;
   }
   return { provider, baseUrl: cfg["tulpar.ai.baseUrl"].trim() || defaults.baseUrl, model, apiKey: cfg["tulpar.ai.apiKey"] };

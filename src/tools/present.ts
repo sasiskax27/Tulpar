@@ -74,8 +74,9 @@ export function togglePresentation() {
   setPresenting(true);
   void import("../hype/achievements").then((a) => a.unlock("presenter"));
   document.body.classList.add("tp-present");
-  const base = settings()["editor.fontSize"] ?? 14;
-  editor?.updateOptions({ fontSize: Math.round(base * 1.6), minimap: { enabled: false }, lineNumbers: "off", glyphMargin: false, folding: false, renderLineHighlight: "none", scrollBeyondLastLine: false });
+  const s0 = settings();
+  const base = s0["editor.fontSize"] ?? 14;
+  editor?.updateOptions({ fontSize: Math.round(base * (s0["tulpar.present.scale"] ?? 1.6)), minimap: { enabled: false }, lineNumbers: "off", glyphMargin: false, folding: false, renderLineHighlight: "none", scrollBeyondLastLine: false });
   void executeCommand("workbench.action.toggleZenMode");
   const offKeys = keyOverlay();
   const offSpot = editor ? spotlight(editor) : () => undefined;

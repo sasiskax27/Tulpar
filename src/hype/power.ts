@@ -3,9 +3,8 @@ import { createSignal } from "solid-js";
 import { editorInstance } from "../editor/instance";
 import { unlock } from "./achievements";
 
-const KEY = "tulpar.powerMode";
-const [power, setPower] = createSignal<"off" | "sparks" | "shake">((localStorage.getItem(KEY) as "off" | "sparks" | "shake") || "off");
-export { power };
+import { settings, updateSetting } from "../config/store";
+export const power = () => settings()["tulpar.fun.powerMode"] ?? "off";
 
 interface Particle { x: number; y: number; vx: number; vy: number; life: number; color: string; size: number }
 let canvas: HTMLCanvasElement | null = null;
@@ -87,8 +86,7 @@ export function onType() {
 }
 
 export function setPowerMode(mode: "off" | "sparks" | "shake") {
-  setPower(mode);
-  localStorage.setItem(KEY, mode);
+  updateSetting("tulpar.fun.powerMode", mode);
   if (mode !== "off") unlock("power-mode");
 }
 

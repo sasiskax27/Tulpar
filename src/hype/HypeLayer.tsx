@@ -4,6 +4,7 @@ import MusicPlayer from "./MusicPlayer";
 import SnapshotDialog from "./SnapshotDialog";
 import { heard, listening, toggleVoice } from "./voice";
 import { comboCount, power } from "./power";
+import { settings } from "../config/store";
 
 export default function HypeLayer() {
   return (
@@ -16,7 +17,7 @@ export default function HypeLayer() {
           <span>{heard() || "Говорите… (клик — стоп)"}</span>
         </div>
       </Show>
-      <Show when={power() !== "off" && comboCount() >= 10}>
+      <Show when={power() !== "off" && settings()["tulpar.fun.combo"] && comboCount() >= 10}>
         <div class="power-combo" classList={{ hot: comboCount() >= 50 }}>
           <b>{comboCount()}</b>
           <span>КОМБО</span>

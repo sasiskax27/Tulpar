@@ -4,6 +4,7 @@ import { createSignal } from "solid-js";
 import { editorInstance } from "../editor/instance";
 import { monaco } from "../editor/monaco";
 import { currentLang } from "../i18n/translate";
+import { settings } from "../config/store";
 import { notify } from "../app/notify";
 import { askAi } from "../tools/ai";
 import { unlock } from "./achievements";
@@ -66,7 +67,8 @@ export function toggleVoice(mode: "code" | "chat" = "code") {
     return;
   }
   rec = new Ctor();
-  rec.lang = currentLang() === "en" ? "en-US" : currentLang() === "kk" ? "kk-KZ" : "ru-RU";
+  const chosen = settings()["tulpar.voice.language"];
+  rec.lang = chosen && chosen !== "auto" ? chosen : currentLang() === "en" ? "en-US" : currentLang() === "kk" ? "kk-KZ" : "ru-RU";
   rec.interimResults = true;
   rec.continuous = false;
   let final = "";

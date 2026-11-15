@@ -1,6 +1,7 @@
 // 📊 Своя статистика: сколько минут вы реально пишете код, на каких языках,
 // серия дней подряд. Хранится только у вас (localStorage), никуда не уходит.
 import { createSignal } from "solid-js";
+import { settings } from "../config/store";
 
 const KEY = "tulpar.stats";
 
@@ -35,6 +36,7 @@ let saveTimer = 0;
 
 /** Вызывается на каждую правку. Минута засчитывается один раз. */
 export function recordEdit(language: string) {
+  if (settings()["tulpar.stats.enabled"] === false) return;
   pendingEdits++;
   const now = new Date();
   const minute = `${dayKey(now)} ${now.getHours()}:${now.getMinutes()} ${language}`;

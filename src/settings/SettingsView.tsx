@@ -10,7 +10,7 @@ import {
   userKeybindings,
   type Settings,
 } from "../config/store";
-import { settingsVisible, setSettingsVisible } from "../app/ui";
+import { settingsVisible, setSettingsVisible, settingsSection, setSettingsSection } from "../app/ui";
 import { allCommands, executeCommand, label } from "../commands/registry";
 import { chooseBackground, clearBackground, usePhotoTheme } from "../app/background";
 import { providers } from "../ai/ai";
@@ -41,7 +41,7 @@ type FieldDef = { key: keyof Settings & string; label: string; hint?: Text } & (
 );
 
 /** Группы разделов: так настройки разложены по смыслу — от ИИ до системы. */
-type GroupId = "ai" | "code" | "look" | "tools" | "system";
+type GroupId = "general" | "code" | "look" | "ai" | "fun" | "system";
 
 interface Section {
   id: string;
@@ -216,13 +216,13 @@ const glyph = (children: JSX.Element, size = 16) => (
 
 const groups: { id: GroupId; title: string; icon: (size?: number) => JSX.Element }[] = [
   {
-    id: "ai",
-    title: "ИИ",
-    icon: (s) => glyph(<><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" /><path d="M19 15.5l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z" /></>, s),
+    id: "general",
+    title: "Общие",
+    icon: (s) => glyph(<><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" /></>, s),
   },
   {
     id: "code",
-    title: "Код",
+    title: "Редактор",
     icon: (s) => glyph(<><path d="M9 7l-5 5 5 5M15 7l5 5-5 5" /></>, s),
   },
   {
@@ -231,9 +231,14 @@ const groups: { id: GroupId; title: string; icon: (size?: number) => JSX.Element
     icon: (s) => glyph(<><path d="M12 21a9 9 0 1 1 9-9c0 1.7-1.3 3-3 3h-1.6a2.4 2.4 0 0 0-1.7 4.1A2 2 0 0 1 12 21z" /><circle cx="8.2" cy="10.2" r="1.1" /><circle cx="12" cy="7.6" r="1.1" /><circle cx="15.8" cy="10.2" r="1.1" /></>, s),
   },
   {
-    id: "tools",
-    title: "Инструменты",
-    icon: (s) => glyph(<><path d="M14.7 6.3a3.7 3.7 0 0 0 4.9 4.9l-8.5 8.5a2 2 0 0 1-2.9 0l-2-2a2 2 0 0 1 0-2.9z" /><path d="M14.7 6.3l3-3 3 3-3 3" /></>, s),
+    id: "ai",
+    title: "ИИ",
+    icon: (s) => glyph(<><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" /><path d="M19 15.5l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z" /></>, s),
+  },
+  {
+    id: "fun",
+    title: "Фишки",
+    icon: (s) => glyph(<><path d="M13 2L4 14h7l-1 8 9-12h-7z" /></>, s),
   },
   {
     id: "system",
@@ -242,8 +247,6 @@ const groups: { id: GroupId; title: string; icon: (size?: number) => JSX.Element
   },
 ];
 
-/** Порядок разделов внутри окна: ИИ → код → оформление → инструменты → система. */
-const SECTION_ORDER = ["ai", "ai-local", "ai-actions", "editor", "terminal", "appearance", "tools", "keys", "system"];
 
 /** Значения считаем одинаковыми, если совпадают как примитивы или как JSON. */
 function sameValue(a: unknown, b: unknown): boolean {
@@ -620,7 +623,7 @@ const sectionList: Section[] = [
   },
   {
     id: "tools",
-    group: "tools",
+    group: "system",
     title: "SDK и инструменты",
     intro: "Языки и сборщики для запуска проектов: если чего-то нет — установка одной кнопкой (во вкладке терминала).",
     fields: [],
@@ -863,7 +866,82 @@ const sectionList: Section[] = [
 ];
 
 /** Разделы в порядке групп: ИИ, код, оформление, инструменты, система. */
-const sections = [...sectionList].sort((a, b) => SECTION_ORDER.indexOf(a.id) - SECTION_ORDER.indexOf(b.id));
+/** Новые настройки «Фишек» (раньше их не было в окне). */
+const funFields: FieldDef[] = [
+  { key: "tulpar.fun.powerMode", label: "Power mode", hint: "Искры из-под курсора при наборе; «с тряской» — ещё и лёгкая тряска экрана на быстром наборе.", type: "select", options: [["off", "Выключен"], ["sparks", "Искры"], ["shake", "Искры и тряска"]] },
+  { key: "tulpar.fun.combo", label: "Счётчик комбо", hint: "Большая цифра в углу, когда печатаете без остановки (только с Power mode).", type: "toggle" },
+  { key: "tulpar.fun.achievements", label: "Всплывающие ачивки", hint: "Достижения всё равно копятся — выключается только всплывашка с конфетти.", type: "toggle" },
+  { key: "tulpar.present.scale", label: "Режим презентации: увеличение", type: "range", min: 1.2, max: 2.5, step: 0.1, show: (v) => `×${v.toFixed(1)}` },
+  { key: "tulpar.voice.language", label: "Язык для кода голосом", type: "select", options: [["auto", "Как интерфейс"], ["ru-RU", "Русский"], ["kk-KZ", "Қазақша"], ["en-US", "English"]] },
+  { key: "tulpar.stats.enabled", label: "Считать время за кодом", hint: "Для «Моей статистики» и ачивок. Данные только на этом компьютере.", type: "toggle" },
+  { key: "tulpar.history.enabled", label: "Машина времени", hint: "Копия файла при каждом сохранении и перед правками ИИ — локально, даже без git.", type: "toggle" },
+  { key: "tulpar.history.perFile", label: "Сколько версий хранить на файл", type: "number", min: 5, max: 500 },
+];
+
+type Layout = { id: string; group: GroupId; title: string; intro?: Text; keys: string[]; extraFrom?: string; extra?: () => JSX.Element };
+
+/** Как настройки разложены по разделам: короткие разделы по смыслу. */
+const LAYOUT: Layout[] = [
+  { id: "general", group: "general", title: "Основное", keys: ["workbench.language", "files.autoSave", "tulpar.update.check", "tulpar.chat.location"] },
+  { id: "saving", group: "general", title: "Сохранение файлов", keys: ["editor.formatOnSave", "files.trimTrailingWhitespace", "files.insertFinalNewline"] },
+  { id: "text", group: "code", title: "Текст и шрифт", keys: ["editor.fontSize", "editor.fontFamily", "editor.lineHeight", "editor.fontLigatures", "editor.wordWrap", "editor.mouseWheelZoom"] },
+  { id: "cursor", group: "code", title: "Курсор и прокрутка", keys: ["editor.cursorStyle", "editor.cursorBlinking", "editor.renderLineHighlight", "editor.cursorSurroundingLines", "editor.smoothScrolling"] },
+  { id: "indent", group: "code", title: "Отступы и скобки", keys: ["editor.tabSize", "editor.insertSpaces", "editor.autoClosingBrackets", "editor.bracketPairColorization.enabled", "editor.guides.indentation", "editor.renderWhitespace", "editor.rulers"] },
+  { id: "helpers", group: "code", title: "Подсказки на экране", keys: ["editor.lineNumbers", "editor.minimap.enabled", "editor.stickyScroll.enabled", "breadcrumbs.enabled", "editor.folding", "editor.occurrencesHighlight", "git.blame.inline"] },
+  { id: "terminal", group: "code", title: "Терминал", keys: ["terminal.integrated.shell", "terminal.integrated.fontSize", "terminal.integrated.fontFamily", "terminal.integrated.cursorStyle", "terminal.integrated.scrollback"] },
+  {
+    id: "theme",
+    group: "look",
+    title: "Тема",
+    keys: ["workbench.colorTheme"],
+    extra: () => (
+      <div class="settings-row">
+        <div class="settings-label">
+          <span>Галерея тем</span>
+          <small>Сотни тем VS Code из Open VSX с предпросмотром.</small>
+        </div>
+        <div class="settings-control settings-buttons">
+          <button class="button" onClick={() => { setSettingsVisible(false); void executeCommand("tulpar.themes.gallery"); }}>Открыть галерею…</button>
+        </div>
+      </div>
+    ),
+  },
+  { id: "layout", group: "look", title: "Интерфейс", keys: ["workbench.style", "workbench.islands", "workbench.activityBar", "workbench.tabs.style", "workbench.radius", "workbench.gap", "workbench.uiFontSize", "workbench.statusBar.visible", "workbench.sidebar.autoHide"] },
+  { id: "background", group: "look", title: "Фон и прозрачность", extraFrom: "appearance", keys: ["tulpar.background.mode", "workbench.panelOpacity", "workbench.panelBlur", "tulpar.background.opacity", "tulpar.background.blur", "tulpar.background.fit"] },
+  { id: "ai", group: "ai", title: "Модель и подключение", extraFrom: "ai", keys: ["tulpar.ai.provider", "tulpar.ai.model", "tulpar.ai.baseUrl", "tulpar.ai.apiKey"] },
+  { id: "agent", group: "ai", title: "Чат и агент", keys: ["tulpar.agent.approve", "tulpar.agent.maxSteps", "tulpar.ai.projectChars", "tulpar.ai.language"] },
+  { id: "inline", group: "ai", title: "Подсказки при наборе", keys: ["tulpar.ai.inline", "tulpar.ai.inlineProvider", "tulpar.ai.inlineModel"] },
+  { id: "ai-actions", group: "ai", title: "Свои действия ИИ", extraFrom: "ai-actions", keys: [] },
+  { id: "ai-local", group: "ai", title: "Локальный ИИ", extraFrom: "ai-local", keys: ["tulpar.ai.contextSize"] },
+  { id: "fun", group: "fun", title: "Хайп", keys: ["tulpar.fun.powerMode", "tulpar.fun.combo", "tulpar.fun.achievements", "tulpar.present.scale", "tulpar.voice.language"] },
+  { id: "privacy", group: "fun", title: "Статистика и история", intro: "Всё хранится только на этом компьютере — Tulpar ничего не отправляет.", keys: ["tulpar.stats.enabled", "tulpar.history.enabled", "tulpar.history.perFile"] },
+  { id: "tools", group: "system", title: "SDK и инструменты", extraFrom: "tools", keys: [] },
+  { id: "keys", group: "system", title: "Горячие клавиши", extraFrom: "keys", keys: [] },
+  { id: "system", group: "system", title: "Файлы и система", extraFrom: "system", keys: [] },
+];
+
+const sections: Section[] = (() => {
+  const all = new Map<string, FieldDef>([...sectionList.flatMap((sec) => sec.fields), ...funFields].map((f) => [f.key, f]));
+  const byId = new Map(sectionList.map((sec) => [sec.id, sec]));
+  const placed = new Set(LAYOUT.flatMap((l) => l.keys));
+  const built = LAYOUT.map((l): Section => {
+    const src = l.extraFrom ? byId.get(l.extraFrom) : undefined;
+    return {
+      id: l.id,
+      group: l.group,
+      title: l.title,
+      intro: l.intro ?? src?.intro,
+      fields: l.keys.map((k) => all.get(k)).filter((f): f is FieldDef => !!f),
+      extra: l.extra ?? src?.extra,
+      after: src?.after,
+      searchInExtra: src?.searchInExtra,
+    };
+  });
+  // Ничего не теряем: всё, что не разложено, — в «Файлы и система»
+  const rest = [...all.values()].filter((f) => !placed.has(f.key));
+  if (rest.length) built.find((x) => x.id === "system")!.fields.push(...rest);
+  return built;
+})();
 
 function Control(props: { def: FieldDef }) {
   const def = props.def;
@@ -954,7 +1032,8 @@ function matches(def: FieldDef, q: string): boolean {
 function Panel() {
   const [query, setQuery] = createSignal("");
   const [onlyChanged, setOnlyChanged] = createSignal(false);
-  const [active, setActive] = createSignal("ai");
+  const [active, setActive] = createSignal(sections.some((x) => x.id === settingsSection()) ? settingsSection() : "general");
+  onCleanup(() => setSettingsSection("general"));
 
   const q = () => query().trim().toLowerCase();
   const filtering = () => Boolean(q()) || onlyChanged();

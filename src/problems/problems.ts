@@ -6,7 +6,7 @@ import { monaco } from "../editor/monaco";
 import { openFile } from "../editor/tabs";
 import { executeCommand } from "../commands/registry";
 import { root } from "../app/workspace";
-import { bottomTab, bottomVisible, setBottomTab, setBottomVisible, setSettingsVisible } from "../app/ui";
+import { bottomTab, bottomVisible, setBottomTab, setBottomVisible } from "../app/ui";
 import { notify } from "../app/notify";
 import { parseErrors, stripAnsi } from "./terminalErrors";
 
@@ -160,7 +160,7 @@ function checkMissingTool(lines: string[]) {
       {
         label: "Установить…",
         run: () => {
-          setSettingsVisible(true);
+          void import("../app/ui").then((u) => u.openSettingsAt("tools"));
           setTimeout(() => document.querySelector(".toolchains")?.scrollIntoView({ behavior: "smooth" }), 200);
         },
       },

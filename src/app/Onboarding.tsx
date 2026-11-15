@@ -8,7 +8,7 @@ import { executeCommand } from "../commands/registry";
 import { catalog } from "../ai/models";
 import { fitOf, initLocalAi, install, isInstalled, memory, progress, running, useModel } from "../ai/ollama";
 import { runInTerminal } from "../terminal/sessions";
-import { setSettingsVisible } from "./ui";
+import { openSettingsAt } from "./ui";
 
 const DONE_KEY = "tulpar.onboarded";
 const [open, setOpen] = createSignal(false);
@@ -228,7 +228,7 @@ export default function Onboarding() {
                         class="button"
                         onClick={() => {
                           finish();
-                          setSettingsVisible(true);
+                          openSettingsAt("ai");
                         }}
                       >
                         Открыть настройки ИИ

@@ -1,6 +1,7 @@
 // ⏳ Машина времени: копия файла при каждом сохранении (в IndexedDB, только
 // на этом компьютере). Работает и без git, и между коммитами.
 import { createSignal } from "solid-js";
+import { settings } from "../config/store";
 
 export interface Snapshot {
   id?: number;
@@ -13,7 +14,6 @@ export interface Snapshot {
 
 const DB = "tulpar-history";
 const STORE = "snapshots";
-const PER_FILE = 80;
 const MAX_SIZE = 1_000_000;
 
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -47,6 +47,8 @@ export async function snapshots(path: string): Promise<Snapshot[]> {
 }
 
 export async function addSnapshot(path: string, content: string, reason: Snapshot["reason"] = "save") {
+  if (settings()["tulpar.history.enabled"] === false) return;
+  const PER_FILE = Math.max(5, settings()["tulpar.history.perFile"] ?? 80);
   if (content.length > MAX_SIZE || path.startsWith("diff:")) return;
   try {
     const list = await snapshots(path);

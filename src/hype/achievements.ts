@@ -1,6 +1,7 @@
 // 🏆 Ачивки: красивые всплывашки за маленькие победы. Всё локально.
 import { createSignal } from "solid-js";
 import { t } from "../i18n/translate";
+import { settings } from "../config/store";
 
 export interface Achievement {
   id: string;
@@ -64,7 +65,7 @@ export function unlock(id: string) {
   } catch {
     /* ничего */
   }
-  toast(a);
+  if (settings()["tulpar.fun.achievements"] !== false) toast(a);
 }
 
 /** Счётчик с порогами: count("saves", 1, {1: "first-file", 100: "saves-100"}). */

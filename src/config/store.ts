@@ -113,6 +113,14 @@ export interface Settings {
   "tulpar.ai.projectChars": number;
   /** Проверять новую версию Tulpar на GitHub (раз в 12 часов, один запрос без данных о вас) */
   "tulpar.update.check": boolean;
+  "tulpar.fun.powerMode": "off" | "sparks" | "shake";
+  "tulpar.fun.achievements": boolean;
+  "tulpar.fun.combo": boolean;
+  "tulpar.stats.enabled": boolean;
+  "tulpar.history.enabled": boolean;
+  "tulpar.history.perFile": number;
+  "tulpar.present.scale": number;
+  "tulpar.voice.language": "auto" | "ru-RU" | "kk-KZ" | "en-US";
   /** Агент: что спрашивать перед действием. ask — правки и команды, edits — только команды, all — ничего */
   "tulpar.agent.approve": "ask" | "edits" | "all";
   /** Сколько шагов агент может сделать за одну задачу */
@@ -200,6 +208,14 @@ export const defaultSettings: Settings = {
   "tulpar.chat.location": "bottom",
   "tulpar.ai.contextSize": 16384,
   "tulpar.update.check": true,
+  "tulpar.fun.powerMode": "off",
+  "tulpar.fun.achievements": true,
+  "tulpar.fun.combo": true,
+  "tulpar.stats.enabled": true,
+  "tulpar.history.enabled": true,
+  "tulpar.history.perFile": 80,
+  "tulpar.present.scale": 1.6,
+  "tulpar.voice.language": "auto",
   "tulpar.agent.approve": "ask",
   "tulpar.agent.maxSteps": 30,
   "tulpar.ai.inlineModel": "",

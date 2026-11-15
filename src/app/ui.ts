@@ -11,6 +11,13 @@ export { bottomVisible, setBottomVisible };
 /** Окно настроек (Ctrl+,) */
 const [settingsVisible, setSettingsVisible] = createSignal(false);
 export { settingsVisible, setSettingsVisible };
+/** Какой раздел открыть в настройках при следующем показе. */
+const [settingsSection, setSettingsSection] = createSignal("general");
+export { settingsSection, setSettingsSection };
+export function openSettingsAt(section: string) {
+  setSettingsSection(section);
+  setSettingsVisible(true);
+}
 
 /** Что показано в боковой панели: проводник или поиск */
 export type SidebarView = "explorer" | "search" | "git" | "chat" | "build" | "outline" | "extensions" | "packages" | "tests" | "databases";

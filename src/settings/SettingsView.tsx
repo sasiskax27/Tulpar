@@ -913,7 +913,7 @@ const LAYOUT: Layout[] = [
   { id: "inline", group: "ai", title: "Подсказки при наборе", keys: ["tulpar.ai.inline", "tulpar.ai.inlineProvider", "tulpar.ai.inlineModel"] },
   { id: "ai-actions", group: "ai", title: "Свои действия ИИ", extraFrom: "ai-actions", keys: [] },
   { id: "ai-local", group: "ai", title: "Локальный ИИ", extraFrom: "ai-local", keys: ["tulpar.ai.contextSize"] },
-  { id: "fun", group: "fun", title: "Хайп", keys: ["tulpar.fun.powerMode", "tulpar.fun.combo", "tulpar.fun.achievements", "tulpar.present.scale", "tulpar.voice.language"] },
+  { id: "fun", group: "fun", title: "Игры и фан", keys: ["tulpar.fun.powerMode", "tulpar.fun.combo", "tulpar.fun.achievements", "tulpar.present.scale", "tulpar.voice.language"] },
   { id: "privacy", group: "fun", title: "Статистика и история", intro: "Всё хранится только на этом компьютере — Tulpar ничего не отправляет.", keys: ["tulpar.stats.enabled", "tulpar.history.enabled", "tulpar.history.perFile"] },
   { id: "tools", group: "system", title: "SDK и инструменты", extraFrom: "tools", keys: [] },
   { id: "keys", group: "system", title: "Горячие клавиши", extraFrom: "keys", keys: [] },

@@ -14,6 +14,11 @@ import CollabView from "../collab/CollabView";
 import CsvView from "./CsvView";
 import BattleView from "../hype/BattleView";
 import AchievementsView from "../hype/AchievementsView";
+import GamesHub from "../games/GamesHub";
+import TypingGame from "../games/TypingGame";
+import BugHunt from "../games/BugHunt";
+import QuizGame from "../games/QuizGame";
+import SnakeGame from "../games/SnakeGame";
 
 export default function ToolView(props: { tool: ToolId }) {
   return (
@@ -31,6 +36,11 @@ export default function ToolView(props: { tool: ToolId }) {
       <Match when={props.tool === "csv"}><CsvView /></Match>
       <Match when={props.tool === "battle"}><BattleView /></Match>
       <Match when={props.tool === "achievements"}><AchievementsView /></Match>
+      <Match when={props.tool === "games"}><GamesHub /></Match>
+      <Match when={props.tool === "typing"}><TypingGame /></Match>
+      <Match when={props.tool === "bughunt"}><BugHunt /></Match>
+      <Match when={props.tool === "quiz"}><QuizGame /></Match>
+      <Match when={props.tool === "snake"}><SnakeGame /></Match>
     </Switch>
   );
 }

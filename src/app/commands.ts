@@ -207,9 +207,14 @@ export function registerBuiltinCommands() {
   tool("tulpar.collab", "collab", "Вместе по сети: совместное редактирование");
   tool("tulpar.csv", "csv", "Показать CSV таблицей");
   reg({ id: "tulpar.present", category: "Вид", title: "Режим презентации (крупно, клавиши на экране)", run: () => void import("../tools/present").then((m) => m.togglePresentation()) });
-  tool("tulpar.battle", "battle", "Битва с ИИ: кто быстрее решит задачу", "Хайп");
-  tool("tulpar.achievements", "achievements", "Мои достижения", "Хайп");
-  const hype = (id: string, title: string, run: () => Promise<unknown>) => reg({ id, category: "Хайп", title, run: () => void run() });
+  tool("tulpar.battle", "battle", "Битва с ИИ: кто быстрее решит задачу", "Игры и фан");
+  tool("tulpar.achievements", "achievements", "Мои достижения", "Игры и фан");
+  tool("tulpar.games", "games", "Все игры", "Игры и фан");
+  tool("tulpar.game.typing", "typing", "Скоростная печать кода", "Игры и фан");
+  tool("tulpar.game.bughunt", "bughunt", "Найди баг", "Игры и фан");
+  tool("tulpar.game.quiz", "quiz", "Викторина по программированию", "Игры и фан");
+  tool("tulpar.game.snake", "snake", "Змейка", "Игры и фан");
+  const hype = (id: string, title: string, run: () => Promise<unknown>) => reg({ id, category: "Игры и фан", title, run: () => void run() });
   hype("tulpar.snapshot", "Красивый скриншот кода", () => import("../hype/snapshot").then((m) => m.captureSelection()));
   hype("tulpar.music", "Музыка (Spotify, YouTube, свои mp3)", () => import("../hype/music").then((m) => m.setPlayerOpen(true)));
   hype("tulpar.powerMode", "Power mode: искры → тряска → выкл", () => import("../hype/power").then((m) => m.cyclePowerMode()));

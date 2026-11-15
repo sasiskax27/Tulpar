@@ -36,6 +36,11 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "voice", icon: "🗣", title: "Говорящий кодер", hint: "Написать код голосом" },
   { id: "presenter", icon: "🎤", title: "Спикер", hint: "Включить режим презентации" },
   { id: "learner", icon: "🎓", title: "Ученик", hint: "Пройти урок в учебном режиме" },
+  { id: "typing-10", icon: "⌨️", title: "Машинистка", hint: "Пройти 10 заездов скоростной печати" },
+  { id: "typing-fast", icon: "🚀", title: "Пальцы-молнии", hint: "Печатать код быстрее 300 знаков в минуту" },
+  { id: "bug-detective", icon: "🔎", title: "Детектив", hint: "Найти 5 спрятанных багов" },
+  { id: "quiz-perfect", icon: "🧠", title: "Всезнайка", hint: "Ответить на все вопросы викторины" },
+  { id: "snake-30", icon: "🐍", title: "Удав", hint: "Набрать 30 очков в Змейке" },
   { id: "time-traveler", icon: "⏳", title: "Путешественник во времени", hint: "Восстановить старую версию файла" },
 ];
 

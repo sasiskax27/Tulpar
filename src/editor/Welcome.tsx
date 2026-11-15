@@ -203,7 +203,7 @@ export default function Welcome() {
             {action("Моя статистика", "tulpar.stats", "📊")}
             {action("Вместе по сети", "tulpar.collab", "👥")}
             {action("ИИ-ревью проекта", "tulpar.review", "🔍")}
-            {action("Битва с ИИ", "tulpar.battle", "⚔️")}
+            {action("Игры", "tulpar.games", "🎮")}
             {action("Достижения", "tulpar.achievements", "🏆")}
             {action("Настройки", "workbench.action.openSettings", "⚙")}
           </section>

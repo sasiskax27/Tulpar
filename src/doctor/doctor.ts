@@ -83,7 +83,17 @@ export async function diagnose(onProgress: (checks: Check[]) => void): Promise<C
     if (rt) {
       let res = await sh(rt[0]);
       if (!res.ok && m.id === "pip" && isWin) res = await sh("py --version");
-      if (!res.ok) push({ id: `rt-${m.id}`, title: rt[1], status: "fail", detail: `${rt[1]} не найден — нужен для ${m.file}`, fix: { label: `Скачать ${rt[1]}`, run: () => core.openUrl(rt[2]) } });
+      if (!res.ok) {
+        const { runtimeFor, installRuntime } = await import("../runtimes/runtimes");
+        const one = runtimeFor(m.registry === "npm" ? "node" : m.registry === "pypi" ? (m.id === "uv" ? "uv" : "python") : m.id === "go" ? "go" : ["maven", "gradle"].includes(m.id) ? "java" : "");
+        push({
+          id: `rt-${m.id}`,
+          title: rt[1],
+          status: "fail",
+          detail: `${rt[1]} не найден — нужен для ${m.file}`,
+          fix: one ? { label: `Поставить ${one.title}`, run: () => installRuntime(one) } : { label: `Скачать ${rt[1]}`, run: () => core.openUrl(rt[2]) },
+        });
+      }
       else push({ id: `rt-${m.id}`, title: rt[1], status: "ok", detail: firstLine(res.out) });
     }
     // Зависимости поставлены?

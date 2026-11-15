@@ -18,6 +18,8 @@ mod sqlite;
 mod db;
 mod phone;
 mod collab;
+mod runtimes;
+mod ssh;
 mod search;
 mod terminal;
 mod transfer;
@@ -29,6 +31,8 @@ fn main() {
     if let Some(data) = config::portable_dir() {
         std::env::set_var("WEBVIEW2_USER_DATA_FOLDER", data.join("webview"));
     }
+    // Языки, поставленные через Tulpar, — в PATH для терминала, агента и LSP
+    runtimes::apply_path();
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(workspace::WorkspaceState::default())
@@ -57,6 +61,12 @@ fn main() {
             phone::phone_start,
             collab::collab_start,
             config::is_portable,
+            runtimes::runtimes_list,
+            runtimes::runtime_install,
+            runtimes::runtime_remove,
+            ssh::ssh_exec,
+            ssh::ssh_cache_dir,
+            ssh::ssh_deploy,
             collab::collab_stop,
             collab::collab_broadcast,
             phone::phone_stop,

@@ -4,6 +4,7 @@ import { createSignal, For, onMount, Show } from "solid-js";
 import { core } from "../ipc";
 import { runInTerminal } from "../terminal/sessions";
 import { notify } from "../app/notify";
+import { installRuntime, runtimeFor, runtimeProgress } from "../runtimes/runtimes";
 
 const isWindows = navigator.userAgent.includes("Windows");
 const isMac = navigator.userAgent.includes("Mac");
@@ -29,6 +30,7 @@ const TOOLS: Tool[] = [
   { id: "dotnet", title: ".NET SDK", check: "dotnet --version", note: "C#, F#", winget: "Microsoft.DotNet.SDK.8", brew: "dotnet", apt: "dotnet-sdk-8.0" },
   { id: "go", title: "Go", check: "go version", note: "Язык Go", winget: "GoLang.Go", brew: "go", apt: "golang" },
   { id: "rust", title: "Rust", check: "rustc --version", note: "Rust и cargo (через rustup)", winget: "Rustlang.Rustup", brew: "rustup", apt: "rustup" },
+  { id: "uv", title: "uv", check: "uv --version", note: "Быстрый менеджер пакетов Python", winget: "astral-sh.uv", brew: "uv" },
   { id: "git", title: "Git", check: "git --version", note: "Контроль версий", winget: "Git.Git", brew: "git", apt: "git" },
   { id: "gh", title: "GitHub CLI", check: "gh --version", note: "Вход в GitHub, публикация проектов", winget: "GitHub.cli", brew: "gh", apt: "gh" },
   { id: "cmake", title: "CMake", check: "cmake --version", note: "Сборка C/C++", winget: "Kitware.CMake", brew: "cmake", apt: "cmake" },
@@ -106,9 +108,25 @@ export default function Toolchains() {
               <small>{t.note}</small>
             </div>
             <div class="model-actions">
+              <Show when={runtimeProgress()[runtimeFor(t.id)?.kind ?? ""]}>
+                {(p) => (
+                  <span class="model-badge">
+                    {p().stage === "extract" ? "распаковка…" : p().total ? `${Math.round((p().done / p().total) * 100)}%` : "скачивание…"}
+                  </span>
+                )}
+              </Show>
+              <Show when={found()[t.id] === null && runtimeFor(t.id) && !runtimeProgress()[runtimeFor(t.id)!.kind]}>
+                <button
+                  class="button"
+                  title="Скачать портативную версию в папку Tulpar — без прав администратора и перезапуска"
+                  onClick={() => void installRuntime(runtimeFor(t.id)!).then((ok) => ok && check())}
+                >
+                  ⚡ В один клик
+                </button>
+              </Show>
               <Show when={found()[t.id] === null && installCommand(t)}>
-                <button class="button" onClick={() => install(t)} title={installCommand(t)!}>
-                  Установить
+                <button class={runtimeFor(t.id) ? "button-quiet" : "button"} onClick={() => install(t)} title={installCommand(t)!}>
+                  {runtimeFor(t.id) ? "В систему" : "Установить"}
                 </button>
               </Show>
             </div>

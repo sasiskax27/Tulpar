@@ -241,6 +241,8 @@ export function registerBuiltinCommands() {
   tool("tulpar.doctor", "doctor", "Tulpar Doctor: проверить проект");
   tool("tulpar.security", "security", "Центр безопасности: уязвимые пакеты и ключи в коде");
   tool("tulpar.docker", "docker", "Docker: контейнеры и образы");
+  tool("tulpar.servers", "servers", "Серверы: SSH, файлы, сервисы, деплой");
+  reg({ id: "tulpar.runtimes", category: "Инструменты", title: "Поставить язык в один клик (Python, Node, Go, Java, uv)", run: () => void import("../app/ui").then((u) => u.openSettingsAt("tools")) });
   brainCmd("tulpar.team", "Команда ИИ: кодер → тестировщик → ревьюер", () => import("../brain/team").then((m) => m.runTeam()));
   reg({ id: "tulpar.lowEnd", category: "Вид", title: "Режим для слабых ПК: вкл/выкл", run: () => void import("../perf/lowend").then((m) => m.toggleLowEnd()) });
   tool("tulpar.toolbox", "toolbox", "Инструменты: JSON → TypeScript, Base64, JWT, хэши, цвета…");

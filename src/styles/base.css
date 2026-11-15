@@ -2533,3 +2533,14 @@ body.tp-lowend .power-canvas, body.tp-lowend .ach-confetti { display: none !impo
 .docker-actions { display: flex; gap: 3px; }
 .tool .docker-actions button { padding: 3px 7px; }
 .docker-log { display: flex; flex-direction: column; gap: 4px; }
+
+/* Серверы */
+.srv-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.srv-form { display: flex; flex-direction: column; gap: 8px; }
+.srv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.srv-field { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--tp-fg-muted); }
+.srv-field input { color: var(--tp-fg); }
+.srv-files { display: flex; flex-direction: column; gap: 1px; max-height: 60vh; overflow: auto; }
+.tool .srv-file { display: flex; gap: 8px; align-items: center; border: 0; background: none; text-align: left; padding: 4px 8px; border-radius: 6px; }
+.tool .srv-file:hover { background: var(--tp-bg-hover); }
+.srv-deploy { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 10px; background: var(--tp-bg-hover); }

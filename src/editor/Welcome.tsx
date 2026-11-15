@@ -205,6 +205,7 @@ export default function Welcome() {
             {action("ИИ-ревью проекта", "tulpar.review", "🔍")}
             {action("Doctor", "tulpar.doctor", "🩺")}
             {action("Безопасность", "tulpar.security", "🛡")}
+            {action("Серверы", "tulpar.servers", "🖥")}
             {action("Игры", "tulpar.games", "🎮")}
             {action("Достижения", "tulpar.achievements", "🏆")}
             {action("Настройки", "workbench.action.openSettings", "⚙")}

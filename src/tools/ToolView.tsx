@@ -23,6 +23,7 @@ const FlightView = lazy(() => import("../flight/FlightView"));
 const DoctorView = lazy(() => import("../doctor/DoctorView"));
 const SecurityView = lazy(() => import("../security/SecurityView"));
 const DockerView = lazy(() => import("../docker/DockerView"));
+const ServersView = lazy(() => import("../servers/ServersView"));
 
 export default function ToolView(props: { tool: ToolId }) {
   return (
@@ -49,6 +50,7 @@ export default function ToolView(props: { tool: ToolId }) {
       <Match when={props.tool === "doctor"}><DoctorView /></Match>
       <Match when={props.tool === "security"}><SecurityView /></Match>
       <Match when={props.tool === "docker"}><DockerView /></Match>
+      <Match when={props.tool === "servers"}><ServersView /></Match>
     </Switch>
   );
 }

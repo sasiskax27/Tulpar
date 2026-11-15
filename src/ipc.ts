@@ -202,6 +202,14 @@ export const core = {
   collabStop: () => invoke<void>("collab_stop"),
   collabBroadcast: (messages: string[]) => invoke<number>("collab_broadcast", { messages }),
   isPortable: () => invoke<boolean>("is_portable"),
+  runtimesList: () => invoke<{ kind: string; dir: string; version: string }[]>("runtimes_list"),
+  runtimeInstall: (kind: string, url: string, bins: string[], version: string) => invoke<string>("runtime_install", { kind, url, bins, version }),
+  runtimeRemove: (kind: string) => invoke<void>("runtime_remove", { kind }),
+  sshExec: (args: string[], command: string, stdin?: string, timeoutSecs?: number) =>
+    invoke<{ code: number; stdout: string; stderr: string }>("ssh_exec", { args, command, stdin: stdin ?? null, timeoutSecs: timeoutSecs ?? null }),
+  sshCacheDir: () => invoke<string>("ssh_cache_dir"),
+  sshDeploy: (args: string[], localDir: string, remoteDir: string, excludes: string[], after: string) =>
+    invoke<{ files: number; bytes: number; output: string; code: number }>("ssh_deploy", { args, localDir, remoteDir, excludes, after }),
   configEnsure: (name: ConfigName) => invoke<string>("config_ensure", { name }),
 };
 

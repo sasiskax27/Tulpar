@@ -19,7 +19,7 @@ export type SideView =
   | { kind: "web"; path: string; url: string }
   | { kind: "text"; path: string; title: string; text: string; language: string };
 
-export type ToolId = "http" | "regex" | "todo" | "history" | "stats" | "toolbox" | "env" | "generate" | "review" | "collab" | "csv" | "battle" | "achievements" | "games" | "typing" | "bughunt" | "quiz" | "snake" | "flight" | "doctor" | "security" | "docker";
+export type ToolId = "http" | "regex" | "todo" | "history" | "stats" | "toolbox" | "env" | "generate" | "review" | "collab" | "csv" | "battle" | "achievements" | "games" | "typing" | "bughunt" | "quiz" | "snake" | "flight" | "doctor" | "security" | "docker" | "servers";
 
 const TOOL_TITLES: Record<ToolId, string> = {
   http: "🌐 Запросы",
@@ -44,6 +44,7 @@ const TOOL_TITLES: Record<ToolId, string> = {
   doctor: "🩺 Tulpar Doctor",
   security: "🛡 Безопасность",
   docker: "🐳 Docker",
+  servers: "🖥 Серверы",
 };
 
 /** Встроенный инструмент справа: HTTP-клиент, регулярки, TODO и т. д. */

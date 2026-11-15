@@ -19,6 +19,7 @@ export function initTools() {
     // Ключ — путь как во вкладках (fsPath меняет регистр буквы диска в Windows)
     const path = tabs.find((t) => !t.diffOf && modelFor(t.path) === model)?.path ?? model.uri.fsPath;
     void addSnapshot(path, model.getValue(), "save");
+    void import("../servers/servers").then((m) => m.maybeUpload(path, model.getValue()));
     void import("../flight/flight").then((f) => f.log("save", `Сохранён ${path.split(/[\\/]/).pop()}`));
     if (/[\\/]\.tulpar[\\/]brain\.md$/.test(path)) void import("../brain/brain").then((b) => b.reloadBrain());
   });

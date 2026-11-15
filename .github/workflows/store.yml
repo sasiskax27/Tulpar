@@ -1,0 +1,61 @@
+name: microsoft-store
+
+# Пакет MSIX для Microsoft Store. Запускается тегом v* или вручную.
+# Store сам подписывает MSIX — свой сертификат не нужен.
+#
+# Нужны переменные репозитория (Settings → Secrets and variables → Actions → Variables):
+#   STORE_IDENTITY_NAME, STORE_PUBLISHER, STORE_PUBLISHER_NAME — из Partner Center → Product identity
+# Для автоматической отправки в Store (необязательно) — ещё:
+#   переменная STORE_PRODUCT_ID и секреты STORE_TENANT_ID, STORE_SELLER_ID, STORE_CLIENT_ID, STORE_CLIENT_SECRET
+# Без них workflow просто соберёт .msix — его можно скачать и загрузить в Partner Center руками.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  msix:
+    runs-on: windows-latest
+    if: vars.STORE_IDENTITY_NAME != ''
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: npm ci
+
+      - name: Собрать MSIX
+        shell: pwsh
+        env:
+          TULPAR_STORE_IDENTITY: ${{ vars.STORE_IDENTITY_NAME }}
+          TULPAR_STORE_PUBLISHER: ${{ vars.STORE_PUBLISHER }}
+          TULPAR_STORE_PUBLISHER_NAME: ${{ vars.STORE_PUBLISHER_NAME }}
+        run: ./store/build-msix.ps1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tulpar-msix
+          path: store/out/*.msix
+
+      - name: Отправить в Microsoft Store
+        if: vars.STORE_PRODUCT_ID != '' && startsWith(github.ref, 'refs/tags/v')
+        uses: microsoft/setup-msstore-cli@v1
+
+      - name: Публикация
+        if: vars.STORE_PRODUCT_ID != '' && startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          msstore reconfigure --tenantId "${{ secrets.STORE_TENANT_ID }}" --sellerId "${{ secrets.STORE_SELLER_ID }}" --clientId "${{ secrets.STORE_CLIENT_ID }}" --clientSecret "${{ secrets.STORE_CLIENT_SECRET }}"
+          $msix = Get-ChildItem store/out/*.msix | Select-Object -First 1
+          msstore publish $msix.FullName -id "${{ vars.STORE_PRODUCT_ID }}"

@@ -41,6 +41,11 @@ function offer(info: UpdateInfo) {
 
 /** Проверить обновления. manual — по команде: сообщаем и когда обновлений нет. */
 export async function checkForUpdates(manual = false) {
+  // Версия из Microsoft Store обновляется через сам Store
+  if (import.meta.env.VITE_TULPAR_STORE) {
+    if (manual) notify("Tulpar из Microsoft Store обновляется автоматически через Store.");
+    return;
+  }
   try {
     localStorage.setItem(LAST_KEY, String(Date.now()));
   } catch {

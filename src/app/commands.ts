@@ -242,7 +242,9 @@ export function registerBuiltinCommands() {
   tool("tulpar.security", "security", "Центр безопасности: уязвимые пакеты и ключи в коде");
   tool("tulpar.docker", "docker", "Docker: контейнеры и образы");
   tool("tulpar.servers", "servers", "Серверы: SSH, файлы, сервисы, деплой");
-  reg({ id: "tulpar.runtimes", category: "Инструменты", title: "Поставить язык в один клик (Python, Node, Go, Java, uv)", run: () => void import("../app/ui").then((u) => u.openSettingsAt("tools")) });
+  tool("tulpar.store", "store", "Магазин Tulpar: языки, серверы, базы данных, инструменты");
+  reg({ id: "tulpar.runtimes", category: "Инструменты", title: "Поставить язык в один клик (Python, Node, Go, Java…)", run: () => void import("../editor/side").then((m) => m.showTool("store")) });
+  reg({ id: "tulpar.webserver", category: "Инструменты", title: "Запустить сайт (встроенный веб-сервер)", run: () => void import("../editor/side").then((m) => m.showTool("store")) });
   brainCmd("tulpar.team", "Команда ИИ: кодер → тестировщик → ревьюер", () => import("../brain/team").then((m) => m.runTeam()));
   reg({ id: "tulpar.lowEnd", category: "Вид", title: "Режим для слабых ПК: вкл/выкл", run: () => void import("../perf/lowend").then((m) => m.toggleLowEnd()) });
   tool("tulpar.toolbox", "toolbox", "Инструменты: JSON → TypeScript, Base64, JWT, хэши, цвета…");

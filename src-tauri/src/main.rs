@@ -20,6 +20,8 @@ mod phone;
 mod collab;
 mod runtimes;
 mod ssh;
+mod services;
+mod webserver;
 mod search;
 mod terminal;
 mod transfer;
@@ -38,6 +40,8 @@ fn main() {
         .manage(workspace::WorkspaceState::default())
         .manage(phone::PhoneState::default())
         .manage(collab::CollabState::default())
+        .manage(services::ServicesState::default())
+        .manage(webserver::WebServerState::default())
         .manage(config::ConfigState::default())
         .manage(lsp::LspState::default())
         .manage(terminal::TerminalState::default())
@@ -67,6 +71,16 @@ fn main() {
             ssh::ssh_exec,
             ssh::ssh_cache_dir,
             ssh::ssh_deploy,
+            services::service_start,
+            services::service_stop,
+            services::service_status,
+            services::service_logs,
+            services::service_run_once,
+            services::service_write_config,
+            services::service_path,
+            webserver::webserver_start,
+            webserver::webserver_stop,
+            webserver::webserver_status,
             collab::collab_stop,
             collab::collab_broadcast,
             phone::phone_stop,
@@ -156,6 +170,7 @@ fn main() {
             if let tauri::RunEvent::Exit = event {
                 app.state::<lsp::LspState>().kill_all();
                 app.state::<terminal::TerminalState>().kill_all();
+                app.state::<services::ServicesState>().kill_all();
             }
         });
 }

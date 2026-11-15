@@ -203,6 +203,7 @@ export default function Welcome() {
             {action("Моя статистика", "tulpar.stats", "📊")}
             {action("Вместе по сети", "tulpar.collab", "👥")}
             {action("ИИ-ревью проекта", "tulpar.review", "🔍")}
+            {action("Магазин", "tulpar.store", "🏪")}
             {action("Doctor", "tulpar.doctor", "🩺")}
             {action("Безопасность", "tulpar.security", "🛡")}
             {action("Серверы", "tulpar.servers", "🖥")}

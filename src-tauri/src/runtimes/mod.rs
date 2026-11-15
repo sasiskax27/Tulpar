@@ -21,6 +21,17 @@ const ALLOWED_HOSTS: &[&str] = &[
     "go.dev",
     "dl.google.com",
     "api.adoptium.net",
+    "nginx.org",
+    "get.enterprisedb.com",
+    "sbp.enterprisedb.com",
+    "dev.mysql.com",
+    "cdn.mysql.com",
+    "downloads.mysql.com",
+    "www.sqlite.org",
+    "windows.php.net",
+    "downloads.php.net",
+    "fastdl.mongodb.org",
+    "dl.deno.land",
 ];
 
 fn root() -> Result<PathBuf, String> {

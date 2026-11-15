@@ -2544,3 +2544,17 @@ body.tp-lowend .power-canvas, body.tp-lowend .ach-confetti { display: none !impo
 .tool .srv-file { display: flex; gap: 8px; align-items: center; border: 0; background: none; text-align: left; padding: 4px 8px; border-radius: 6px; }
 .tool .srv-file:hover { background: var(--tp-bg-hover); }
 .srv-deploy { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 10px; background: var(--tp-bg-hover); }
+
+/* Магазин */
+.store-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.store-grid.wide { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+.store-card { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; border: 1px solid var(--tp-border); background: var(--tp-bg-sidebar); }
+.store-card.on { border-color: color-mix(in srgb, var(--tp-accent) 50%, var(--tp-border)); }
+.store-top { display: flex; align-items: center; gap: 10px; }
+.store-icon { font-size: 28px; width: 36px; text-align: center; }
+.store-name { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.store-desc { color: var(--tp-fg-muted); flex: 1; }
+.store-live { font-size: 11px; color: var(--tp-ok); font-weight: 700; white-space: nowrap; }
+.web-live { display: flex; gap: 12px; align-items: center; }
+.web-qr { width: 110px; height: 110px; background: #fff; border-radius: 8px; padding: 4px; flex: none; }
+.web-qr svg { width: 100%; height: 100%; }

@@ -210,6 +210,16 @@ export const core = {
   sshCacheDir: () => invoke<string>("ssh_cache_dir"),
   sshDeploy: (args: string[], localDir: string, remoteDir: string, excludes: string[], after: string) =>
     invoke<{ files: number; bytes: number; output: string; code: number }>("ssh_deploy", { args, localDir, remoteDir, excludes, after }),
+  serviceStart: (id: string, kind: string, exe: string, args: string[], cwd?: string) => invoke<number>("service_start", { id, kind, exe, args, cwd: cwd ?? null }),
+  serviceStop: (id: string) => invoke<void>("service_stop", { id }),
+  serviceStatus: () => invoke<{ id: string; running: boolean; pid: number; exit: number | null }[]>("service_status"),
+  serviceLogs: (id: string) => invoke<string>("service_logs", { id }),
+  serviceRunOnce: (kind: string, exe: string, args: string[], cwd?: string) => invoke<[number, string]>("service_run_once", { kind, exe, args, cwd: cwd ?? null }),
+  serviceWriteConfig: (kind: string, rel: string, content: string) => invoke<void>("service_write_config", { kind, rel, content }),
+  servicePath: (kind: string, rel: string) => invoke<string>("service_path", { kind, rel }),
+  webserverStart: (root: string) => invoke<WebInfo>("webserver_start", { root }),
+  webserverStop: () => invoke<void>("webserver_stop"),
+  webserverStatus: () => invoke<WebInfo | null>("webserver_status"),
   configEnsure: (name: ConfigName) => invoke<string>("config_ensure", { name }),
 };
 
@@ -311,3 +321,5 @@ export interface HttpResponse {
   size: number;
   truncated: boolean;
 }
+
+export interface WebInfo { port: number; root: string; local: string; lan: string }

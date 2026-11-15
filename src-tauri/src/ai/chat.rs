@@ -37,6 +37,9 @@ pub struct ChatRequest {
     /// Ollama: размер контекста в токенах
     #[serde(default)]
     context_size: Option<u32>,
+    /// false — выключить «размышления» у моделей, которые думают перед ответом (Qwen 3, DeepSeek R1)
+    #[serde(default)]
+    think: Option<bool>,
 }
 
 #[derive(Serialize, Clone)]
@@ -106,12 +109,18 @@ pub async fn ai_chat(app: AppHandle, state: State<'_, ChatState>, request: ChatR
         let host = base.trim_end_matches("/v1").trim_end_matches('/').to_owned();
         let mut messages = vec![ChatMessage { role: "system".into(), content: request.system.clone() }];
         messages.extend(request.messages.iter().cloned());
-        client.post(format!("{host}/api/chat")).json(&json!({
+        let mut body = json!({
             "model": request.model.trim(),
             "messages": messages,
             "stream": true,
             "options": { "num_ctx": request.context_size.unwrap_or(16384).clamp(2048, 131072) },
-        }))
+            // Модель остаётся в памяти полчаса: следующий ответ начинается сразу, без загрузки
+            "keep_alive": "30m",
+        });
+        if let Some(think) = request.think {
+            body["think"] = json!(think);
+        }
+        client.post(format!("{host}/api/chat")).json(&body)
     } else {
         let mut messages = vec![ChatMessage { role: "system".into(), content: request.system.clone() }];
         messages.extend(request.messages.iter().cloned());

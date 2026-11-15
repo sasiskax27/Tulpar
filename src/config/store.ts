@@ -95,10 +95,14 @@ export interface Settings {
   "workbench.panelOpacity": number;
   /** Размытие под панелями («стекло»), px */
   "workbench.panelBlur": number;
-  "tulpar.ai.provider": "none" | "ollama" | "openai" | "opencode" | "openrouter" | "anthropic";
+  "tulpar.ai.provider": "none" | "ollama" | "openai" | "opencode" | "openrouter" | "anthropic" | "gemini" | "groq" | "cerebras" | "mistral" | "github" | "huggingface";
   "tulpar.ai.baseUrl": string;
   "tulpar.ai.model": string;
   "tulpar.ai.apiKey": string;
+  /** Думающим моделям Ollama разрешено размышлять перед ответом (медленнее) */
+  "tulpar.ai.think": boolean;
+  /** Модель, адрес и ключ для каждого сервиса: при переключении ничего не теряется */
+  "tulpar.ai.profiles": Record<string, { model: string; baseUrl: string; apiKey: string }>;
   /** На каком языке ИИ пишет комментарии и объяснения */
   "tulpar.ai.language": string;
   /** Подсказки ИИ при наборе (серый текст, Tab — принять) */
@@ -203,6 +207,8 @@ export const defaultSettings: Settings = {
   "tulpar.ai.baseUrl": "",
   "tulpar.ai.model": "",
   "tulpar.ai.apiKey": "",
+  "tulpar.ai.think": false,
+  "tulpar.ai.profiles": {},
   "tulpar.ai.language": "",
   "tulpar.ai.inline": false,
   "tulpar.ai.inlineProvider": "model",

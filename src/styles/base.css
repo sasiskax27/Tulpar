@@ -2558,3 +2558,33 @@ body.tp-lowend .power-canvas, body.tp-lowend .ach-confetti { display: none !impo
 .web-live { display: flex; gap: 12px; align-items: center; }
 .web-qr { width: 110px; height: 110px; background: #fff; border-radius: 8px; padding: 4px; flex: none; }
 .web-qr svg { width: 100%; height: 100%; }
+
+/* ---------- ИИ-сервисы (карточки в настройках и магазине) ---------- */
+.ai-services { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.ai-service-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+.ai-service-grid.compact { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.ai-service { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--tp-border); background: var(--tp-bg-sidebar); color: inherit; text-align: left; cursor: pointer; transition: border-color .15s, transform .15s; }
+.ai-service:hover { border-color: color-mix(in srgb, var(--tp-accent) 40%, var(--tp-border)); transform: translateY(-1px); }
+.ai-service.on { border-color: var(--tp-accent); box-shadow: 0 0 0 1px var(--tp-accent) inset; }
+.ai-service-icon { font-size: 22px; }
+.ai-service-name { font-weight: 600; }
+.ai-service-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.ai-tag { font-size: 10.5px; padding: 1px 6px; border-radius: 999px; background: color-mix(in srgb, var(--tp-fg-muted) 15%, transparent); color: var(--tp-fg-muted); }
+.ai-tag.free { background: color-mix(in srgb, #3fb950 18%, transparent); color: #3fb950; }
+.ai-tag.fast { background: color-mix(in srgb, #d29922 18%, transparent); color: #d29922; }
+.ai-service-panel { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--tp-accent) 7%, transparent); }
+.ai-service-panel .settings-buttons { justify-content: flex-start; display: flex; }
+.ai-service-note { color: var(--tp-fg-muted); font-size: 12.5px; line-height: 1.45; }
+.ai-service-warn { font-size: 12px; color: #d29922; }
+.chat-waiting { color: var(--tp-fg-muted); font-size: 12.5px; font-style: italic; padding: 2px 0; }
+.chat-stats { color: var(--tp-fg-muted); font-size: 11px; opacity: .75; margin-top: 4px; }
+/* ---------- Магазин: шапка ---------- */
+.store-hero { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; margin-bottom: 10px; border-radius: 16px; background: linear-gradient(120deg, color-mix(in srgb, var(--tp-accent) 22%, transparent), color-mix(in srgb, var(--tp-accent) 4%, transparent)); border: 1px solid color-mix(in srgb, var(--tp-accent) 30%, var(--tp-border)); }
+.store-hero-icon { font-size: 34px; }
+.store-hero-text { display: flex; flex-direction: column; flex: 1; min-width: 180px; }
+.store-hero-text b { font-size: 17px; }
+.store-hero-stat { font-size: 12px; padding: 3px 10px; border-radius: 999px; background: var(--tp-bg-sidebar); }
+.store-search { min-width: 220px; }
+.store-tabs { margin-bottom: 10px; flex-wrap: wrap; }
+.store-h { font-size: 13px; margin: 14px 0 8px; color: var(--tp-fg); }
+.store-ai { display: flex; flex-direction: column; gap: 4px; }

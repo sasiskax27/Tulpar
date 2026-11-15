@@ -12,7 +12,7 @@ import { editorInstance } from "../editor/instance";
 import { activePath, cursor } from "../editor/tabs";
 import { languageName } from "../editor/monaco";
 import { notifyError } from "../app/notify";
-import { aiBase } from "./ai";
+import { thinkFlag, aiBase } from "./ai";
 import { loadAgentHistory, resetAgent, runAgent, stopAgent } from "./agent";
 
 export interface AgentStep {
@@ -42,6 +42,8 @@ export interface ChatMsg {
   checkpoint?: { path: string; before: string | null }[];
   /** Изменения задачи уже откачены */
   rolledBack?: boolean;
+  /** Скорость ответа: «gemini · 0.8 с до первого слова · 95 ток/с» */
+  stats?: string;
 }
 
 const HISTORY = 12;
@@ -155,11 +157,14 @@ async function collectProject(
 
 let listening = false;
 
+let firstChunkAt = 0;
+
 async function ensureListener() {
   if (listening) return;
   listening = true;
   await events.onAiChunk((id, text) => {
     if (id !== streaming()) return;
+    if (!firstChunkAt) firstChunkAt = performance.now();
     setMessages(produce((list) => {
       const last = list[list.length - 1];
       if (last?.role === "assistant") last.content += text;
@@ -438,6 +443,15 @@ function agentNote(): string {
   return parts.length ? `\n\n(The user attached: ${parts.join(", ")}.)` : "";
 }
 
+/** «модель · 0.8 с до первого слова · 95 ток/с» (токен ≈ 4 символа) */
+export function speedStats(model: string, sentAt: number, firstAt: number, chars: number): string {
+  const now = performance.now();
+  const wait = ((firstAt || now) - sentAt) / 1000;
+  const gen = firstAt ? (now - firstAt) / 1000 : 0;
+  const speed = gen > 0.2 ? Math.round(chars / 4 / gen) : 0;
+  return `${model} · ${wait.toFixed(1)} с до первого слова${speed ? ` · ≈${speed} ток/с` : ""}`;
+}
+
 export async function send(text: string) {
   void import("../flight/flight").then((f) => f.log("ai", `Вопрос ИИ: ${text.replace(/\s+/g, " ").slice(0, 90)}`));
   void import("../hype/achievements").then((a) => a.unlock("first-ai"));
@@ -473,17 +487,21 @@ export async function send(text: string) {
       const user = list[list.length - 2];
       if (user?.role === "user") user.context = labels;
     }));
+    firstChunkAt = 0;
+    const sentAt = performance.now();
     const full = await core.aiChat({
       id,
       ...base,
       system: systemPrompt(),
       contextSize: Number(settings()["tulpar.ai.contextSize"]) || 16384,
+      think: thinkFlag(base.provider, base.model),
       messages: [...history, { role: "user", content: context ? `<context>\n${context}\n</context>\n\n${question}` : question }],
     });
     // Если события потерялись — показываем полный ответ
     setMessages(produce((list) => {
       const last = list[list.length - 1];
       if (last?.role === "assistant" && last.content.length < full.length) last.content = full;
+      if (last?.role === "assistant") last.stats = speedStats(base.model, sentAt, firstChunkAt, full.length);
     }));
   } catch (e) {
     setMessages(produce((list) => {

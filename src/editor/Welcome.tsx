@@ -192,6 +192,7 @@ export default function Welcome() {
             {action("Открыть папку", "workbench.action.files.openFolder", "📂")}
             {action("Клонировать с GitHub", "git.clone", "⤓")}
             {action("Учиться программировать", "tulpar.learn", "🎓")}
+            {action("Магазин", "tulpar.store", "🏪")}
             {action("Код в видео", "tulpar.video.studio", "🎬")}
             {action("Карта проекта", "tulpar.projectMap", "🗺")}
             {action("Телефон — второй экран", "tulpar.phone", "📱")}
@@ -203,7 +204,6 @@ export default function Welcome() {
             {action("Моя статистика", "tulpar.stats", "📊")}
             {action("Вместе по сети", "tulpar.collab", "👥")}
             {action("ИИ-ревью проекта", "tulpar.review", "🔍")}
-            {action("Магазин", "tulpar.store", "🏪")}
             {action("Doctor", "tulpar.doctor", "🩺")}
             {action("Безопасность", "tulpar.security", "🛡")}
             {action("Серверы", "tulpar.servers", "🖥")}

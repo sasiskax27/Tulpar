@@ -27,6 +27,18 @@ export const providers: Record<string, Provider> = {
   /** OpenRouter: сотни моделей, у части есть бесплатные версии (:free) */
   openrouter: { baseUrl: "https://openrouter.ai/api/v1", model: "" },
   anthropic: { baseUrl: "https://api.anthropic.com", model: "claude-sonnet-5-5" },
+  /** Google Gemini: бесплатный ключ в AI Studio, без карты */
+  gemini: { baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", model: "gemini-3.8-flash" },
+  /** Groq: очень быстрые открытые модели, бесплатный тариф */
+  groq: { baseUrl: "https://api.groq.com/openai/v1", model: "llama-3.3-70b-versatile" },
+  /** Cerebras: тысячи токенов в секунду, бесплатный тариф */
+  cerebras: { baseUrl: "https://api.cerebras.ai/v1", model: "gpt-oss-120b" },
+  /** Mistral: бесплатный план Experiment, есть Codestral для кода */
+  mistral: { baseUrl: "https://api.mistral.ai/v1", model: "codestral-latest" },
+  /** GitHub Models: вход через аккаунт GitHub, небольшие бесплатные лимиты */
+  github: { baseUrl: "https://models.github.ai/inference", model: "openai/gpt-4.1-mini" },
+  /** Hugging Face: тысячи открытых моделей через один токен */
+  huggingface: { baseUrl: "https://router.huggingface.co/v1", model: "Qwen/Qwen3-Coder-30B-A3B-Instruct:fastest" },
 };
 
 interface Task {
@@ -164,6 +176,16 @@ export function aiBase(): AiBase | null {
     return null;
   }
   return { provider, baseUrl: cfg["tulpar.ai.baseUrl"].trim() || defaults.baseUrl, model, apiKey: cfg["tulpar.ai.apiKey"] };
+}
+
+/** Выключить «размышления» у думающих моделей Ollama (Qwen 3/3.5, DeepSeek R1, QwQ):
+ *  они часами думают про себя, прежде чем написать первое слово. Включить обратно —
+ *  настройка «Модель думает перед ответом». undefined — не трогать. */
+export function thinkFlag(provider: string, model: string): boolean | undefined {
+  if (provider !== "ollama" || settings()["tulpar.ai.think"]) return undefined;
+  const m = model.toLowerCase();
+  if (m.includes("coder") || m.includes("cloud")) return undefined;
+  return /qwen3|deepseek-r1|qwq|magistral|phi4-reasoning|granite4/.test(m) ? false : undefined;
 }
 
 /** Убрать обёртки ``` и кавычки вокруг короткого ответа. */

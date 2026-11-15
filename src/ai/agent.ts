@@ -10,7 +10,7 @@ import { root, reloadDir } from "../app/workspace";
 import { editorInstance } from "../editor/instance";
 import { modelFor, openDiff, saveFile, tabs } from "../editor/tabs";
 import { notifyError } from "../app/notify";
-import { aiBase } from "./ai";
+import { aiBase, thinkFlag } from "./ai";
 import { closeReview, setReviewHandlers, setReviewPending, showReview, type Review } from "./review";
 import { chatInternals, currentFolder, relPath, saveChatSoon, streaming, type AgentStep, type ChatMsg } from "./chat";
 
@@ -629,6 +629,7 @@ export async function runAgent(question: string, attachedNote: string): Promise<
         messages: history,
         tools: TOOLS,
         contextSize: Number(settings()["tulpar.ai.contextSize"]) || 16384,
+        think: thinkFlag(base.provider, base.model),
       });
       if (stopRequested || streaming() !== runId) break;
       // Думающие модели (qwen3, qwen3.5) иногда кладут рассуждения в текст

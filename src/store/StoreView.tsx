@@ -13,9 +13,10 @@ import { busy, install, installed, refreshInstalled, refreshRunning, running, st
 import { RECIPES, runRecipe, type Recipe } from "./remote";
 import { mapDrive, openShare, shareFolder, unshareFolder } from "./network";
 import { OS } from "./platform";
+import StoreAi from "./StoreAi";
 
-type Tab = Category | "remote" | "network";
-const TABS: [Tab, string][] = [["lang", "🧑‍💻 Языки"], ["server", "🗄 Серверы и базы"], ["tool", "🧰 Инструменты"], ["remote", "🖥 На сервер"], ["network", "📡 Сеть"]];
+type Tab = Category | "ai" | "remote" | "network";
+const TABS: [Tab, string][] = [["ai", "✨ ИИ"], ["lang", "🧑‍💻 Языки"], ["server", "🗄 Серверы и базы"], ["tool", "🧰 Инструменты"], ["remote", "🖥 На сервер"], ["network", "📡 Сеть"]];
 
 function qr(text: string) {
   const q = qrcode(0, "M");
@@ -191,7 +192,7 @@ function NetworkTab() {
 }
 
 export default function StoreView() {
-  const [tab, setTab] = createSignal<Tab>("lang");
+  const [tab, setTab] = createSignal<Tab>("ai");
   const [q, setQ] = createSignal("");
   const refresh = () => {
     void refreshInstalled(ITEMS);
@@ -203,26 +204,38 @@ export default function StoreView() {
   });
   const timer = setInterval(() => void refreshRunning(), 3000);
   onCleanup(() => clearInterval(timer));
-  const shown = () => ITEMS.filter((i) => i.category === tab() && (!q() || (i.title + i.desc).toLowerCase().includes(q().toLowerCase())));
+  // Поиск ищет сразу во всех разделах
+  const shown = () => {
+    const needle = q().trim().toLowerCase();
+    return ITEMS.filter((i) => (needle ? (i.title + " " + i.desc).toLowerCase().includes(needle) : i.category === tab()));
+  };
+  const installedCount = () => ITEMS.filter((i) => installed()[i.id] || systemHas()[i.id]).length;
+  const catalogTab = () => !!q().trim() || (tab() !== "remote" && tab() !== "network" && tab() !== "ai");
 
   return (
     <div class="tool store">
-      <div class="tool-row">
-        <div class="tool-tabs">
-          <For each={TABS}>{([id, label]) => <button classList={{ on: tab() === id }} onClick={() => setTab(id)}>{label}</button>}</For>
+      <header class="store-hero">
+        <div class="store-hero-icon">🏪</div>
+        <div class="store-hero-text">
+          <b>Магазин Tulpar</b>
+          <span class="dim small">ИИ, языки, базы данных и инструменты — в один клик, сам настраивается под {OS === "windows" ? "Windows" : OS === "mac" ? "macOS" : "Linux"}</span>
         </div>
-        <span class="grow" />
-        <Show when={tab() !== "remote" && tab() !== "network"}>
-          <input class="tool-input" placeholder="Поиск" value={q()} onInput={(e) => setQ(e.currentTarget.value)} />
-          <button onClick={refresh}>Обновить</button>
-        </Show>
+        <span class="store-hero-stat" title="Уже установлено">✅ {installedCount()} / {ITEMS.length}</span>
+        <input class="tool-input store-search" placeholder="🔍 Найти: python, postgres, redis…" value={q()} onInput={(e) => setQ(e.currentTarget.value)} />
+        <button onClick={refresh} title="Проверить, что установлено">⟳</button>
+      </header>
+      <div class="tool-tabs store-tabs">
+        <For each={TABS}>{([id, label]) => <button classList={{ on: tab() === id && !q() }} onClick={() => { setQ(""); setTab(id); }}>{label}</button>}</For>
       </div>
-      <Show when={tab() === "remote"}><RemoteTab /></Show>
-      <Show when={tab() === "network"}><NetworkTab /></Show>
-      <Show when={tab() !== "remote" && tab() !== "network"}>
+      <Show when={!q() && tab() === "ai"}><StoreAi /></Show>
+      <Show when={!q() && tab() === "remote"}><RemoteTab /></Show>
+      <Show when={!q() && tab() === "network"}><NetworkTab /></Show>
+      <Show when={catalogTab()}>
+        <Show when={shown().length} fallback={<div class="tool-empty">Ничего не нашлось. Попробуйте другое слово.</div>}>
         <div class="store-grid">
           <For each={shown()}>{(it) => <Card item={it} onChange={refresh} />}</For>
         </div>
+        </Show>
         <div class="dim small">
           {OS === "windows"
             ? "Всё ставится в папку Tulpar — без прав администратора и не мешая другим программам. Источники: официальные сайты и GitHub-релизы."

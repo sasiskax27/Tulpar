@@ -22,6 +22,7 @@ mod runtimes;
 mod ssh;
 mod services;
 mod webserver;
+mod login;
 mod search;
 mod terminal;
 mod transfer;
@@ -71,6 +72,8 @@ fn main() {
             ssh::ssh_exec,
             ssh::ssh_cache_dir,
             ssh::ssh_deploy,
+            login::oauth_capture,
+            login::github_cli_token,
             services::service_start,
             services::service_stop,
             services::service_status,

@@ -82,6 +82,14 @@ export default function TopBar() {
         </For>
         <span class="top-sep" />
         <button
+          class="top-btn top-store"
+          title={hint("Магазин Tulpar", "tulpar.store")}
+          aria-label="Магазин Tulpar"
+          onClick={() => void executeCommand("tulpar.store")}
+        >
+          {icons.store(17)}
+        </button>
+        <button
           class="top-btn"
           title={hint("Терминал", "workbench.action.terminal.toggleTerminal")}
           aria-label="Терминал"

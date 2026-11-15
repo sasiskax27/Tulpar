@@ -46,6 +46,7 @@ export interface AgentStepRequest {
   messages: AgentMessage[];
   tools: { name: string; description: string; parameters: unknown }[];
   contextSize?: number;
+  think?: boolean;
 }
 
 export interface AgentReply {
@@ -190,7 +191,7 @@ export const core = {
   agentWrite: (path: string, content: string) => invoke<string>("agent_write", { path, content }),
   agentRun: (command: string, timeoutSecs?: number) =>
     invoke<{ code: number | null; output: string; timedOut: boolean }>("agent_run", { command, timeoutSecs }),
-  aiChat: (request: { id: string; provider: string; baseUrl: string; model: string; apiKey: string; system: string; messages: { role: string; content: string }[]; contextSize?: number }) =>
+  aiChat: (request: { id: string; provider: string; baseUrl: string; model: string; apiKey: string; system: string; messages: { role: string; content: string }[]; contextSize?: number; think?: boolean }) =>
     invoke<string>("ai_chat", { request }),
   aiChatCancel: (id: string) => invoke<void>("ai_chat_cancel", { id }),
   backupPut: (name: string, data: string) => invoke<void>("backup_put", { name, data }),
@@ -202,6 +203,8 @@ export const core = {
   collabStop: () => invoke<void>("collab_stop"),
   collabBroadcast: (messages: string[]) => invoke<number>("collab_broadcast", { messages }),
   isPortable: () => invoke<boolean>("is_portable"),
+  oauthCapture: (port: number, timeoutSecs?: number) => invoke<string>("oauth_capture", { port, timeoutSecs }),
+  githubCliToken: () => invoke<string>("github_cli_token"),
   runtimesList: () => invoke<{ kind: string; dir: string; version: string }[]>("runtimes_list"),
   runtimeInstall: (kind: string, url: string, bins: string[], version: string) => invoke<string>("runtime_install", { kind, url, bins, version }),
   runtimeRemove: (kind: string) => invoke<void>("runtime_remove", { kind }),

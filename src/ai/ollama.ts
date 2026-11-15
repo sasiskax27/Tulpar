@@ -4,6 +4,7 @@ import { core, events } from "../ipc";
 import { settings, updateSetting } from "../config/store";
 import { notify, notifyError } from "../app/notify";
 import { providers } from "./ai";
+import { switchService } from "./services";
 import type { CatalogModel } from "./models";
 
 export interface Progress {
@@ -66,7 +67,7 @@ export async function initLocalAi() {
 }
 
 export function useModel(tag: string) {
-  updateSetting("tulpar.ai.provider", "ollama");
+  switchService("ollama");
   updateSetting("tulpar.ai.model", tag);
   notify(`ИИ: выбрана модель ${tag}`);
 }
@@ -111,4 +112,17 @@ export function fitOf(model: CatalogModel): Fit {
   const need = model.sizeGb * 1.15 + 1;
   if (vramGb !== null && need <= vramGb) return "fast";
   return need <= ramGb * 0.75 ? "slow" : "no";
+}
+
+let warmed = "";
+/** Заранее загрузить выбранную модель в память, пока человек пишет вопрос:
+ *  первый ответ тогда приходит сразу, а не через полминуты. */
+export function warmUp() {
+  const s = settings();
+  const model = s["tulpar.ai.model"].trim();
+  if (s["tulpar.ai.provider"] !== "ollama" || !model || model.includes("cloud") || warmed === model) return;
+  warmed = model;
+  void core
+    .httpRequest({ method: "POST", url: `${ollamaHost()}/api/generate`, headers: [["Content-Type", "application/json"]], body: JSON.stringify({ model, keep_alive: "30m" }), timeoutSecs: 120 })
+    .catch(() => (warmed = ""));
 }

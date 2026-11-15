@@ -21,6 +21,8 @@ import { notify, notifyError } from "../app/notify";
 import LocalAi from "./LocalAi";
 import Toolchains from "./Toolchains";
 import { copilotSignIn, copilotSignOut, copilotState, copilotUser } from "../ai/copilot";
+import AiServices from "./AiServices";
+import { switchService } from "../ai/services";
 import { claudeModels, cloudCatalog, openaiModels, opencodeModels } from "../ai/models";
 import { installed, isInstalled } from "../ai/ollama";
 import { allThemes } from "../app/themes";
@@ -153,8 +155,20 @@ async function modelChoices(name: string): Promise<{ items: ModelChoice[]; title
         title: "Модель OpenRouter — бесплатные сверху",
       };
     }
-    default:
-      return null;
+    case "github":
+      return {
+        items: ["openai/gpt-4.1-mini", "openai/gpt-4.1", "openai/gpt-4o", "openai/o4-mini", "deepseek/DeepSeek-R1", "meta/Llama-4-Scout-17B-16E-Instruct", "microsoft/Phi-4", "mistral-ai/Codestral-2501"].map((id) => ({ label: id, detail: "бесплатно с лимитом", value: id })),
+        title: "Модель GitHub Models (полный список — github.com/marketplace/models)",
+      };
+    default: {
+      const list = await serverModels(name);
+      if (!list?.length) {
+        notifyError("Не удалось загрузить список моделей", "проверьте ключ API и интернет, или впишите название модели вручную");
+        return null;
+      }
+      const clean = (id: string) => id.replace(/^models\//, "");
+      return { items: list.map((m) => ({ label: clean(m.id), detail: m.free ? "бесплатно" : undefined, value: clean(m.id) })), title: "Модели сервиса" };
+    }
   }
 }
 
@@ -637,6 +651,7 @@ const sectionList: Section[] = [
       "Выделите код, нажмите правую кнопку мыши и выберите действие «ИИ: …». Код отправляется только на сервер, указанный здесь, и только по вашей команде.",
     extra: () => (
       <>
+      <AiServices />
       <CopilotRow />
       <Show when={String(settings()["tulpar.ai.provider"]) !== "none"}>
         <div class="settings-row">
@@ -672,6 +687,12 @@ const sectionList: Section[] = [
       },
       { key: "tulpar.agent.maxSteps", label: "Агент: шагов на задачу", type: "number", min: 3, max: 200 },
       {
+        key: "tulpar.ai.think",
+        label: "Модель думает перед ответом",
+        hint: "Qwen 3, DeepSeek R1 и похожие модели сначала долго «думают про себя». Выключено — отвечают в разы быстрее, почти без потери качества в обычных вопросах.",
+        type: "toggle",
+      },
+      {
         key: "tulpar.ai.contextSize",
         label: "Память модели (Ollama)",
         hint: "Сколько токенов разговора модель держит в голове. Мало — агент забывает инструкции и файлы. 16384 подходит для 7B при 16 ГБ памяти; если компьютер тормозит — 8192.",
@@ -692,13 +713,19 @@ const sectionList: Section[] = [
             opencode:
               "Облачные модели OpenCode Zen — работают на их серверах, компьютер не нагружается. Платно, оплата за запросы: ключ и баланс — на opencode.ai/console. Бесплатные модели OpenCode работают только в самой программе OpenCode — откройте её кнопкой «OpenCode» в чате, она запустится во вкладке терминала в папке проекта.",
             anthropic: "Claude через API. Нужен ключ API из консоли Anthropic.",
-          })[String(settings()["tulpar.ai.provider"])] ?? "",
+          })[String(settings()["tulpar.ai.provider"])] ?? "Подробности — в карточке сервиса выше.",
         type: "select",
         options: [
           ["none", "Выключен"],
           ["opencode", "OpenCode Zen (облако, платно)"],
           ["ollama", "Ollama (компьютер или облако, бесплатно)"],
           ["openrouter", "OpenRouter (есть бесплатные)"],
+          ["gemini", "Google Gemini (бесплатно)"],
+          ["groq", "Groq (бесплатно, очень быстро)"],
+          ["cerebras", "Cerebras (бесплатно, очень быстро)"],
+          ["github", "GitHub Models (вход через GitHub)"],
+          ["huggingface", "Hugging Face"],
+          ["mistral", "Mistral (бесплатный план)"],
           ["openai", "OpenAI-совместимый"],
           ["anthropic", "Claude (Anthropic)"],
         ],
@@ -913,7 +940,7 @@ const LAYOUT: Layout[] = [
   { id: "agent", group: "ai", title: "Чат и агент", keys: ["tulpar.agent.approve", "tulpar.agent.maxSteps", "tulpar.ai.projectChars", "tulpar.ai.language"] },
   { id: "inline", group: "ai", title: "Подсказки при наборе", keys: ["tulpar.ai.inline", "tulpar.ai.inlineProvider", "tulpar.ai.inlineModel"] },
   { id: "ai-actions", group: "ai", title: "Свои действия ИИ", extraFrom: "ai-actions", keys: [] },
-  { id: "ai-local", group: "ai", title: "Локальный ИИ", extraFrom: "ai-local", keys: ["tulpar.ai.contextSize"] },
+  { id: "ai-local", group: "ai", title: "Локальный ИИ", extraFrom: "ai-local", keys: ["tulpar.ai.contextSize", "tulpar.ai.think"] },
   { id: "fun", group: "fun", title: "Игры и фан", keys: ["tulpar.fun.powerMode", "tulpar.fun.combo", "tulpar.fun.achievements", "tulpar.present.scale", "tulpar.voice.language"] },
   { id: "privacy", group: "fun", title: "Статистика и история", intro: "Всё хранится только на этом компьютере — Tulpar ничего не отправляет.", keys: ["tulpar.stats.enabled", "tulpar.history.enabled", "tulpar.history.perFile"] },
   { id: "tools", group: "system", title: "SDK и инструменты", extraFrom: "tools", keys: [] },
@@ -948,6 +975,7 @@ function Control(props: { def: FieldDef }) {
   const def = props.def;
   const value = () => settings()[def.key];
   const set = (v: unknown) => {
+    if (def.key === "tulpar.ai.provider") return switchService(String(v));
     updateSetting(def.key, v as Settings[typeof def.key]);
     // Дизайн 2 задуман с темами Tulpar: с классической темой он выглядит чужим.
     if (def.key === "workbench.style" && v === "tulpar") {

@@ -417,8 +417,34 @@ export function NewChatButton() {
   );
 }
 
+const [waited, setWaited] = createSignal(0);
+let waitTimer: number | undefined;
+
+function waitingText(): string {
+  const sec = Math.floor(waited() / 1000);
+  const local = settings()["tulpar.ai.provider"] === "ollama" && !settings()["tulpar.ai.model"].includes("cloud");
+  if (sec < 3) return "Думаю…";
+  if (local) return `Модель загружается в память… ${sec} с. Следующие ответы будут быстрее.`;
+  return `Жду ответ сервиса… ${sec} с`;
+}
+
 export default function ChatPanel(props: { embedded?: boolean }) {
   let list: HTMLDivElement | undefined;
+
+  createEffect(
+    on(streaming, (id) => {
+      clearInterval(waitTimer);
+      setWaited(0);
+      if (!id) return;
+      const start = Date.now();
+      waitTimer = window.setInterval(() => setWaited(Date.now() - start), 500);
+    }),
+  );
+  // Пока пишется вопрос — модель Ollama уже грузится в память
+  createEffect(() => {
+    settings()["tulpar.ai.model"];
+    void import("./ollama").then((o) => o.warmUp());
+  });
 
   // Прокрутка вниз по мере ответа, если пользователь сам не листает вверх
   createEffect(
@@ -540,6 +566,14 @@ export default function ChatPanel(props: { embedded?: boolean }) {
                       }
                     >
                       <Markdown text={m.content} />
+                      <Show when={streaming() && i() === messages.length - 1 && !m.content && !m.steps}>
+                        <div class="chat-waiting">{waitingText()}</div>
+                      </Show>
+                      <Show when={!streaming() || i() !== messages.length - 1}>
+                        <Show when={m.stats}>
+                          <div class="chat-stats" data-no-translate>{m.stats}</div>
+                        </Show>
+                      </Show>
                       <Show when={streaming() && i() === messages.length - 1}>
                         <Show when={m.steps} fallback={<span class="chat-cursor" />}>
                           <div class="chat-typing">Агент работает<span>.</span><span>.</span><span>.</span></div>

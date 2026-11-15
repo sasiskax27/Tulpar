@@ -62,6 +62,9 @@ pub struct AgentRequest {
     /// Ollama: сколько токенов разговора держать в памяти модели
     #[serde(default)]
     context_size: Option<u32>,
+    /// false — выключить «размышления» у моделей, которые думают перед ответом (Qwen 3, DeepSeek R1)
+    #[serde(default)]
+    think: Option<bool>,
 }
 
 #[derive(Serialize)]
@@ -251,13 +254,19 @@ pub async fn ai_agent_step(request: AgentRequest) -> Result<AgentReply, String> 
             .iter()
             .map(|t| json!({ "type": "function", "function": { "name": t.name, "description": t.description, "parameters": t.parameters } }))
             .collect();
-        client.post(format!("{host}/api/chat")).json(&json!({
+        let mut body = json!({
             "model": request.model.trim(),
             "messages": ollama_messages(&request.system, &request.messages),
             "tools": tools,
             "stream": false,
             "options": { "num_ctx": request.context_size.unwrap_or(16384).clamp(2048, 131072) },
-        }))
+            // Модель остаётся в памяти полчаса: следующий ответ начинается сразу, без загрузки
+            "keep_alive": "30m",
+        });
+        if let Some(think) = request.think {
+            body["think"] = json!(think);
+        }
+        client.post(format!("{host}/api/chat")).json(&body)
     } else {
         let tools: Vec<Value> = request
             .tools

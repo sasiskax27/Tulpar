@@ -109,6 +109,7 @@ export async function discard(files: GitFile[]) {
 }
 
 export async function commit() {
+  void import("../hype/achievements").then((a) => a.unlock("first-commit"));
   const text = message().trim();
   if (!text) {
     notify("Напишите сообщение коммита", "error");

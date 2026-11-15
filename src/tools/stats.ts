@@ -111,6 +111,7 @@ export function startFocus(minutes: number, onDone: () => void) {
   setFocusEnd(Date.now() + minutes * 60_000);
   focusTimer = window.setTimeout(() => {
     setFocusEnd(null);
+    void import("../hype/achievements").then((a) => a.unlock("focus-done"));
     onDone();
   }, minutes * 60_000);
 }

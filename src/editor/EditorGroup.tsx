@@ -64,6 +64,13 @@ export default function EditorGroup() {
     registerFixActions(editor);
     registerDebugActions(editor);
     registerDebugGutter(editor);
+    editor.addAction({
+      id: "tulpar.snapshot.context",
+      label: "📸 Красивый скриншот кода",
+      contextMenuGroupId: "9_cutcopypaste",
+      contextMenuOrder: 10,
+      run: () => void import("../hype/snapshot").then((m) => m.captureSelection()),
+    });
     void import("../tools/env").then((m) => m.registerEnvMasking(editor, (model) => m.isEnvFile(model.uri.path)));
     onCleanup(() => {
       setEditorInstance(undefined);

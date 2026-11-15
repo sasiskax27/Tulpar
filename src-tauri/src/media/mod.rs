@@ -10,6 +10,8 @@ use serde::Serialize;
 
 const IMAGE_EXT: &[&str] = &["png", "jpg", "jpeg", "webp", "gif", "bmp"];
 const VIDEO_EXT: &[&str] = &["mp4", "webm", "m4v"];
+/// Музыка для встроенного плеера
+const AUDIO_EXT: [&str; 7] = ["mp3", "ogg", "wav", "m4a", "flac", "aac", "opus"];
 const MAX_IMAGE: u64 = 20 * 1024 * 1024;
 const MAX_VIDEO: u64 = 80 * 1024 * 1024;
 
@@ -23,7 +25,7 @@ fn image_ext(path: &Path) -> Result<String, String> {
     path.extension()
         .and_then(|e| e.to_str())
         .map(|e| e.to_lowercase())
-        .filter(|e| IMAGE_EXT.contains(&e.as_str()) || VIDEO_EXT.contains(&e.as_str()) || e == "pdf" || e == "ico")
+        .filter(|e| IMAGE_EXT.contains(&e.as_str()) || VIDEO_EXT.contains(&e.as_str()) || e == "pdf" || e == "ico" || AUDIO_EXT.contains(&e.as_str()))
         .ok_or_else(|| "поддерживаются картинки PNG, JPG, WebP, GIF, BMP, ICO, документы PDF и видео MP4, WebM".to_string())
 }
 
@@ -34,7 +36,8 @@ fn is_video(ext: &str) -> bool {
 fn check_size(path: &Path) -> Result<(), String> {
     let size = std::fs::metadata(path).map_err(|e| e.to_string())?.len();
     let video = path.extension().and_then(|e| e.to_str()).is_some_and(|e| is_video(&e.to_lowercase()));
-    let (limit, what) = if video { (MAX_VIDEO, "видео") } else { (MAX_IMAGE, "картинка") };
+    let audio = path.extension().and_then(|e| e.to_str()).is_some_and(|e| AUDIO_EXT.contains(&e.to_lowercase().as_str()));
+    let (limit, what) = if video || audio { (MAX_VIDEO, if audio { "песня" } else { "видео" }) } else { (MAX_IMAGE, "картинка") };
     if size > limit {
         return Err(format!("{what} слишком большая ({} МБ, можно до {})", size / 1024 / 1024, limit / 1024 / 1024));
     }
@@ -61,6 +64,9 @@ fn base64_encode(data: &[u8]) -> String {
 pub async fn background_import(path: String) -> Result<String, String> {
     let source = PathBuf::from(&path);
     let ext = image_ext(&source)?;
+    if ext == "pdf" || AUDIO_EXT.contains(&ext.as_str()) {
+        return Err("для фона подходят картинки и видео".into());
+    }
     check_size(&source)?;
     let dir = crate::config::dir().ok_or("не удалось определить папку настроек")?;
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
@@ -101,6 +107,11 @@ pub async fn image_read(path: String) -> Result<ImageData, String> {
         "webm" => "video/webm".to_string(),
         "pdf" => "application/pdf".to_string(),
         "ico" => "image/x-icon".to_string(),
+        "mp3" => "audio/mpeg".to_string(),
+        "m4a" | "aac" => "audio/mp4".to_string(),
+        "ogg" | "opus" => "audio/ogg".to_string(),
+        "wav" => "audio/wav".to_string(),
+        "flac" => "audio/flac".to_string(),
         other => format!("image/{other}"),
     };
     Ok(ImageData { mime, base64: base64_encode(&bytes) })

@@ -437,6 +437,7 @@ function agentNote(): string {
 }
 
 export async function send(text: string) {
+  void import("../hype/achievements").then((a) => a.unlock("first-ai"));
   const question = text.trim();
   if (!question || streaming()) return;
   if (agentMode() && root()) {

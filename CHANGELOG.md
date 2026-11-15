@@ -15,6 +15,9 @@
 - 🔐 Редактор .env: размытие секретов, проверка .gitignore, `.env.example`
 - 🪄 Генератор: .gitignore, Dockerfile, .dockerignore, docker-compose, GitHub Actions, .editorconfig, README, MIT
 - 🎬 Код в видео, 🎓 учебный режим, 🗺 карта проекта, 🔀 три варианта, 📱 телефон — второй экран
+- 🎮 Ачивки (25 штук), ⚔️ битва с ИИ, ⚡ Power mode, 😈 прожарка кода, 📸 скриншоты кода (`Ctrl+Alt+C`), ⏪ таймлапс файла в видео
+- 🎧 Музыка: свои mp3, Spotify, YouTube, SoundCloud, Яндекс Музыка
+- 🗣 Код голосом (`Ctrl+Alt+V`)
 - 🎤 Режим презентации, 📑 CSV таблицей, 💡 ошибки простыми словами
 - Просмотр PDF, SVG с живым предпросмотром, масштаб картинок
 - Базы данных: PostgreSQL, MySQL, MongoDB, SQLite

@@ -244,6 +244,7 @@ export function goTo(p: Problem) {
 
 /** Попросить агента исправить проблемы. */
 export async function fixWithAi(list: Problem[]) {
+  void import("../hype/achievements").then((a) => a.unlock("bug-hunter"));
   if (!list.length) return;
   const describe = (p: Problem) =>
     `- ${relOf(p.path)}:${p.line}:${p.column} ${p.severity === "error" ? "ошибка" : "предупреждение"}: ${p.message}${p.source ? ` (${p.source}${p.code ? ` ${p.code}` : ""})` : ""}`;

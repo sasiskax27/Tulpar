@@ -207,6 +207,16 @@ export function registerBuiltinCommands() {
   tool("tulpar.collab", "collab", "Вместе по сети: совместное редактирование");
   tool("tulpar.csv", "csv", "Показать CSV таблицей");
   reg({ id: "tulpar.present", category: "Вид", title: "Режим презентации (крупно, клавиши на экране)", run: () => void import("../tools/present").then((m) => m.togglePresentation()) });
+  tool("tulpar.battle", "battle", "Битва с ИИ: кто быстрее решит задачу", "Хайп");
+  tool("tulpar.achievements", "achievements", "Мои достижения", "Хайп");
+  const hype = (id: string, title: string, run: () => Promise<unknown>) => reg({ id, category: "Хайп", title, run: () => void run() });
+  hype("tulpar.snapshot", "Красивый скриншот кода", () => import("../hype/snapshot").then((m) => m.captureSelection()));
+  hype("tulpar.music", "Музыка (Spotify, YouTube, свои mp3)", () => import("../hype/music").then((m) => m.setPlayerOpen(true)));
+  hype("tulpar.powerMode", "Power mode: искры → тряска → выкл", () => import("../hype/power").then((m) => m.cyclePowerMode()));
+  hype("tulpar.voice", "Код голосом", () => import("../hype/voice").then((m) => m.toggleVoice("code")));
+  hype("tulpar.voiceChat", "Спросить ИИ голосом", () => import("../hype/voice").then((m) => m.toggleVoice("chat")));
+  hype("tulpar.roast", "Прожарить текущий файл 😈", () => import("../hype/misc").then((m) => m.roastFile()));
+  hype("tulpar.timelapse", "Таймлапс файла в видео", () => import("../hype/misc").then((m) => m.timelapse()));
   tool("tulpar.toolbox", "toolbox", "Инструменты: JSON → TypeScript, Base64, JWT, хэши, цвета…");
   reg({ id: "tulpar.variants", category: "ИИ", title: "ИИ: Три варианта…", run: () => void import("../variants/variants").then((m) => m.makeVariants()) });
   reg({

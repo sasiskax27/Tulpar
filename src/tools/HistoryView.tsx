@@ -43,6 +43,7 @@ export default function HistoryView() {
     model.pushEditOperations([], [{ range: model.getFullModelRange(), text: s.content }], () => null);
     model.pushStackElement();
     notify("Версия восстановлена. Сохраните файл или отмените — Ctrl+Z");
+    void import("../hype/achievements").then((a) => a.unlock("time-traveler"));
   };
 
   const REASON: Record<Snapshot["reason"], string> = { save: "сохранение", restore: "до восстановления", ai: "до правки ИИ" };

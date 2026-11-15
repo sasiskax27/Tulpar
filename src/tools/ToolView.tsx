@@ -12,6 +12,8 @@ import GenerateView from "./GenerateView";
 import ReviewView from "./ReviewView";
 import CollabView from "../collab/CollabView";
 import CsvView from "./CsvView";
+import BattleView from "../hype/BattleView";
+import AchievementsView from "../hype/AchievementsView";
 
 export default function ToolView(props: { tool: ToolId }) {
   return (
@@ -27,6 +29,8 @@ export default function ToolView(props: { tool: ToolId }) {
       <Match when={props.tool === "review"}><ReviewView /></Match>
       <Match when={props.tool === "collab"}><CollabView /></Match>
       <Match when={props.tool === "csv"}><CsvView /></Match>
+      <Match when={props.tool === "battle"}><BattleView /></Match>
+      <Match when={props.tool === "achievements"}><AchievementsView /></Match>
     </Switch>
   );
 }

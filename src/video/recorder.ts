@@ -26,6 +26,8 @@ const [recording, setRecording] = createSignal(false);
 const [lastRecording, setLastRecording] = createSignal<Recording | null>(null);
 const [startedAt, setStartedAt] = createSignal(0);
 export { recording, lastRecording, startedAt };
+/** Загрузить готовую «запись» (например, таймлапс из Машины времени). */
+export const loadRecording = (rec: Recording) => setLastRecording(rec);
 
 let current: Recording | null = null;
 let subs: monaco.IDisposable[] = [];

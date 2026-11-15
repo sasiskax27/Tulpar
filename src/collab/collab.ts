@@ -155,6 +155,7 @@ function hostReceive(guest: string, raw: string) {
       if (!peer) {
         setPeers([...peers(), { id: guest, name, color: peers().length + 1 }]);
         notify(`👥 ${name} подключился`);
+        void import("../hype/achievements").then((a) => a.unlock("collab"));
       }
       refreshPeerStyles();
       broadcast({ t: "peers", list: [{ id: "host", name: hostName, color: 0 }, ...peers()] });
@@ -445,6 +446,7 @@ export async function joinSession(link: string, name: string) {
   }
   setMode("guest");
   setPeers([]);
+  void import("../hype/achievements").then((a) => a.unlock("collab"));
   post({ t: "hello", name: guest.name });
   void pollLoop();
 }

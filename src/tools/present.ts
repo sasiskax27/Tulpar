@@ -72,6 +72,7 @@ export function togglePresentation() {
     return;
   }
   setPresenting(true);
+  void import("../hype/achievements").then((a) => a.unlock("presenter"));
   document.body.classList.add("tp-present");
   const base = settings()["editor.fontSize"] ?? 14;
   editor?.updateOptions({ fontSize: Math.round(base * 1.6), minimap: { enabled: false }, lineNumbers: "off", glyphMargin: false, folding: false, renderLineHighlight: "none", scrollBeyondLastLine: false });

@@ -46,6 +46,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 /** Урок решён: опыт, серия дней. Возвращает полученный опыт (0 — если уже был решён). */
 export function markDone(lessonId: string): number {
+  void import("../hype/achievements").then((a) => a.unlock("learner"));
   const p = progress();
   const first = !p.done[lessonId];
   const gained = first ? 10 : 0;

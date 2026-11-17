@@ -43,7 +43,7 @@ export async function install(item: StoreItem): Promise<boolean> {
     mark(item.id, null);
     return ok;
   }
-  if (OS === "windows" && item.windows) {
+  if ((OS === "windows" || item.anyOs) && item.windows) {
     mark(item.id, "install");
     try {
       const { url, version } = await item.windows.resolve();
@@ -59,7 +59,8 @@ export async function install(item: StoreItem): Promise<boolean> {
       mark(item.id, null);
     }
   }
-  const cmd = item.pkgs ? await systemInstall(item.pkgs) : null;
+  // Windows без портативной сборки — winget в терминале (соглашения человек принимает сам)
+  const cmd = OS === "windows" ? (item.winget ? `winget install --id ${item.winget} -e` : null) : item.pkgs ? await systemInstall(item.pkgs) : null;
   if (!cmd) {
     notify(`Для этой системы ${item.title} пока не ставится автоматически`, "error");
     return false;
@@ -116,4 +117,17 @@ export async function stop(item: StoreItem) {
   await core.serviceStop(item.id);
   await refreshRunning();
   mark(item.id, null);
+}
+
+/** Поставить набор: по очереди, пропуская уже установленное. */
+export async function installBundle(items: StoreItem[], title: string) {
+  let done = 0;
+  for (const it of items) {
+    if (installed()[it.id] || systemHas()[it.id]) {
+      done++;
+      continue;
+    }
+    if (await install(it)) done++;
+  }
+  notify(done === items.length ? `✓ Набор «${title}» готов` : `Набор «${title}»: ${done} из ${items.length} готово, остальное ставится в терминале`);
 }

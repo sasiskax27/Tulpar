@@ -32,6 +32,8 @@ const ALLOWED_HOSTS: &[&str] = &[
     "downloads.php.net",
     "fastdl.mongodb.org",
     "dl.deno.land",
+    "services.gradle.org",
+    "storage.googleapis.com",
 ];
 
 fn root() -> Result<PathBuf, String> {

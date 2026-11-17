@@ -248,6 +248,7 @@ export function registerBuiltinCommands() {
   tool("tulpar.logs", "logs", "Логи: системный журнал и лог-файлы, разбор ошибок ИИ");
   tool("tulpar.bench", "bench", "Сравнение моделей ИИ и выбор модели под задачу");
   tool("tulpar.vm", "vm", "VM Studio: виртуальные машины (QEMU)");
+  tool("tulpar.android", "android", "Android: создать приложение, собрать APK, запустить на телефоне");
   reg({ id: "tulpar.aiConnect", category: "ИИ", title: "Подключить ИИ (Gemini, Groq, OpenRouter, Hugging Face…)", run: () => void import("../editor/side").then((m) => m.showTool("store")) });
   reg({ id: "tulpar.runtimes", category: "Инструменты", title: "Поставить язык в один клик (Python, Node, Go, Java…)", run: () => void import("../editor/side").then((m) => m.showTool("store")) });
   reg({ id: "tulpar.webserver", category: "Инструменты", title: "Запустить сайт (встроенный веб-сервер)", run: () => void import("../editor/side").then((m) => m.showTool("store")) });

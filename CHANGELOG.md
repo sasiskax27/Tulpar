@@ -2,6 +2,8 @@
 
 ## 0.4.0 — в разработке
 
+- 📱 Android-приложения прямо в Tulpar: Android SDK, Gradle и Java в один клик, телефон по USB и Wi-Fi, эмулятор, шаблоны (пустое, список дел, сайт → приложение), ИИ дописывает приложение по описанию, «Собрать и запустить», журнал телефона с разбором падений, .aab для Google Play
+- 🏪 Магазин стал больше: «Главное», наборы одной кнопкой (Android, веб, Python и ИИ, бэкенд, DevOps, Flutter, терминал), новые разделы Android, DevOps и Медиа; Kotlin, Dart, Flutter, Rust, .NET, Ruby, Zig, Lua, CMake, Git, fzf, bat, fd, jq, scrcpy, Docker Desktop, kubectl, k9s, Helm, Terraform, Cloudflare Tunnel, FFmpeg, ImageMagick, yt-dlp
 - 🖥 Серверы: SSH, файлы, сервисы, мониторинг, деплой
 - 🏪 Магазин Tulpar: языки, серверы и базы, инструменты — под каждую систему сам
 - 🌐 Встроенный веб-сервер с QR для телефона

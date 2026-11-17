@@ -7,6 +7,7 @@ const LogsView = lazy(() => import("../system/LogsView"));
 const BenchView = lazy(() => import("../ai/BenchView"));
 const VmView = lazy(() => import("../vm/VmView"));
 const CommandCenter = lazy(() => import("../system/CommandCenter"));
+const AndroidView = lazy(() => import("../android/AndroidView"));
 const RegexLab = lazy(() => import("./RegexLab"));
 const TodoBoard = lazy(() => import("./TodoBoard"));
 const HistoryView = lazy(() => import("./HistoryView"));
@@ -63,6 +64,7 @@ export default function ToolView(props: { tool: ToolId }) {
       <Match when={props.tool === "bench"}><BenchView /></Match>
       <Match when={props.tool === "vm"}><VmView /></Match>
       <Match when={props.tool === "command"}><CommandCenter /></Match>
+      <Match when={props.tool === "android"}><div class="tool"><AndroidView /></div></Match>
     </Switch>
   );
 }

@@ -193,6 +193,7 @@ export default function Welcome() {
             {action("Клонировать с GitHub", "git.clone", "⤓")}
             {action("Учиться программировать", "tulpar.learn", "🎓")}
             {action("Магазин", "tulpar.store", "🏪")}
+            {action("Android-приложение", "tulpar.android", "📱")}
             {action("Command Center", "tulpar.commandCenter", "🛰")}
             {action("VM Studio", "tulpar.vm", "🖥")}
             {action("Процессы и порты", "tulpar.processes", "⚙")}

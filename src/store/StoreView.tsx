@@ -8,15 +8,19 @@ import { askInput } from "../app/InputBox";
 import { copy } from "../tools/ai";
 import { runtimeProgress } from "../runtimes/runtimes";
 import { servers } from "../servers/servers";
-import { ITEMS, refreshPinned, type Category, type StoreItem } from "./catalog";
-import { busy, install, installed, refreshInstalled, refreshRunning, running, start, stop, systemHas, uninstall } from "./actions";
+import { BUNDLES, ITEMS, refreshPinned, type Category, type StoreItem } from "./catalog";
+import AndroidView from "../android/AndroidView";
+import { busy, install, installBundle, installed, refreshInstalled, refreshRunning, running, start, stop, systemHas, uninstall } from "./actions";
 import { RECIPES, runRecipe, type Recipe } from "./remote";
 import { mapDrive, openShare, shareFolder, unshareFolder } from "./network";
 import { OS } from "./platform";
 import StoreAi from "./StoreAi";
 
-type Tab = Category | "ai" | "remote" | "network";
-const TABS: [Tab, string][] = [["ai", "✨ ИИ"], ["lang", "🧑‍💻 Языки"], ["server", "🗄 Серверы и базы"], ["tool", "🧰 Инструменты"], ["remote", "🖥 На сервер"], ["network", "📡 Сеть"]];
+type Tab = Category | "home" | "ai" | "remote" | "network";
+const TABS: [Tab, string][] = [
+  ["home", "⭐ Главное"], ["ai", "✨ ИИ"], ["mobile", "📱 Android"], ["lang", "🧑‍💻 Языки"], ["server", "🗄 Серверы и базы"],
+  ["tool", "🧰 Инструменты"], ["devops", "☸ DevOps"], ["media", "🎞 Медиа"], ["remote", "🖥 На сервер"], ["network", "📡 Сеть"],
+];
 
 function qr(text: string) {
   const q = qrcode(0, "M");
@@ -40,12 +44,13 @@ function Card(props: { item: StoreItem; onChange: () => void }) {
         <div class="store-name">
           <b>{it.title}</b>
           <span class="dim small">
-            {state() === "tulpar" ? `в Tulpar · ${installed()[it.id]}` : state() === "system" ? "уже есть в системе" : OS === "windows" ? "портативная версия" : OS === "mac" ? "через brew" : "через менеджер пакетов"}
+            {state() === "tulpar" ? `в Tulpar · ${installed()[it.id]}` : state() === "system" ? "уже есть в системе" : (OS === "windows" || it.anyOs) && it.windows ? "портативная версия" : OS === "windows" ? "через winget" : OS === "mac" ? "через brew" : "через менеджер пакетов"}
           </span>
         </div>
         <Show when={it.service && running()[it.id]}><span class="store-live">● работает</span></Show>
       </div>
       <div class="small store-desc">{it.desc}</div>
+      <Show when={it.tags?.length}><div class="ai-service-tags"><For each={it.tags}>{(t) => <span class="ai-tag">{t}</span>}</For></div></Show>
       <Show when={prog()}>
         {(p) => <div class="review-progress"><div class="fill" style={{ width: `${p().total ? (p().done / p().total) * 100 : 15}%` }} /><span>{p().stage === "extract" ? "распаковка…" : "скачивание…"}</span></div>}
       </Show>
@@ -192,7 +197,7 @@ function NetworkTab() {
 }
 
 export default function StoreView() {
-  const [tab, setTab] = createSignal<Tab>("ai");
+  const [tab, setTab] = createSignal<Tab>("home");
   const [q, setQ] = createSignal("");
   const refresh = () => {
     void refreshInstalled(ITEMS);
@@ -210,7 +215,7 @@ export default function StoreView() {
     return ITEMS.filter((i) => (needle ? (i.title + " " + i.desc).toLowerCase().includes(needle) : i.category === tab()));
   };
   const installedCount = () => ITEMS.filter((i) => installed()[i.id] || systemHas()[i.id]).length;
-  const catalogTab = () => !!q().trim() || (tab() !== "remote" && tab() !== "network" && tab() !== "ai");
+  const catalogTab = () => !!q().trim() || !["remote", "network", "ai", "home"].includes(tab());
 
   return (
     <div class="tool store">
@@ -227,6 +232,43 @@ export default function StoreView() {
       <div class="tool-tabs store-tabs">
         <For each={TABS}>{([id, label]) => <button classList={{ on: tab() === id && !q() }} onClick={() => { setQ(""); setTab(id); }}>{label}</button>}</For>
       </div>
+      <Show when={!q() && tab() === "home"}>
+        <div class="store-home">
+          <button class="store-banner" onClick={() => setTab("mobile")}>
+            <span class="store-banner-icon">📱</span>
+            <span><b>Новое: приложения для Android</b><br /><span class="dim small">Создать, собрать APK и поставить на свой телефон — прямо из Tulpar</span></span>
+          </button>
+          <button class="store-banner" onClick={() => setTab("ai")}>
+            <span class="store-banner-icon">✨</span>
+            <span><b>Подключить ИИ</b><br /><span class="dim small">Gemini, Groq, OpenRouter, Hugging Face или модели на своём компьютере</span></span>
+          </button>
+        </div>
+        <h3 class="store-h">📦 Наборы — всё для направления одной кнопкой</h3>
+        <div class="store-grid">
+          <For each={BUNDLES}>
+            {(b) => {
+              const items = () => b.items.map((id) => ITEMS.find((i) => i.id === id)).filter((i): i is StoreItem => !!i);
+              const ready = () => items().filter((i) => installed()[i.id] || systemHas()[i.id]).length;
+              return (
+                <div class="store-card" classList={{ on: ready() === items().length }}>
+                  <div class="store-top">
+                    <span class="store-icon">{b.icon}</span>
+                    <div class="store-name"><b>{b.title}</b><span class="dim small">{ready()} из {items().length} установлено</span></div>
+                  </div>
+                  <div class="small store-desc">{b.desc}</div>
+                  <div class="ai-service-tags"><For each={items()}>{(i) => <span class="ai-tag" classList={{ free: !!(installed()[i.id] || systemHas()[i.id]) }}>{i.icon} {i.title}</span>}</For></div>
+                  <div class="tool-row">
+                    <Show when={ready() < items().length} fallback={<span class="dim small">✓ всё готово</span>}>
+                      <button class="primary" onClick={() => void installBundle(items(), b.title).then(refresh)}>Поставить набор</button>
+                    </Show>
+                  </div>
+                </div>
+              );
+            }}
+          </For>
+        </div>
+      </Show>
+      <Show when={!q() && tab() === "mobile"}><AndroidView /></Show>
       <Show when={!q() && tab() === "ai"}><StoreAi /></Show>
       <Show when={!q() && tab() === "remote"}><RemoteTab /></Show>
       <Show when={!q() && tab() === "network"}><NetworkTab /></Show>

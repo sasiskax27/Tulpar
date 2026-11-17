@@ -19,7 +19,7 @@ export type SideView =
   | { kind: "web"; path: string; url: string }
   | { kind: "text"; path: string; title: string; text: string; language: string };
 
-export type ToolId = "http" | "regex" | "todo" | "history" | "stats" | "toolbox" | "env" | "generate" | "review" | "collab" | "csv" | "battle" | "achievements" | "games" | "typing" | "bughunt" | "quiz" | "snake" | "flight" | "doctor" | "security" | "docker" | "servers" | "store" | "processes" | "logs" | "bench" | "vm" | "command";
+export type ToolId = "http" | "regex" | "todo" | "history" | "stats" | "toolbox" | "env" | "generate" | "review" | "collab" | "csv" | "battle" | "achievements" | "games" | "typing" | "bughunt" | "quiz" | "snake" | "flight" | "doctor" | "security" | "docker" | "servers" | "store" | "processes" | "logs" | "bench" | "vm" | "command" | "android";
 
 const TOOL_TITLES: Record<ToolId, string> = {
   processes: "⚙ Процессы и порты",
@@ -27,6 +27,7 @@ const TOOL_TITLES: Record<ToolId, string> = {
   bench: "🏁 Сравнение моделей",
   vm: "🖥 VM Studio",
   command: "🛰 Command Center",
+  android: "📱 Android",
   http: "🌐 Запросы",
   regex: "🔣 Регулярки",
   todo: "📋 Доска TODO",

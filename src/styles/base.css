@@ -2646,3 +2646,20 @@ body.tp-lowend .power-canvas, body.tp-lowend .ach-confetti { display: none !impo
 .cc-big .warn { color: #d29922; }
 .cc-big .ok { color: #3fb950; }
 .cc-edit { padding: 8px 10px; border-radius: 10px; background: var(--tp-bg-sidebar); gap: 12px; margin-bottom: 8px; }
+.store-home { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.store-banner { display: flex; gap: 12px; align-items: center; text-align: left; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--tp-border); background: linear-gradient(135deg, color-mix(in srgb, var(--tp-accent) 16%, var(--tp-bg-sidebar)), var(--tp-bg-sidebar)); color: var(--tp-fg); cursor: pointer; }
+.store-banner:hover { border-color: var(--tp-accent); }
+.store-banner-icon { font-size: 30px; }
+/* ---------- Android ---------- */
+.android { display: flex; flex-direction: column; gap: 8px; }
+.and-steps { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.and-step { display: flex; gap: 10px; align-items: center; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--tp-border); background: var(--tp-bg-sidebar); }
+.and-step.ok { border-color: color-mix(in srgb, #3fb950 50%, var(--tp-border)); }
+.and-check { font-size: 18px; width: 20px; text-align: center; color: var(--tp-fg-muted); }
+.and-step.ok .and-check { color: #3fb950; }
+.and-phones { display: flex; flex-direction: column; gap: 6px; }
+.and-phone { display: flex; gap: 8px; align-items: center; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--tp-border); cursor: pointer; }
+.and-phone.on { border-color: var(--tp-accent); }
+.and-phone.off { opacity: .7; }
+.and-wifi { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 12px; background: var(--tp-bg-sidebar); }
+.and-project { margin-bottom: 8px; }

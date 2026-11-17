@@ -249,6 +249,19 @@ export function registerBuiltinCommands() {
   tool("tulpar.bench", "bench", "Сравнение моделей ИИ и выбор модели под задачу");
   tool("tulpar.vm", "vm", "VM Studio: виртуальные машины (QEMU)");
   tool("tulpar.android", "android", "Android: создать приложение, собрать APK, запустить на телефоне");
+  const build = () => import("../build/build");
+  reg({ id: "tulpar.build", category: "Сборка", title: "Собрать проект", run: () => void build().then(async (b) => {
+    const list = await b.refreshTargets();
+    const cur = b.current();
+    b.runTarget(cur && !cur.run ? cur : list.find((t) => !t.run && t.dir === cur?.dir) ?? cur);
+  }) });
+  reg({ id: "tulpar.build.run", category: "Сборка", title: "Собрать и запустить", run: () => void build().then(async (b) => {
+    const list = await b.refreshTargets();
+    const cur = b.current();
+    b.runTarget(cur?.run ? cur : list.find((t) => t.run && t.dir === cur?.dir) ?? list.find((t) => t.run) ?? cur);
+  }) });
+  reg({ id: "tulpar.build.stop", category: "Сборка", title: "Остановить сборку", run: () => void build().then((b) => b.cancel()) });
+  reg({ id: "tulpar.build.panel", category: "Сборка", title: "Панель сборки: выбрать, что собирать", run: () => { setBottomTab("build"); setBottomVisible(true); void build().then((b) => b.refreshTargets()); } });
   reg({ id: "tulpar.aiConnect", category: "ИИ", title: "Подключить ИИ (Gemini, Groq, OpenRouter, Hugging Face…)", run: () => void import("../editor/side").then((m) => m.showTool("store")) });
   reg({ id: "tulpar.runtimes", category: "Инструменты", title: "Поставить язык в один клик (Python, Node, Go, Java…)", run: () => void import("../editor/side").then((m) => m.showTool("store")) });
   reg({ id: "tulpar.webserver", category: "Инструменты", title: "Запустить сайт (встроенный веб-сервер)", run: () => void import("../editor/side").then((m) => m.showTool("store")) });

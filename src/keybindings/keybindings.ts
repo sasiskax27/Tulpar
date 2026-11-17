@@ -25,6 +25,8 @@ const defaults: Keybinding[] = [
   { key: "mod+alt+i", command: "workbench.action.chat.open" },
   { key: "mod+shift+b", command: "workbench.action.tasks.runTask" },
   { key: "ctrl+f5", command: "tulpar.run.file" },
+  { key: "ctrl+shift+b", command: "tulpar.build" },
+  { key: "f6", command: "tulpar.build.run" },
   { key: "f5", command: "workbench.action.debug.start" },
   { key: "shift+f5", command: "workbench.action.debug.stop" },
   { key: "f10", command: "workbench.action.debug.stepOver" },

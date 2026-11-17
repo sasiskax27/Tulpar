@@ -213,6 +213,8 @@ export const core = {
   vmStart: (name: string, system: string, args: string[]) => invoke<number>("vm_start", { name, system, args }),
   vmStatus: () => invoke<Record<string, string>>("vm_status"),
   vmStop: (name: string) => invoke<void>("vm_stop", { name }),
+  buildStart: (id: string, cwd: string, command: string, env?: Record<string, string>, stdin?: string) => invoke<void>("build_start", { id, cwd, command, env, stdin }),
+  buildCancel: (id: string) => invoke<void>("build_cancel", { id }),
   runtimesList: () => invoke<{ kind: string; dir: string; version: string }[]>("runtimes_list"),
   runtimeInstall: (kind: string, url: string, bins: string[], version: string) => invoke<string>("runtime_install", { kind, url, bins, version }),
   runtimeRemove: (kind: string) => invoke<void>("runtime_remove", { kind }),
@@ -249,6 +251,10 @@ export const events = {
     listen<{ model: string; status: string; completed: number; total: number }>("ollama:progress", (e) => cb(e.payload)),
   onAiChunk: (cb: (id: string, text: string) => void): Promise<UnlistenFn> =>
     listen<{ id: string; text: string }>("ai:chunk", (e) => cb(e.payload.id, e.payload.text)),
+  onBuildLine: (cb: (id: string, line: string, err: boolean) => void): Promise<UnlistenFn> =>
+    listen<{ id: string; line: string; err: boolean }>("build:line", (e) => cb(e.payload.id, e.payload.line, e.payload.err)),
+  onBuildDone: (cb: (d: { id: string; code: number | null; ms: number; cancelled: boolean }) => void): Promise<UnlistenFn> =>
+    listen<{ id: string; code: number | null; ms: number; cancelled: boolean }>("build:done", (e) => cb(e.payload)),
   onConfigChanged: (cb: (name: ConfigName) => void): Promise<UnlistenFn> =>
     listen<{ name: ConfigName }>("config:changed", (e) => cb(e.payload.name)),
 };

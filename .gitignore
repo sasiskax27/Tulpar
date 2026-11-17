@@ -7,3 +7,4 @@ src-tauri/gen/
 
 # Сборка для Microsoft Store
 store/out/
+src-tauri/toolchain/

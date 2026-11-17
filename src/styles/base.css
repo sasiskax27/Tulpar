@@ -2663,3 +2663,29 @@ body.tp-lowend .power-canvas, body.tp-lowend .ach-confetti { display: none !impo
 .and-phone.off { opacity: .7; }
 .and-wifi { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 12px; background: var(--tp-bg-sidebar); }
 .and-project { margin-bottom: 8px; }
+/* ---------- Сборка ---------- */
+.build-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.build-bar { display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-bottom: 1px solid var(--tp-border); flex-wrap: wrap; }
+.build-target { max-width: 360px; }
+.build-status { font-size: 12px; }
+.build-status.ok { color: #3fb950; }
+.build-status.fail { color: var(--tp-error); }
+.build-progress { height: 2px; overflow: hidden; background: var(--tp-border); }
+.build-progress > div { height: 100%; width: 30%; background: var(--tp-accent); animation: build-slide 1.2s ease-in-out infinite; }
+@keyframes build-slide { from { transform: translateX(-100%); } to { transform: translateX(400%); } }
+.build-out { flex: 1; overflow: auto; padding: 6px 10px; font-family: var(--tp-font-mono, monospace); font-size: 12px; line-height: 1.45; }
+.build-line { white-space: pre-wrap; word-break: break-word; }
+.build-line.err { color: color-mix(in srgb, var(--tp-error) 80%, var(--tp-fg)); }
+.build-line.link { cursor: pointer; }
+.build-line.link:hover { text-decoration: underline; }
+.build-line.step { color: var(--tp-accent); font-weight: 600; margin-top: 4px; }
+.build-line.ok { color: #3fb950; font-weight: 600; }
+.build-line.fail { color: var(--tp-error); font-weight: 600; }
+.build-line.info { color: var(--tp-fg-muted); }
+.build-empty { padding: 10px; font-family: var(--tp-font-ui, system-ui); }
+.build-license { background: var(--tp-bg-editor, #1e1e1e); color: var(--tp-fg); border: 1px solid var(--tp-border); border-radius: 14px; padding: 18px 20px; max-width: 520px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 20px 60px rgba(0,0,0,.4); }
+.build-license h3 { margin: 0; }
+.build-license p { margin: 0; font-size: 13px; line-height: 1.5; }
+.top-build { color: #3fb950; }
+.top-build.busy { color: var(--tp-accent); animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .45; } }

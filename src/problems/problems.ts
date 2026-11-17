@@ -118,7 +118,7 @@ const termTail = new Map<string, string>();
 const termTimers = new Map<string, number>();
 
 /** Абсолютный путь в стиле открытой папки; null — файл не из проекта. */
-function projectPath(file: string): string | null {
+export function projectPath(file: string): string | null {
   const r = root();
   if (!r) return null;
   const sep = r.includes("\\") ? "\\" : "/";

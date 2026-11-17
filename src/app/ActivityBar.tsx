@@ -1,5 +1,6 @@
 // Полоса иконок Дизайна 1. Может стоять слева, справа или быть скрыта
 // (настройка workbench.activityBar). Нажатие на активную иконку прячет боковую панель.
+import { status as buildStatus } from "../build/build";
 import { For } from "solid-js";
 import { executeCommand } from "../commands/registry";
 import { Badge, hiddenActive, hint, icons, isViewActive, showMoreMenu, showViewMenu, viewDnd, visibleViews } from "./views";
@@ -32,6 +33,15 @@ export default function ActivityBar() {
         ⋯
       </button>
       <div class="activity-spacer" />
+      <button
+        class="activity-item top-build"
+        classList={{ busy: buildStatus() === "running" || buildStatus() === "prepare" }}
+        title={buildStatus() === "running" || buildStatus() === "prepare" ? "Остановить сборку" : hint("Собрать и запустить", "tulpar.build.run")}
+        aria-label="Собрать и запустить"
+        onClick={() => void executeCommand(buildStatus() === "running" || buildStatus() === "prepare" ? "tulpar.build.stop" : "tulpar.build.run")}
+      >
+        {buildStatus() === "running" || buildStatus() === "prepare" ? icons.stopSq(20) : icons.play(20)}
+      </button>
       <button
         class="activity-item"
         title={hint("Command Center", "tulpar.commandCenter")}

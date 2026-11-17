@@ -1,5 +1,6 @@
 // Верхняя панель Дизайна 2: знак Tulpar, папка и ветка, ИИ-остров по центру
 // (поиск команд; пока ИИ работает — показывает, чем он занят) и кнопки разделов.
+import { current as buildTarget, status as buildStatus } from "../build/build";
 import { For, Show } from "solid-js";
 import { executeCommand } from "../commands/registry";
 import { root } from "./workspace";
@@ -81,6 +82,15 @@ export default function TopBar() {
           )}
         </For>
         <span class="top-sep" />
+        <button
+          class="top-btn top-build"
+          classList={{ busy: buildStatus() === "running" || buildStatus() === "prepare" }}
+          title={buildStatus() === "running" || buildStatus() === "prepare" ? "Остановить сборку" : hint(buildTarget() ? `Собрать и запустить: ${buildTarget()!.label}` : "Собрать и запустить", "tulpar.build.run")}
+          aria-label="Собрать и запустить"
+          onClick={() => void executeCommand(buildStatus() === "running" || buildStatus() === "prepare" ? "tulpar.build.stop" : "tulpar.build.run")}
+        >
+          {buildStatus() === "running" || buildStatus() === "prepare" ? icons.stopSq(16) : icons.play(16)}
+        </button>
         <button
           class="top-btn"
           title={hint("Command Center", "tulpar.commandCenter")}

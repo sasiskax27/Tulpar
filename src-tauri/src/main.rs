@@ -23,6 +23,7 @@ mod ssh;
 mod services;
 mod webserver;
 mod login;
+mod build;
 mod system;
 mod vm;
 mod search;
@@ -45,6 +46,7 @@ fn main() {
         .manage(collab::CollabState::default())
         .manage(services::ServicesState::default())
         .manage(vm::VmState::default())
+        .manage(build::BuildState::default())
         .manage(webserver::WebServerState::default())
         .manage(config::ConfigState::default())
         .manage(lsp::LspState::default())
@@ -54,6 +56,9 @@ fn main() {
         .setup(|app| {
             // Следим за папкой настроек, чтобы применять изменения без перезапуска
             config::start_watching(app.handle().clone());
+            // Полная версия: распаковать встроенные Java и Gradle (в фоне, один раз)
+            let resources = app.path().resource_dir().ok();
+            std::thread::spawn(move || runtimes::install_bundled(resources));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -85,6 +90,8 @@ fn main() {
             vm::vm_start,
             vm::vm_status,
             vm::vm_stop,
+            build::build_start,
+            build::build_cancel,
             services::service_start,
             services::service_stop,
             services::service_status,
@@ -186,6 +193,7 @@ fn main() {
                 app.state::<terminal::TerminalState>().kill_all();
                 app.state::<services::ServicesState>().kill_all();
                 app.state::<vm::VmState>().kill_all();
+                app.state::<build::BuildState>().kill_all();
             }
         });
 }

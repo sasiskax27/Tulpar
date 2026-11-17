@@ -1,4 +1,6 @@
 // Нижняя панель: терминал (вкладки сеансов) и, если чат живёт внизу, чат с ИИ.
+import BuildPanel from "../build/BuildPanel";
+import { status as buildStatus } from "../build/build";
 import { createEffect, For, on, onCleanup, onMount, Show, untrack } from "solid-js";
 import {
   sessions, activeId, setActiveId, activeSession,
@@ -73,6 +75,10 @@ export default function TerminalPanel() {
                 <span class="bottom-badge" classList={{ error: counts().errors > 0 }}>{counts().errors + counts().warnings}</span>
               </Show>
             </button>
+            <button class="bottom-switch-btn" classList={{ active: tab() === "build", live: buildStatus() === "running" || buildStatus() === "prepare" }} role="tab" onClick={() => setBottomTab("build")}>
+              Сборка
+              <Show when={buildStatus() === "fail"}><span class="bottom-badge error">!</span></Show>
+            </button>
             <button class="bottom-switch-btn" classList={{ active: tab() === "debug", live: debugStatus() === "stopped" }} role="tab" onClick={() => setBottomTab("debug")}>
               Отладка
             </button>
@@ -138,6 +144,9 @@ export default function TerminalPanel() {
       </Show>
       <Show when={tab() === "debug"}>
         <DebugPanel />
+      </Show>
+      <Show when={tab() === "build"}>
+        <BuildPanel />
       </Show>
     </div>
   );

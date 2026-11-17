@@ -265,3 +265,45 @@ pub async fn runtime_install(app: AppHandle, kind: String, url: String, bins: Ve
     let _ = app.emit("runtime-progress", Progress { kind: kind.clone(), done, total, stage: "done" });
     Ok(dest.to_string_lossy().into_owned())
 }
+
+/// Полная версия Tulpar везёт Java и Gradle в установщике (папка toolchain рядом
+/// с программой). При первом запуске распаковываем их в runtimes — как будто
+/// поставили из магазина, только без интернета. Android SDK так возить нельзя
+/// (лицензия Google запрещает распространять его) — он скачивается при первой сборке.
+pub fn install_bundled(resource_dir: Option<PathBuf>) {
+    let Some(dir) = resource_dir.map(|d| d.join("toolchain")) else { return };
+    let Ok(base) = root() else { return };
+    let Ok(entries) = fs::read_dir(&dir) else { return };
+    let mut changed = false;
+    for e in entries.flatten() {
+        let path = e.path();
+        let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("").to_owned();
+        // Имя архива: <kind>@<version>@<bins через запятую>.zip|.tar.gz, например java@21@bin.zip
+        // (в папках «/» заменён на «+»: Contents+Home+bin)
+        let Some(stem) = name.strip_suffix(".zip").or_else(|| name.strip_suffix(".tar.gz")) else { continue };
+        let parts: Vec<&str> = stem.split('@').collect();
+        if parts.len() != 3 || !valid_kind(parts[0]) {
+            continue;
+        }
+        let dest = base.join(parts[0]);
+        if dest.join(".version").exists() {
+            continue;
+        }
+        let tmp = dest.with_extension("new");
+        let _ = fs::remove_dir_all(&tmp);
+        if fs::create_dir_all(&tmp).is_err() || extract(&path, &tmp).is_err() || flatten_single_dir(&tmp).is_err() {
+            let _ = fs::remove_dir_all(&tmp);
+            continue;
+        }
+        let _ = fs::remove_dir_all(&dest);
+        if fs::rename(&tmp, &dest).is_err() {
+            continue;
+        }
+        let _ = fs::write(dest.join(".bins"), parts[2].replace(',', "\n").replace('+', "/"));
+        let _ = fs::write(dest.join(".version"), parts[1]);
+        changed = true;
+    }
+    if changed {
+        apply_path();
+    }
+}

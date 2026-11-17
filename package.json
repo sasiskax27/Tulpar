@@ -8,7 +8,8 @@
     "build": "vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "build:full": "node scripts/fetch-toolchain.mjs && tauri build --config src-tauri/tauri.full.conf.json"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",

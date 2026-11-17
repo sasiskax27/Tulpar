@@ -6,11 +6,19 @@ import { ITEMS } from "../store/catalog";
 import { install, installed, refreshInstalled, systemHas } from "../store/actions";
 import { askAi } from "../tools/ai";
 import {
-  acceptLicenses, build, buildAndRun, buildRelease, checkSetup, clearLogcat, connectWifi, createEmulator, createProject, createSigningKey,
+  acceptLicenses, checkSetup, clearLogcat, connectWifi, createEmulator, createProject, createSigningKey,
   devices, findProjects, installSdkPackages, logcat, mirror, openApkFolder, pairWifi, ready, setup, startEmulator,
   type Device, type LogcatLine, type Project,
 } from "./android";
 import { APP_TEMPLATES, type AppTemplate } from "./templates";
+import { refreshTargets, runTarget } from "../build/build";
+
+/** Сборка во встроенном сборщике: он сам доставит Java, SDK и Gradle, если их нет. */
+async function viaBuilder(p: Project, action: "debug" | "run" | "release") {
+  const list = await refreshTargets();
+  const t = list.find((x) => x.id === `android:${p.dir}:${action}`);
+  if (t) await runTarget(t);
+}
 
 function Step(props: { ok: boolean; title: string; hint: string; action?: () => void; label?: string; busy?: boolean }) {
   return (
@@ -129,7 +137,7 @@ export default function AndroidView() {
         <button onClick={() => void refresh()}>⟳ Проверить</button>
       </header>
 
-      <h3 class="store-h">1. Подготовка {ready(s()) ? "— всё готово ✓" : ""}</h3>
+      <h3 class="store-h">1. Подготовка {ready(s()) ? "— всё готово ✓" : "— можно пропустить: при первой сборке Tulpar поставит всё сам"}</h3>
       <Show when={s()} fallback={<div class="dim small">Проверяю…</div>}>
         <div class="and-steps">
           <Step ok={s()!.java} title="Java (JDK)" hint="нужна для сборки" action={() => void put("java")} busy={busy() === "java"} />
@@ -199,13 +207,13 @@ export default function AndroidView() {
                 <div class="store-name"><b data-no-translate>{p.name}</b><span class="dim small" data-no-translate>{p.appId || "Android-проект"}</span></div>
               </div>
               <div class="tool-row">
-                <button class="primary" disabled={!ready(s()) || !serial()} title={!serial() ? "Подключите телефон или запустите эмулятор" : ""} onClick={() => void buildAndRun(p, serial())}>▶ Собрать и запустить</button>
-                <button disabled={!ready(s())} onClick={() => void build(p)}>🔨 Собрать APK</button>
+                <button class="primary" disabled={!serial()} title={!serial() ? "Подключите телефон или запустите эмулятор" : ""} onClick={() => void viaBuilder(p, "run")}>▶ Собрать и запустить</button>
+                <button onClick={() => void viaBuilder(p, "debug")}>🔨 Собрать APK</button>
                 <button class="link small" onClick={() => void openApkFolder(p)}>📁 Где APK</button>
                 <button class="link small" onClick={() => void loadLogs()}>📜 Журнал телефона</button>
                 <span class="grow" />
                 <button class="link small" onClick={() => void createSigningKey(p)}>🔑 Ключ подписи</button>
-                <button class="link small" disabled={!ready(s())} onClick={() => void buildRelease(p)}>🏪 Для Google Play (.aab)</button>
+                <button class="link small" onClick={() => void viaBuilder(p, "release")}>🏪 Для Google Play (.aab)</button>
               </div>
             </div>
           )}

@@ -2,6 +2,8 @@
 
 ## 0.4.0 — в разработке
 
+- 🔨 Встроенный сборщик: кнопка ▶ сверху, панель «Сборка» внизу, Ctrl+Shift+B — собрать, F6 — собрать и запустить. Сам находит, что собирать (Android, Flutter, Node, Rust, Go, Python, .NET, CMake, Gradle, Maven), сам ставит недостающее (Java, Android SDK, Gradle, Node…), показывает шаги, ошибки кликабельны и ведут к строке, ИИ объясняет и чинит
+- 📦 Полная версия установщика со встроенными Java и Gradle (`npm run build:full`) — Android-сборка без отдельных скачиваний, кроме Android SDK (его лицензия Google запрещает вшивать)
 - 📱 Android-приложения прямо в Tulpar: Android SDK, Gradle и Java в один клик, телефон по USB и Wi-Fi, эмулятор, шаблоны (пустое, список дел, сайт → приложение), ИИ дописывает приложение по описанию, «Собрать и запустить», журнал телефона с разбором падений, .aab для Google Play
 - 🏪 Магазин стал больше: «Главное», наборы одной кнопкой (Android, веб, Python и ИИ, бэкенд, DevOps, Flutter, терминал), новые разделы Android, DevOps и Медиа; Kotlin, Dart, Flutter, Rust, .NET, Ruby, Zig, Lua, CMake, Git, fzf, bat, fd, jq, scrcpy, Docker Desktop, kubectl, k9s, Helm, Terraform, Cloudflare Tunnel, FFmpeg, ImageMagick, yt-dlp
 - 🖥 Серверы: SSH, файлы, сервисы, мониторинг, деплой

@@ -363,7 +363,7 @@ export const BUNDLES: { id: string; icon: string; title: string; desc: string; i
 /** Обновлённые версии и ссылки из каталога на GitHub — без нового релиза Tulpar. */
 export async function refreshPinned() {
   try {
-    const r = await core.httpRequest({ method: "GET", url: "https://raw.githubusercontent.com/sasiskax41/Tulpar/main/store/catalog.json", headers: [], body: null, timeoutSecs: 10 });
+    const r = await core.httpRequest({ method: "GET", url: "https://raw.githubusercontent.com/sasiskax27/Tulpar/main/store/catalog.json", headers: [], body: null, timeoutSecs: 10 });
     if (r.status !== 200) return;
     const data = JSON.parse(r.body) as { pinned?: Record<string, { url: string; version: string }> };
     for (const [k, v] of Object.entries(data.pinned ?? {})) if (v?.url?.startsWith("https://") && v.version) PINNED[k] = v;

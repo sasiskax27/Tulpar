@@ -21,7 +21,7 @@ pub struct Pkg {
 fn client() -> Result<reqwest::Client, String> {
     reqwest::Client::builder()
         // crates.io требует понятный User-Agent
-        .user_agent(concat!("Tulpar/", env!("CARGO_PKG_VERSION"), " (https://github.com/sasiskax41/Tulpar)"))
+        .user_agent(concat!("Tulpar/", env!("CARGO_PKG_VERSION"), " (https://github.com/sasiskax27/Tulpar)"))
         .connect_timeout(Duration::from_secs(10))
         .timeout(Duration::from_secs(25))
         .build()

@@ -10,8 +10,8 @@ Only the Windows installer (`Tulpar_<version>_x64-setup.exe`) and the `tulpar.ex
 
 ## Team roles
 
-- Committers and reviewers: [sasiskax41](https://github.com/sasiskax41)
-- Approvers: [sasiskax41](https://github.com/sasiskax41)
+- Committers and reviewers: [sasiskax27](https://github.com/sasiskax27)
+- Approvers: [sasiskax27](https://github.com/sasiskax27)
 
 Every signing request is approved manually. All team members use multi-factor authentication on GitHub and SignPath.
 

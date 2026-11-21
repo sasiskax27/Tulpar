@@ -8,7 +8,7 @@ use serde::Serialize;
 use serde_json::Value;
 use tauri::AppHandle;
 
-const REPO: &str = "sasiskax41/Tulpar";
+const REPO: &str = "sasiskax27/Tulpar";
 const CURRENT: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Serialize)]
@@ -187,7 +187,7 @@ mod tests {
 
     #[test]
     fn only_repo_urls() {
-        assert!(allowed_url("https://github.com/sasiskax41/Tulpar/releases/download/v0.2.0/Tulpar_0.2.0_x64-setup.exe"));
+        assert!(allowed_url("https://github.com/sasiskax27/Tulpar/releases/download/v0.2.0/Tulpar_0.2.0_x64-setup.exe"));
         assert!(!allowed_url("https://evil.example/Tulpar.exe"));
         assert!(!allowed_url("https://github.com/someone/else/x.exe"));
     }

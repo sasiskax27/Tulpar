@@ -4,7 +4,7 @@
 
 Движок как у VS Code (Monaco), но весит в разы меньше, ничего не отправляет «домой» и умеет то, чего в VS Code нет без десятка расширений: ИИ-агент, совместная правка по Wi-Fi, HTTP-клиент, машина времени для файлов, учебный режим и многое другое.
 
-[⬇ Скачать для Windows](https://github.com/sasiskax41/Tulpar/releases/latest) · [Что нового](CHANGELOG.md) · [Архитектура](ARCHITECTURE.md)
+[⬇ Скачать для Windows](https://github.com/sasiskax27/Tulpar/releases/latest) · [Что нового](CHANGELOG.md) · [Архитектура](ARCHITECTURE.md)
 
 > *A lightweight, telemetry-free code editor with AI everywhere. UI in English, Russian and Kazakh (Settings → Appearance → Language).*
 

@@ -71,7 +71,8 @@ export default function EditorGroup() {
       contextMenuOrder: 10,
       run: () => void import("../hype/snapshot").then((m) => m.captureSelection()),
     });
-    void import("../tools/env").then((m) => m.registerEnvMasking(editor, (model) => m.isEnvFile(model.uri.path)));
+    const created = editor;
+    void import("../tools/env").then((m) => m.registerEnvMasking(created, (model) => m.isEnvFile(model.uri.path)));
     onCleanup(() => {
       setEditorInstance(undefined);
       diffEditor?.dispose();

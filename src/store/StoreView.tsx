@@ -182,8 +182,8 @@ function NetworkTab() {
         <div class="store-top"><span class="store-icon">📂</span><div class="store-name"><b>Общая папка (SMB / Samba)</b><span class="dim small">{OS === "windows" ? "встроено в Windows" : OS === "mac" ? "встроено в macOS" : "через samba"}</span></div></div>
         <div class="small store-desc">Открыть папку проекта по сети — её увидят другие компьютеры. Или подключить общую папку с сервера/другого ПК.</div>
         <div class="tool-row">
-          <button onClick={() => root() ? void askInput({ title: "Имя папки в сети", placeholder: "Tulpar" }).then((n) => n !== undefined && shareFolder(root()!, n || "Tulpar")) : notify("Откройте папку проекта")}>Открыть проект по сети</button>
-          <button class="link small" onClick={() => void askInput({ title: "Какую общую папку закрыть?", placeholder: "Tulpar" }).then((n) => n && unshareFolder(n))}>Закрыть доступ</button>
+          <button onClick={() => root() ? void askInput({ title: "Имя папки в сети", placeholder: "Tulpar" }).then((n) => { if (n !== undefined && n !== null) void shareFolder(root()!, n || "Tulpar"); }) : notify("Откройте папку проекта")}>Открыть проект по сети</button>
+          <button class="link small" onClick={() => void askInput({ title: "Какую общую папку закрыть?", placeholder: "Tulpar" }).then((n) => { if (n) void unshareFolder(n); })}>Закрыть доступ</button>
         </div>
         <div class="tool-row">
           <input class="tool-input grow" placeholder={OS === "windows" ? "\\\\192.168.1.10\\projects" : "smb://192.168.1.10/projects"} value={share()} onInput={(e) => setShare(e.currentTarget.value)} data-no-translate />

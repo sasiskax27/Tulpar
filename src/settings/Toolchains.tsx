@@ -119,7 +119,7 @@ export default function Toolchains() {
                 <button
                   class="button"
                   title="Скачать портативную версию в папку Tulpar — без прав администратора и перезапуска"
-                  onClick={() => void installRuntime(runtimeFor(t.id)!).then((ok) => ok && check())}
+                  onClick={() => void installRuntime(runtimeFor(t.id)!).then((ok) => { if (ok) void check(); })}
                 >
                   ⚡ В один клик
                 </button>

@@ -114,9 +114,9 @@ export interface Device {
 export function parseDevices(text: string): Device[] {
   return text
     .split(/\r?\n/)
-    .slice(1)
     .map((l) => l.trim())
-    .filter((l) => l && !l.startsWith("*"))
+    // В выводе бывают заголовок и служебные строки adb («* daemon started…») — устройства только с состоянием
+    .filter((l) => l && !l.startsWith("*") && !/^List of devices/i.test(l) && /^\S+\s+\S+/.test(l))
     .map((l) => {
       const [serial, state] = l.split(/\s+/);
       const model = l.match(/model:(\S+)/)?.[1]?.replace(/_/g, " ") ?? (serial.startsWith("emulator-") ? "Эмулятор" : serial);
@@ -128,19 +128,19 @@ export async function devices(): Promise<Device[]> {
   const adb = await adbPath();
   if (!(await fileExists(adb))) return [];
   const r = await core.agentRun(`${exe(adb)} devices -l`, 20).catch(() => null);
-  return r ? parseDevices(r.stdout) : [];
+  return r ? parseDevices(r.output) : [];
 }
 
 export async function pairWifi(hostPort: string, code: string) {
   const adb = exe(await adbPath());
   const r = await core.agentRun(`${adb} pair ${hostPort.trim()} ${code.trim()}`, 30);
-  if (r.code !== 0 || !/success/i.test(r.stdout)) throw new Error((r.stdout + r.stderr).trim() || "не удалось связаться");
+  if (r.code !== 0 || !/success/i.test(r.output)) throw new Error(r.output.trim() || "не удалось связаться");
 }
 
 export async function connectWifi(hostPort: string) {
   const adb = exe(await adbPath());
   const r = await core.agentRun(`${adb} connect ${hostPort.trim()}`, 30);
-  if (!/connected/i.test(r.stdout)) throw new Error((r.stdout + r.stderr).trim() || "не удалось подключиться");
+  if (!/connected/i.test(r.output)) throw new Error(r.output.trim() || "не удалось подключиться");
 }
 
 export async function mirror(serial?: string) {
@@ -314,7 +314,7 @@ export function parseLogcat(text: string): LogcatLine[] {
 export async function logcat(serial?: string, onlyWarnings = true): Promise<LogcatLine[]> {
   const adb = exe(await adbPath());
   const r = await core.agentRun(`${adb}${serial ? ` -s ${serial}` : ""} logcat -d -t 500 -v threadtime${onlyWarnings ? " *:W" : ""}`, 30);
-  return parseLogcat(r.stdout);
+  return parseLogcat(r.output);
 }
 
 export async function clearLogcat(serial?: string) {
